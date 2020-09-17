@@ -55,7 +55,18 @@ const routes = [
         component: () => import('../views/home/home.vue')
       },
       {
-        path: '/grid_massage',
+        path: '/about',
+        name: 'About',
+        hidden: false,
+        meta: {
+          title: '列表',
+          icon: 'inbox',
+          noCache: true
+        },
+        component: () => import('../views/About.vue')
+      },
+      {
+        path: '/gridInfo',
         name: 'grid_massage',
         hidden: false,
         meta: {
@@ -63,20 +74,7 @@ const routes = [
           icon: 'inbox',
           noCache: true
         },
-        component: () => import('../views/home/grid_massage.vue'),
-        children: [
-          {
-            path: '/about',
-            name: 'About',
-            hidden: false,
-            meta: {
-              title: '列表',
-              icon: 'inbox',
-              noCache: true
-            },
-            component: () => import('../views/About.vue')
-          }
-        ]
+        component: () => import('../views/home/gridInfo.vue')
       },
       {
         path: '/device_info',
@@ -88,6 +86,17 @@ const routes = [
           noCache: true
         },
         component: () => import('../views/device_info.vue')
+      },
+      {
+        path: '/openService',
+        name: 'openService',
+        hidden: false,
+        meta: {
+          title: '测试',
+          icon: 'inbox',
+          noCache: true
+        },
+        component: () => import('../views/openService.vue')
       },
       {
         path: '/test',
