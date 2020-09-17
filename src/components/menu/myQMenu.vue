@@ -268,6 +268,19 @@ export default {
               child: null
             }
           ]
+        },
+        {
+          id: 111,
+          parentId: 87,
+          name: '场景配置',
+          css: '',
+          url: '/api-alarm/pages/ruleManagement/ruleManagement.html',
+          sort: 1003001,
+          createTime: '2020-08-13T05:31:44.000+0000',
+          updateTime: '2020-08-13T05:34:18.000+0000',
+          systemcode: 'giveanalarm-center',
+          systemservice: null,
+          child: null
         }
       ]
     }
