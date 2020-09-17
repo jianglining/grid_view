@@ -67,7 +67,7 @@
 export default {
   data () {
     return {
-      splitterModel: 16,
+      splitterModel: 20,
       selected: 'Food',
       simple: [
         {

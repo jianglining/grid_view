@@ -79,6 +79,17 @@ const routes = [
         ]
       },
       {
+        path: '/device_info',
+        name: 'device_info',
+        hidden: false,
+        meta: {
+          title: '测试',
+          icon: 'inbox',
+          noCache: true
+        },
+        component: () => import('../views/device_info.vue')
+      },
+      {
         path: '/test',
         name: 'test',
         hidden: false,

@@ -139,6 +139,7 @@ export default {
               name: '设备信息',
               css: '',
               url: '/api-alarm/pages/droolsconstant/droolsconstant.html',
+              path: '/device_info',
               sort: 1002,
               createTime: '2020-07-13T00:51:07.000+0000',
               updateTime: '2020-08-13T06:28:01.000+0000',
