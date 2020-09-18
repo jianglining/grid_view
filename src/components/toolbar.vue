@@ -52,9 +52,10 @@
         </q-badge>
         <q-tooltip>通知</q-tooltip>
       </q-btn> -->
+       <q-btn color="green-3" label="退出登录"  />
 
       <!-- 头像 -->
-      <q-btn round flat>
+      <!-- <q-btn round flat>
         <q-avatar size="26px">
           <img src="https://cdn.quasar.dev/img/boy-avatar.png">
         </q-avatar>
@@ -86,7 +87,7 @@
             </div>
           </div>
         </q-menu>
-      </q-btn>
+      </q-btn> -->
     </div>
     </div>
   </q-toolbar>
