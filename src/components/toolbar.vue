@@ -27,17 +27,17 @@
 
     <q-space/>
       <!-- 搜索 -->
-      <q-input  dense standout="bg-blue-6 text-white" v-model="search" input-class="text-right" class="q-ml-md" label-color="primary">
+      <!-- <q-input  dense standout="bg-blue-6 text-white" v-model="search" input-class="text-right" class="q-ml-md" label-color="primary">
         <template v-slot:append>
           <q-icon v-if="search === ''" name="search" />
           <q-icon v-else name="clear" class="cursor-pointer" @click="search = ''" />
         </template>
-      </q-input>
+      </q-input> -->
 
       <q-space/>
 
     <div class="q-gutter-sm row items-center no-wrap">
-      <q-btn round dense flat color="grey-8" icon="video_call" v-if="$q.screen.gt.sm">
+      <!-- <q-btn round dense flat color="grey-8" icon="video_call" v-if="$q.screen.gt.sm">
         <q-tooltip>创建</q-tooltip>
       </q-btn>
       <q-btn round dense flat color="grey-8" icon="apps" v-if="$q.screen.gt.sm">
@@ -45,13 +45,13 @@
       </q-btn>
       <q-btn round dense flat color="grey-8" icon="message" v-if="$q.screen.gt.sm">
         <q-tooltip>消息</q-tooltip>
-      </q-btn>
-      <q-btn round dense flat color="grey-8" icon="notifications">
+      </q-btn> -->
+      <!-- <q-btn round dense flat color="grey-8" icon="notifications">
         <q-badge color="red" text-color="white" floating>
           2
         </q-badge>
         <q-tooltip>通知</q-tooltip>
-      </q-btn>
+      </q-btn> -->
 
       <!-- 头像 -->
       <q-btn round flat>

@@ -25,7 +25,7 @@
               <div style="margin-top:30px;margin-left: 20px;margin-right: 20px; ">
                 <div style="font-size: x-large;margin-bottom: 30px">
                   IOT perception platform<br/>
-                  物 联 感 知 平 台
+                  物 联 设 备 网 格 引 擎
                 </div>
                 <!-- 用户名 -->
                 <q-input class="logon-input"

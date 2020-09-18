@@ -71,13 +71,13 @@ export default {
         }
       ],
       buttonList: [
-        { text: '关于我们' },
-        { text: 'Press' },
-        { text: 'Copyright' },
-        { text: '联系我们' },
-        { text: 'Creators' },
-        { text: '广告' },
-        { text: '开发者' }
+        // { text: '关于我们' },
+        // { text: 'Press' },
+        // { text: 'Copyright' },
+        // { text: '联系我们' },
+        // { text: 'Creators' },
+        // { text: '广告' },
+        // { text: '开发者' }
       ],
       menu_test: [
         {

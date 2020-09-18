@@ -4,7 +4,6 @@
       <template v-slot:before>
         <div class="q-pa-md">
           <div class="row" style="margin:10px">
-            <!-- 搜索 -->
             <q-input
               label="网格节点搜索"
               style="width: 265px;margin-left: 0px"
@@ -30,14 +29,8 @@
           />
         </div>
       </template>
-
       <template v-slot:after>
-        <q-table
-          :data="data"
-          :columns="columns"
-          row-key="name"
-          card-style="margin:15px"
-        >
+        <q-table :data="data" :columns="columns" row-key="name" card-style="margin:15px;height:87vh" :filter="filter" >
           <!-- <template v-slot:top-right>
         <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
         <q-btn class="q-ml-sm" color="teal-7" :disable="loading" label="删除" @click="removeRow" />
@@ -54,29 +47,40 @@
               <q-td key="iron" :props="props">{{ props.row.iron }}</q-td>
               <q-td key="cz" :props="props">
                 <!-- <span><q-btn dense color="red" label="删除"  icon="highlight_off" size="8px" @click="delRecord(props.row)"/></span> -->
-                <q-btn color="teal-2" label="修改网格"  />
+                <q-btn color="green-3" label="修改网格" />
               </q-td>
             </q-tr>
           </template>
           <template v-slot:top-left>
-            <q-input
-              label="网格节点搜索"
-              style="width: 265px;margin-left: 0px"
-              dense
-              standout="bg-blue-6 text-white"
-              v-model="search"
-              input-class="text-right"
-              class="q-ml-md"
-              label-color="primary"
-            >
-              <template v-slot:append>
-                <q-icon v-if="search === ''" name="search" />
-                <q-icon v-else name="clear" class="cursor-pointer" @click="search = ''" />
-              </template>
-            </q-input>
-      </template>
-          <template v-slot:top-right>
-            <q-btn flat round dense icon="group_add" @click="add_model = true" />
+            <div class="q-gutter-md row items-start">
+              <q-input
+                label="网格名称"
+                style="width: 265px;margin-left: 10px"
+                dense
+                standout="green-2 text-white"
+                v-model="gridName"
+                input-class="text-left"
+                class="q-ml-md"
+                label-color="primary"/>
+
+              <q-select
+                style="width: 265px;margin-left: 10px"
+                standout="bg-blue-6 text-white"
+                label="启用类型"
+                v-model="enableType"
+                :options="choose"
+                :dense="dense"
+                :options-dense="denseOpts"
+              >
+                <template v-slot:prepend>
+                  <q-icon name="event" />
+                </template>
+              </q-select>
+              <q-btn color="green-3" label="查询" icon="search" />
+              <q-btn color="green-3" label="重置" icon="navigation" @click="reset"/>
+              <q-btn color="green-3" label="删除"  icon="delete" />
+              <q-btn color="green-3" label="添加网格"  icon="add" />
+            </div>
           </template>
         </q-table>
       </template>
@@ -89,7 +93,12 @@ export default {
     return {
       splitterModel: 20,
       selected: 'Food',
-      search: '',
+      filter: '',
+      gridName: '',
+      enableType: null,
+      choose: ['是', '否'],
+      dense: true,
+      denseOpts: true,
       simple: [
         {
           label: '网格节点',
@@ -185,7 +194,13 @@ export default {
       ]
     }
   },
-  methods: {},
+  methods: {
+    options () {},
+    reset () {
+      this.gridName = ''
+      this.enableType = ''
+    }
+  },
   watch: {
     // 监听事件
     selected: function (newQuestion, oldQuestion) {
@@ -204,3 +219,5 @@ export default {
   }
 }
 </script>
+<style>
+</style>
