@@ -1,25 +1,21 @@
 <template>
-  <div class="q-pa-md" >
+  <div class="q-pa-md " >
     <q-table
-      title="Treats"
       :data="data"
       :columns="columns"
-      style="height: 650px"
       row-key="id"
       :filter="filter"
-      no-data-label="暂无数据"
-      :rows-per-page-options="[5,10,15,20]"
+      :rows-per-page-options="[10,15,20]"
       table-header-class="bg-blue-8 text-white"
       rows-per-page-label="每页显示条数"
     >
-
      <template v-slot:top>
           <strong style="float:left;margin-left:10px;margin-right:10px;">设备名称</strong>
           <q-input
           outlined
           v-model="deviceName"
           dense
-          style="width:200px;height:23px;float:left;" />
+          style="width:200px;float:left;" />
 
           <strong style="float:left;margin-left:10px;margin-right:10px;">在线状态</strong>
           <q-select
@@ -27,7 +23,7 @@
           v-model="status"
           :options="options"
           dense
-          style="width:200px;height:23px;float:left;margin-right:10px;" />
+          style="width:200px;float:left;margin-right:10px;" />
 
           <q-btn
           color="primary"
@@ -52,62 +48,72 @@
           icon="add"
           style="float:left;height:37px;width:180px"/>
      </template>
-
-     <template v-slot:header-cell-select="props">
-        <q-th :props="props" >
-          <input type="checkbox" @click="selectAll" :checked ="checked" style="zoom: 160%;"/>
+     <template v-slot:header-cell-select="props" >
+        <q-th :props="props"  >
+          <input type="checkbox" @click="selectAll"  :checked ="checked" style="zoom: 160%;"/>
         </q-th>
       </template>
 
     <template v-slot:body="props">
-        <q-tr  :props="props">
-          <q-td align="center" >
-            <input type="checkbox" style="zoom: 160%;" v-model="selected" :value="props.row.name" dense  size="45px"/>
+        <q-tr  :props="props" :class="{ 'selected': changeColor }" >
+          <q-td align="center" @dblclick="modify(props.row)">
+            <input type="checkbox" style="zoom: 160%;" @click="change()" v-model="selected" :value="props.row.name" dense  size="45px"/>
           </q-td>
 
-          <q-td key="noteName" :props="props" @click="modify(props.row)">
+          <q-td key="noteName" :props="props" @dblclick="modify(props.row)">
             {{ props.row.name }}
           </q-td>
 
-          <q-td key="products" :props="props" @click="modify(props.row)">
+          <q-td key="products" :props="props" @dblclick="modify(props.row)">
             {{ props.row.products }}
           </q-td>
 
-          <q-td key="onlineStatus" :props="props" @click="modify(props.row)">
+          <q-td key="onlineStatus" :props="props" @dblclick="modify(props.row)">
             {{ props.row.onlineStatus }}
           </q-td>
-
+    </q-tr>
       <!--弹框-->
-      <q-dialog v-model="prompt" persistent :props="props">
-      <q-card style="min-width: 50%;height:45%;">
-        <q-card-section class="text-h6 text-white bg-blue-8" style="width:100%;height:60px;">
-          <div>设备信息</div>
+      <q-dialog v-model="prompt" seamless >
+      <q-card style="min-width: 47%;height:45%;box-shadow:0px 0px 3px #aaa;">
+        <q-card-section class="text-h6 text-white bg-blue-8 " style="width:100%;height:60px;">
+          <div>设备信息<q-icon name="close" style="float:right" v-close-popup/></div>
         </q-card-section>
         <!--弹框滚动条-->
         <div>
-          <q-scroll-area style="width:100% ; height:170px; border:1px solid #CCCCCC; margin-top:0px" >
-            <q-card-section style="width:900px;height:40px;">
-              <div class="text-body1" style="width:150px;height:40px;float:left;text-align:left;line-height:40px;">
-                甜品名称(100g)：
+          <q-scroll-area style="width:100% ; height:200px; margin-top:0px" >
+            <q-card-section style="width:100% ;height:40px;">
+              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex">
+              <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
+                设备名称：
               </div>
-                <q-input outlined class="bg-grey-2" v-model="noteName" :dense="true" style="height:40px;float:left"/>
-            </q-card-section>
-            <q-card-section style="width:900px;margin-top:15px">
-              <div class="text-body1" style="width:150px;height:40px;float:left;text-align:left;line-height:40px;">
-                卡路里：
+              <q-input outlined class="bg-grey-2" v-model="noteName" :dense="true" style="height:40px;float:left;margin-right:10px" disable />
+              <div class="text-body1" style="width:100px;height:40px;float:left;text-align:left;line-height:40px;">
+                设备ID：
               </div>
-              <q-input outlined  type="number" class="bg-grey-2" v-model="onlineStatus" :dense="true" style="height:40px;float:left"/>
+              <q-input outlined  disable class="bg-grey-2" v-model="id" :dense="true" style="height:40px;float:left"/>
+              </div>
+              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex;margin-top:15px">
+              <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
+                所选产品：
+              </div>
+              <q-input outlined  disable class="bg-grey-2" v-model="products" :dense="true" style="height:40px;float:left;margin-right:10px"/>
+              <div class="text-body1" style="width:100px;height:40px;float:left;text-align:left;line-height:40px;">
+                在线状态：
+              </div>
+              <q-input outlined  disable class="bg-grey-2" v-model="onlineStatus" :dense="true" style="height:40px;float:left"/>
+              </div>
              </q-card-section>
           </q-scroll-area>
+          <q-separator inset size="1.5px" />
         </div>
-        <!--弹框操作-->
-        <q-card-actions align="center" class="text-blue-8" style="width:100%;height:55px;">
-          <q-btn class="text-body2 bg-white" style="margin-right:100px" label="取消" @click="prompt = false" />
-          <q-btn class="text-body2 bg-white" label="确定修改" v-close-popup />
-        </q-card-actions>
         </q-card>
       </q-dialog>
-    </q-tr>
+      </template>
+      <template v-slot:bottom-row>
+        <q-tr>
+          <q-td colspan="100%">
+          </q-td>
+        </q-tr>
       </template>
     </q-table>
     </div>
@@ -125,14 +131,23 @@ export default {
   },
   methods: {
     // emulate fetching data from server
+    // 改变颜色
+    change () {
+      if (event.currentTarget.checked) {
+        this.changeColor = true
+      } else {
+        this.changeColor = false
+      }
+    },
     // 全选
     selectAll (event) {
       if (!event.currentTarget.checked) {
         this.selected = []
+        this.changeColor = false
       } else { // 实现全选
-        this.selected = []
         this.data.forEach((item, i) => {
           this.selected.push(this.data[i].name)
+          this.changeColor = true
         })
       }
     },
@@ -143,15 +158,19 @@ export default {
     },
     modify (s) {
       this.prompt = true
+      this.id = s.id
       this.noteName = s.name
       this.onlineStatus = s.onlineStatus
-      this.carbs = s.carbs
-      this.protein = s.protein
-      this.sodium = s.sodium
+      this.products = s.products
     }
   },
   data () {
     return {
+      changeColor: false,
+      id: '',
+      noteName: '',
+      products: '',
+      onlineStatus: '',
       status: '',
       checked: false,
       selected: [],
@@ -172,66 +191,76 @@ export default {
       data: [
         {
           id: 1,
-          name: 'Frozen Yogurt',
+          name: '设备1',
           products: 159,
-          onlineStatus: 6.0
+          onlineStatus: '在线'
         },
         {
           id: 2,
-          name: 'Ice cream sandwich',
+          name: '设备2',
           products: 237,
-          onlineStatus: 9.0
+          onlineStatus: '在线'
         },
         {
           id: 3,
-          name: 'Eclair',
+          name: '设备3',
           products: 262,
-          onlineStatus: 16.0
+          onlineStatus: '在线'
         },
         {
           id: 4,
-          name: 'Cupcake',
+          name: '设备4',
           products: 305,
-          onlineStatus: 3.7
+          onlineStatus: '在线'
         },
         {
           id: 5,
-          name: 'Gingerbread',
+          name: '设备5',
           products: 356,
-          onlineStatus: 16.0
+          onlineStatus: '在线'
         },
         {
           id: 6,
-          name: 'Jelly bean',
+          name: '设备6',
           products: 375,
-          onlineStatus: 0.0
+          onlineStatus: '在线'
         },
         {
           id: 7,
-          name: 'Lollipop',
+          name: '设备7',
           products: 392,
-          onlineStatus: 0.2
+          onlineStatus: '在线'
         },
         {
           id: 8,
-          name: 'Honeycomb',
+          name: '设备8',
           products: 408,
-          onlineStatus: 3.2
+          onlineStatus: '离线'
         },
         {
           id: 9,
-          name: 'Donut',
+          name: '设备9',
           products: 452,
-          onlineStatus: 25.0
+          onlineStatus: '离线'
         },
         {
           id: 10,
-          name: 'KitKat',
+          name: '设备10',
           products: 518,
-          onlineStatus: 26.0
+          onlineStatus: '离线'
         }
       ]
     }
   }
 }
 </script>
+<style lang="scss" scoped>
+/*设置奇数行颜色*/
+table tr:nth-child(odd)
+{
+    background: #F8F8FF;
+}
+.selected{
+      color: red;
+}
+</style>
