@@ -325,6 +325,19 @@ export default {
           const len = res.data.data.data.length
           for (let i = 0; i < len; i++) {
             this.treeNode.label = resData[i].grid_name
+            this.treeNode.children = [{
+              label: 'Food',
+              icon: 'restaurant_menu'
+            },
+            {
+              label: 'Room service',
+              icon: 'room_service'
+            },
+            {
+              label: 'Room view',
+              icon: 'photo'
+            }]
+            // this.treeNode.icon = 'add'
             this.treeNode.grid_bm = resData[i].grid_bm
             this.simple.push(this.treeNode)
             this.treeNode = []
