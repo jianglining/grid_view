@@ -58,16 +58,16 @@
                   </span>
                 </template>
               </q-input>
-                <q-select
-              style="width: 400px"
-              standout="bg-blue-6 text-white"
-              label="父节点"
-              v-model="gridForm.parentNode"
-              :options="choose"
-              :dense="dense"
-              :options-dense="denseOpts"
-            >
-              <template v-slot:before>
+              <q-select
+                style="width: 400px"
+                standout="bg-blue-6 text-white"
+                label="父节点"
+                v-model="gridForm.parentNode"
+                :options="choose"
+                :dense="dense"
+                :options-dense="denseOpts"
+              >
+                <template v-slot:before>
                   <span
                     class="input-label text-right text-grey-10"
                     style="font-size:18px;width:110px"
@@ -76,7 +76,7 @@
                     <span class="text-red text-weight-bolder">*</span>：
                   </span>
                 </template>
-            </q-select>
+              </q-select>
               <q-input
                 filled
                 type="text"
@@ -100,28 +100,28 @@
                   </span>
                 </template>
               </q-input>
-            <q-select
-              style="width: 400px"
-              standout="bg-blue-6 text-white"
-              label="是否启用"
-              v-model="addIsEnable"
-              :options="choose"
-              :dense="dense"
-              :options-dense="denseOpts"
-            >
-              <template v-slot:before>
+              <q-select
+                style="width: 400px"
+                standout="bg-blue-6 text-white"
+                label="是否启用"
+                v-model="addIsEnable"
+                :options="choose"
+                :dense="dense"
+                :options-dense="denseOpts"
+              >
+                <template v-slot:before>
                   <span
                     class="input-label text-right text-grey-10"
                     style="font-size:18px;width:110px"
                   >
-                   是否启用
+                    是否启用
                     <span class="text-red text-weight-bolder">*</span>：
                   </span>
                 </template>
-            </q-select>
+              </q-select>
               <div>
                 <q-btn label="添加" type="submit" color="primary" />
-                <q-btn label="重置" type="reset" color="primary" flat class="q-ml-sm" />
+                <q-btn label="重置" type="reset" color="red" class="q-ml-sm" />
               </div>
             </q-form>
           </q-card-section>
@@ -149,7 +149,7 @@
         </div>
         <q-tree
           :nodes="simple"
-          node-key="label"
+          node-key="grid_bm"
           selected-color="primary"
           :selected.sync="selected"
           default-expand-all
@@ -160,7 +160,7 @@
       <q-table
         :data="data"
         :columns="columns"
-        row-key="name"
+        row-key="grid_name"
         card-style="margin:15px;height:85vh"
         :filter="filter"
       >
@@ -170,17 +170,12 @@
         </template>-->
         <template v-slot:body="props">
           <q-tr :props="props">
-            <q-td key="name" :props="props">{{ props.row.name }}</q-td>
-            <q-td key="calories" :props="props">{{ props.row.calories }}</q-td>
-            <q-td key="fat" :props="props">{{ props.row.fat }}</q-td>
-            <q-td key="carbs" :props="props">{{ props.row.carbs }}</q-td>
-            <q-td key="protein" :props="props">{{ props.row.protein }}</q-td>
-            <q-td key="sodium" :props="props">{{ props.row.sodium }}</q-td>
-            <q-td key="calcium" :props="props">{{ props.row.calcium }}</q-td>
-            <q-td key="iron" :props="props">{{ props.row.iron }}</q-td>
+            <q-td key="grid_name" :props="props">{{ props.row.grid_name }}</q-td>
+            <q-td key="location" :props="props">{{ props.row.location }}</q-td>
+            <q-td key="start_type" :props="props">{{ props.row.start_type }}</q-td>
             <q-td key="cz" :props="props">
               <!-- <span><q-btn dense color="red" label="删除"  icon="highlight_off" size="8px" @click="delRecord(props.row)"/></span> -->
-              <q-btn color="green-3" label="修改网格" />
+              <q-btn color="primary" label="修改网格" />
             </q-td>
           </q-tr>
         </template>
@@ -210,10 +205,10 @@
                 <q-icon name="event" />
               </template>
             </q-select>
-            <q-btn color="green-3" label="查询" icon="search" />
-            <q-btn color="green-3" label="重置" icon="navigation" @click="reset" />
-            <q-btn color="green-3" label="删除" icon="delete" />
-            <q-btn color="green-3" label="添加网格" icon="add" @click="addDialog = !addDialog" />
+            <q-btn color="primary" label="查询" icon="search" />
+            <q-btn color="primary" label="重置" icon="navigation" @click="reset" />
+            <q-btn color="primary" label="删除" icon="delete" />
+            <q-btn color="primary" label="添加网格" icon="add" @click="addDialog = !addDialog" />
           </div>
         </template>
       </q-table>
@@ -222,6 +217,7 @@
 </template>
 <script>
 // import {fetchData}
+import { fetchData } from '../../api/index'
 export default {
   data () {
     return {
@@ -244,40 +240,22 @@ export default {
         location: '',
         isEnable: ''
       },
-      simple: [
-        {
-          label: '网格节点',
-          children: [
-            {
-              label: '网格节点一',
-              icon: 'restaurant_menu'
-            },
-            {
-              label: '网格节点二',
-              icon: 'room_service'
-            },
-            {
-              label: '网格节点三',
-              icon: 'photo'
-            }
-          ]
-        }
-      ],
-      items: [{ message: 'Foo' }, { message: 'Bar' }],
+      treeNode: [],
+      simple: [],
       columns: [
         {
-          name: 'name',
+          name: 'grid_name',
           required: true,
           label: '网格名称',
-          align: 'left'
+          align: 'center'
         },
         {
-          name: 'calories',
+          name: 'location',
           align: 'center',
           label: '网格位置',
-          field: 'calories'
+          field: 'location'
         },
-        { name: 'fat', label: '是否启用', field: 'fat' },
+        { name: 'start_type', label: '是否启用', field: 'start_type' },
         {
           name: 'cz',
           align: 'center',
@@ -285,93 +263,59 @@ export default {
           field: 'id'
         }
       ],
-      data: [],
-      data0: [
-        {
-          name: '网格名称一',
-          calories: '网格位置一',
-          fat: '是'
-        },
-        {
-          name: '网格名称二',
-          calories: '网格位置二',
-          fat: '是'
-        },
-        {
-          name: '网格名称三',
-          calories: '网格位置三',
-          fat: '否'
-        }
-      ],
-      data1: [
-        {
-          name: '网格名称四',
-          calories: '网格位置四',
-          fat: '是'
-        },
-        {
-          name: '网格名称五',
-          calories: '网格位置五',
-          fat: '是'
-        },
-        {
-          name: '网格名称六',
-          calories: '网格位置六',
-          fat: '否'
-        }
-      ],
-      data2: [
-        {
-          name: '网格名称七',
-          calories: '网格位置七',
-          fat: '是'
-        },
-        {
-          name: '网格名称八',
-          calories: '网格位置八',
-          fat: '是'
-        },
-        {
-          name: '网格名称久',
-          calories: '网格位置九',
-          fat: '否'
-        }
-      ]
+      data: []
     }
   },
   mounted () {
     this.getList()
   },
   methods: {
+    // 'Content-Type': 'application/json'
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
       this.$axios({
         method: 'post',
         url: accessUrl,
         data: pdata,
         type: 'json'
-      }).then(successCallback).catch(errorCallback)
+      })
+        .then(successCallback)
+        .catch(errorCallback)
     },
     getList () {
-      var data01 = { args: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 } }
-      this.dataAccess('/api/dbsource/queryByParamKey', data01, function (res) {
-        console.log(res)
-      }, function (err) {
-        console.log(err)
-      })
-      // const query = {
-      //   // url: 'http://10.168.2.206:8080/api-b/menus/me/giveanalarm-center',
-      //   // url: 'http://10.168.2.206:8080/api-grid/dbsource/queryByParamKey',
-      //   url: 'http://10.168.2.21:8090/dbsource/queryByParamKey',
-      //   data: { args: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 } },
-      //   // url: 'http://10.168.2.206:8080/sys/login/admin/admin',
-      //   method: 'post',
-      //   type: 'db_search'
-      // }
-      // fetchData(query).then(res => {
+      // var data01 = { args: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 } }
+      // this.dataAccess('/api/dbsource/queryByParamKey', data01, function (res) {
       //   console.log(res)
-      // }).catch(error => {
-      //   console.log(error)
+      // }, function (err) {
+      //   console.log(err)
       // })
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info',
+          whereId: '2',
+          orderId: '0',
+          params: { parent_bm: '-1' },
+          minRow: 0,
+          maxRow: 19
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data.data
+          const len = res.data.data.data.length
+          for (let i = 0; i < len; i++) {
+            this.treeNode.label = resData[i].grid_name
+            this.treeNode.grid_bm = resData[i].grid_bm
+            this.simple.push(this.treeNode)
+            this.treeNode = []
+          }
+          this.data = resData
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     },
     options () {},
     reset () {
@@ -385,16 +329,27 @@ export default {
     // 监听事件
     selected: function (newQuestion, oldQuestion) {
       // this.$router.push({ path: '/about' })
-      console.log(this.selected)
-      if (this.selected === '网格节点一') {
-        this.data = this.data0
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info',
+          whereId: '2',
+          orderId: '0',
+          params: { parent_bm: this.selected },
+          minRow: 0,
+          maxRow: 19
+        },
+        method: 'post',
+        type: 'db_search'
       }
-      if (this.selected === '网格节点二') {
-        this.data = this.data1
-      }
-      if (this.selected === '网格节点三') {
-        this.data = this.data2
-      }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data.data
+          this.data = resData
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     }
   }
 }
