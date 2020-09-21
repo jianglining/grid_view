@@ -99,6 +99,17 @@ const routes = [
         component: () => import('../views/openService.vue')
       },
       {
+        path: '/sceneConfig',
+        name: 'sceneConfig',
+        hidden: false,
+        meta: {
+          title: '场景配置',
+          icon: 'inbox',
+          noCache: true
+        },
+        component: () => import('../views/scene/SceneConfig.vue')
+      },
+      {
         path: '/test',
         name: 'test',
         hidden: false,
