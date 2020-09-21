@@ -26,24 +26,24 @@
               :selected.sync="selected"
               default-expand-all
            />
-           <!-- 按钮 -->
-            <div class="q-mb-lg q-gutter-xs" style="padding-top: 130%;">
+            <!-- 按钮 -->
+            <div class="q-gutter-xs absolute-bottom">
               <q-btn size="12px" color="primary" icon="add" label="添加" @click="increase = true"/>
               <q-btn size="12px" color="primary" icon="colorize" label="编辑" @click="edited = true"/>
               <q-btn size="12px" color="primary" icon="delete" label="删除" @click="deleted = true"/>
               <!-- 弹出框 -->
               <!-- 增加 -->
               <q-dialog v-model="increase" persistent>
-                <q-card style="min-width: 350px">
-                <q-card-section>
+                <q-card  style="width: 65%;height: 45%">
+                <q-card-section class="bg-light-blue-6">
                   <div class="text-h6">新增API说明
-                    <q-btn style="margin-left:150px;" flat icon="minimize" auto-close size="12px"/>
-                    <q-btn style="" flat icon="crop_square" size="12px"/>
-                    <q-btn style="" flat icon="close" v-close-popup size="12px"/>
+                    <q-btn class="float-right" flat icon="close" v-close-popup size="12px"/>
+                    <q-btn class="float-right" flat icon="crop_square" size="12px"/>
+                    <q-btn class="float-right" flat icon="minimize" auto-close size="12px"/>
                   </div>
                 </q-card-section>
-
-                <q-card-section class="q-pt-none">
+                <form>
+                <q-card-section class="q-pt-none q-mt-md">
                   <div class="text-h6">
                     <q-input
                       filled
@@ -57,23 +57,21 @@
                     >
                     <template v-slot:before>
                       <span class="input-label text-right " style="font-size:18px">
-                        API名称
+                        API名称:
                       </span>
                     </template>
                     </q-input>
                     <q-input
                       filled
-                      v-model="name"
+                      v-model="text"
+                      type="textarea"
                       label="API说明"
                       outlined
-                      autogrow
                       dense
-                      lazy-rules
-                      :rules="[ val => val && val.length > 0 || 'Please type something']"
                     >
                     <template v-slot:before>
                       <span class="input-label text-right " style="font-size:18px">
-                        API说明
+                        API说明:
                       </span>
                     </template>
                     </q-input>
@@ -81,23 +79,25 @@
                 </q-card-section>
 
                 <q-card-actions align="right" class="text-primary">
-                  <q-btn flat label="确定" v-close-popup />
+                  <q-btn flat label="确定" @click="onsubmit"  />
                   <q-btn flat label="取消" v-close-popup />
                 </q-card-actions>
+                </form>
                 </q-card>
               </q-dialog>
               <!-- 编辑 -->
+              <!-- fit row wrap justify-end items-start content-start -->
               <q-dialog v-model="edited" persistent>
-                <q-card style="min-width: 350px">
-                <q-card-section>
+                <q-card style="width: 65%;height: 45%">
+                <q-card-section class="bg-light-blue-6">
                   <div class="text-h6">编辑
-                    <q-btn style="margin-left:150px;" flat icon="minimize" auto-close size="12px"/>
-                    <q-btn style="" flat icon="crop_square" size="12px"/>
-                    <q-btn style="" flat icon="close" v-close-popup size="12px"/>
+                    <q-btn class="float-right" flat icon="close" v-close-popup size="12px"/>
+                    <q-btn class="float-right" flat icon="crop_square" size="12px"/>
+                    <q-btn class="float-right" flat icon="minimize" auto-close size="12px"/>
                   </div>
                 </q-card-section>
-
-                <q-card-section class="q-pt-none">
+                <form>
+                <q-card-section class="q-pt-none q-mt-md">
                   <div class="text-h6">
                     <q-input
                       filled
@@ -111,23 +111,21 @@
                     >
                     <template v-slot:before>
                       <span class="input-label text-right " style="font-size:18px">
-                        API名称
+                        API名称:
                       </span>
                     </template>
                     </q-input>
                     <q-input
                       filled
-                      v-model="name"
+                      v-model="text"
+                      type="textarea"
                       label="API说明"
                       outlined
-                      autogrow
                       dense
-                      lazy-rules
-                      :rules="[ val => val && val.length > 0 || 'Please type something']"
                     >
                     <template v-slot:before>
                       <span class="input-label text-right " style="font-size:18px">
-                        API说明
+                        API说明:
                       </span>
                     </template>
                     </q-input>
@@ -135,23 +133,24 @@
                 </q-card-section>
 
                 <q-card-actions align="right" class="text-primary">
-                  <q-btn flat label="确定" v-close-popup />
+                  <q-btn flat label="确定"  @click="submitEdit" />
                   <q-btn flat label="取消" v-close-popup />
                 </q-card-actions>
+                </form>
                 </q-card>
               </q-dialog>
               <!-- 删除 -->
               <q-dialog v-model="deleted" persistent>
-                <q-card style="min-width: 350px">
-                <q-card-section>
+                <q-card style="width: 25%;">
+                <q-card-section class="bg-light-blue-6">
                   <div class="text-h6">删除
                     <!-- <div style="margin-left:200px;margin-bottom: 30px;border-style:solid;border-width:0.5px;"> -->
-                      <q-btn style="margin-left:220px;" flat icon="close" v-close-popup />
+                      <q-btn class="float-right" flat icon="close" v-close-popup />
                     </div>
                   <!-- </div> -->
                 </q-card-section>
 
-                <q-card-section class="q-pt-none">
+                <q-card-section class="q-pt-none q-mt-md">
                   <div class="text-h6">是否删除已勾选的1个API说明？</div>
                 </q-card-section>
 
@@ -231,6 +230,8 @@ export default {
       increase: false,
       edited: false,
       address: '',
+      name: '',
+      text: '',
       selected: '获取网格设备列表信息',
       simple: [
         {
@@ -278,6 +279,22 @@ export default {
           ]
         }
       ]
+    }
+  },
+  methods: {
+    onsubmit () {
+      if (this.text === '') {
+        alert('请输入事件行为识别')
+      } else {
+        this.increase = false
+      }
+    },
+    submitEdit () {
+      if (this.text === '') {
+        alert('请输入事件行为识别')
+      } else {
+        this.edited = false
+      }
     }
   }
 }
