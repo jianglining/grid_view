@@ -286,6 +286,7 @@ export default {
       var data01 = { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 }
       data01 = 'args=' + JSON.stringify(data01)
       console.log('访问参数：', data01)
+      // 后台数据访问
       this.dataAccess(url, data01, function (res) {
         console.log('后端返回数据结果json：', res.data)
         // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
