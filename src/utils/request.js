@@ -8,7 +8,7 @@ import Axios from 'axios'
  */
 
 const service = Axios.create({
-  baseURL: 'http://10.168.2.206:8080', // 请求基地址
+  baseURL: '', // 请求基地址
   timeout: 13000 // 超时时间
 })
 

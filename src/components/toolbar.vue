@@ -52,7 +52,7 @@
         </q-badge>
         <q-tooltip>通知</q-tooltip>
       </q-btn> -->
-       <q-btn color="green-3" label="退出登录"  />
+       <q-btn color="primary" label="退出登录"  />
 
       <!-- 头像 -->
       <!-- <q-btn round flat>
