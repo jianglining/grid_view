@@ -11,103 +11,117 @@
 
           <q-card-section>
             <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-md">
-                <q-input
-                  filled
-                  label="Your name *"
-                  hint="Name and surname"
-                  outlined
-                  autogrow
-                  dense
-                  lazy-rules
-                   style="width:400px"
-                  :rules="[ val => val && val.length > 0 || 'Please type something']"
-                >
-                  <template v-slot:before>
-                    <span class="input-label text-right text-light-blue-2" style="font-size:18px;width:110px">
-                      网格名称
-                      <span class="text-red text-weight-bolder">*</span>：
-                    </span>
-                  </template>
-                </q-input>
+              <q-input
+                filled
+                label="网格名称"
+                v-model="gridForm.name"
+                outlined
+                autogrow
+                dense
+                lazy-rules
+                style="width:400px"
+                :rules="[ val => val && val.length > 0 || '请输入正确的网格名称']"
+              >
+                <template v-slot:before>
+                  <span
+                    class="input-label text-right text-grey-10"
+                    style="font-size:18px;width:110px"
+                  >
+                    网格名称
+                    <span class="text-red text-weight-bolder">*</span>：
+                  </span>
+                </template>
+              </q-input>
 
-                <q-input
-                  filled
-                  type="number"
-                                    outlined
-                  autogrow
-                  dense
-                   style="width:400px"
-                  label="Your age *"
-                  lazy-rules
-                  :rules="[
-          val => val !== null && val !== '' || 'Please type your age',
-          val => val > 0 && val < 100 || 'Please type a real age'
-        ]">
-        <template v-slot:before>
-                    <span class="input-label text-right text-light-blue-2" style="font-size:18px;width:110px">
+              <q-input
+                filled
+                type="text"
+                v-model="gridForm.code"
+                outlined
+                autogrow
+                dense
+                style="width:400px"
+                label="网格编码"
+                lazy-rules
+                :rules="[
+          val => val !== null && val !== '' || '请输入正确的网格编码',
+          val => val > 0 && val < 100 || '请输入正确的网格编码'
+        ]"
+              >
+                <template v-slot:before>
+                  <span
+                    class="input-label text-right text-grey-10"
+                    style="font-size:18px;width:110px"
+                  >
                     网格编码
-                      <span class="text-red text-weight-bolder">*</span>：
-                    </span>
-                  </template>
-        </q-input>
-                <q-input
-                  filled
-                  label="Your name *"
-                  hint="Name and surname"
-                  outlined
-                  autogrow
-                   style="width:400px"
-                  dense
-                  lazy-rules
-                  :rules="[ val => val && val.length > 0 || 'Please type something']"
-                >
-                  <template v-slot:before>
-                    <span class="input-label text-right text-light-blue-2" style="font-size:18px;width:110px">
-                      父 节 点
-                      <span class="text-red text-weight-bolder">*</span>：
-                    </span>
-                  </template>
-                </q-input>
-
-                <q-input
-                  filled
-                  type="number"
-                  dense
-                  label="Your age *"
-                  lazy-rules
-                   style="width:400px"
-                  :rules="[
-          val => val !== null && val !== '' || 'Please type your age',
-          val => val > 0 && val < 100 || 'Please type a real age'
-        ]">
-        <template v-slot:before>
-                    <span class="input-label text-right text-light-blue-2" style="font-size:18px;width:110px">
-                      网格位置
-                      <span class="text-red text-weight-bolder">*</span>：
-                    </span>
-                  </template>
-        </q-input>
-         <q-input
-                  filled
-                  type="number"
-                  dense
-                  label="Your age *"
-                  lazy-rules
-                   style="width:400px"
-                  :rules="[
-          val => val !== null && val !== '' || 'Please type your age',
-          val => val > 0 && val < 100 || 'Please type a real age'
-        ]">
-        <template v-slot:before>
-                    <span class="input-label text-right text-light-blue-2" style="font-size:18px;width:110px">
-                      是否启用
-                      <span class="text-red text-weight-bolder">*</span>：
-                    </span>
-                  </template>
-        </q-input>
+                    <span class="text-red text-weight-bolder">*</span>：
+                  </span>
+                </template>
+              </q-input>
+                <q-select
+              style="width: 400px"
+              standout="bg-blue-6 text-white"
+              label="父节点"
+              v-model="gridForm.parentNode"
+              :options="choose"
+              :dense="dense"
+              :options-dense="denseOpts"
+            >
+              <template v-slot:before>
+                  <span
+                    class="input-label text-right text-grey-10"
+                    style="font-size:18px;width:110px"
+                  >
+                    父 节 点
+                    <span class="text-red text-weight-bolder">*</span>：
+                  </span>
+                </template>
+            </q-select>
+              <q-input
+                filled
+                type="text"
+                dense
+                v-model="gridForm.location"
+                label="网格位置"
+                lazy-rules
+                style="width:400px"
+                :rules="[
+          val => val !== null && val !== '' || '请输入正确的网格位置',
+          val => val > 0 && val < 100 || '请输入正确的网格位置'
+        ]"
+              >
+                <template v-slot:before>
+                  <span
+                    class="input-label text-right text-grey-10"
+                    style="font-size:18px;width:110px"
+                  >
+                    网格位置
+                    <span class="text-red text-weight-bolder">*</span>：
+                  </span>
+                </template>
+              </q-input>
+            <q-select
+              style="width: 400px"
+              standout="bg-blue-6 text-white"
+              label="是否启用"
+              v-model="addIsEnable"
+              :options="choose"
+              :dense="dense"
+              :options-dense="denseOpts"
+            >
+              <template v-slot:before>
+                  <span
+                    class="input-label text-right text-grey-10"
+                    style="font-size:18px;width:110px"
+                  >
+                   是否启用
+                    <span class="text-red text-weight-bolder">*</span>：
+                  </span>
+                </template>
+            </q-select>
               <div>
-                <q-btn label="Submit" type="submit" color="primary" />
-                <q-btn label="Reset" type="reset" color="primary" flat class="q-ml-sm" />
+                <q-btn label="添加" type="submit" color="primary" />
+                <q-btn label="重置" type="reset" color="primary" flat class="q-ml-sm" />
               </div>
             </q-form>
           </q-card-section>
@@ -122,14 +136,14 @@
             style="width: 265px;margin-left: 0px"
             dense
             standout="bg-blue-6 text-white"
-            v-model="search"
+            v-model="gridNodeSearch"
             input-class="text-right"
             class="q-ml-md"
             label-color="primary"
           >
             <template v-slot:append>
-              <q-icon v-if="search === ''" name="search" />
-              <q-icon v-else name="clear" class="cursor-pointer" @click="search = ''" />
+              <q-icon v-if="gridNodeSearch === ''" name="search" />
+              <q-icon v-else name="clear" class="cursor-pointer" @click="gridNodeSearch = ''" />
             </template>
           </q-input>
         </div>
@@ -207,18 +221,29 @@
   </q-splitter>
 </template>
 <script>
+// import {fetchData}
 export default {
   data () {
     return {
       splitterModel: 20,
       selected: 'Food',
+      totalNode: [],
       addDialog: false,
       filter: '',
       gridName: '',
       enableType: null,
+      addIsEnable: '',
       choose: ['是', '否'],
       dense: true,
       denseOpts: true,
+      gridNodeSearch: '',
+      gridForm: {
+        name: '',
+        code: '',
+        parentNode: '',
+        location: '',
+        isEnable: ''
+      },
       simple: [
         {
           label: '网格节点',
@@ -314,12 +339,47 @@ export default {
       ]
     }
   },
+  mounted () {
+    this.getList()
+  },
   methods: {
+    dataAccess (accessUrl, pdata, successCallback, errorCallback) {
+      this.$axios({
+        method: 'post',
+        url: accessUrl,
+        data: pdata,
+        type: 'json'
+      }).then(successCallback).catch(errorCallback)
+    },
+    getList () {
+      var data01 = { args: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 } }
+      this.dataAccess('/api/dbsource/queryByParamKey', data01, function (res) {
+        console.log(res)
+      }, function (err) {
+        console.log(err)
+      })
+      // const query = {
+      //   // url: 'http://10.168.2.206:8080/api-b/menus/me/giveanalarm-center',
+      //   // url: 'http://10.168.2.206:8080/api-grid/dbsource/queryByParamKey',
+      //   url: 'http://10.168.2.21:8090/dbsource/queryByParamKey',
+      //   data: { args: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 } },
+      //   // url: 'http://10.168.2.206:8080/sys/login/admin/admin',
+      //   method: 'post',
+      //   type: 'db_search'
+      // }
+      // fetchData(query).then(res => {
+      //   console.log(res)
+      // }).catch(error => {
+      //   console.log(error)
+      // })
+    },
     options () {},
     reset () {
       this.gridName = ''
       this.enableType = ''
-    }
+    },
+    onSubmit () {},
+    onReset () {}
   },
   watch: {
     // 监听事件

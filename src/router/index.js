@@ -67,7 +67,7 @@ const routes = [
       },
       {
         path: '/gridInfo',
-        name: 'grid_massage',
+        name: 'gridInfo',
         hidden: false,
         meta: {
           title: '主页',
