@@ -223,16 +223,19 @@ export default {
   data () {
     return {
       splitterModel: 20,
-      selected: 'Food',
+      selected: '',
       totalNode: [],
       addDialog: false,
       queryName: '',
       enableType: null,
       addIsEnable: '',
+      // 父节点数据
       choose: [],
       dense: true,
       denseOpts: true,
+      // 网格节点查询数据
       gridNodeSearch: '',
+      // 表单数据
       gridForm: {
         name: '',
         code: '',
@@ -240,7 +243,7 @@ export default {
         location: '',
         isEnable: ''
       },
-      treeNode: [],
+      // 树
       simple: [{
         label: '网格节点',
         icon: 'share',
@@ -272,10 +275,12 @@ export default {
     }
   },
   mounted () {
+    // 获取网格节点菜单
     this.getTreeNode()
     // this.getAllNode()
   },
   methods: {
+    // axios方法，获取后台数据
     // 'Content-Type': 'application/json'
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
       this.$axios({
@@ -288,7 +293,7 @@ export default {
         .catch(errorCallback)
     },
     /**
-     * 获取网格节点
+     * 获取网格节点(左菜单)
      */
     getTreeNode () {
       // var url = '/api/dbsource/queryByParamKey'
@@ -334,6 +339,11 @@ export default {
           console.log(error)
         })
     },
+    /**
+     * 添加网格前置操作
+     * 获取更新父节点列表
+     * 打开添加界面
+     */
     addGrid () {
       this.addDialog = true
       this.choose = []
@@ -364,6 +374,9 @@ export default {
       this.gridForm.location = params.location
       this.gridForm.isEnable = (params.is_enable === '0') ? '启用' : '不启用'
     },
+    /**
+     * 移除表单内容
+     */
     removeGridForm () {
       this.gridForm.name = ''
       this.gridForm.code = ''
@@ -372,7 +385,7 @@ export default {
       this.gridForm.isEnable = ''
     },
     /**
-     * 获取全部节点
+     * 获取全部网格节点
      */
     getAllNode () {
       const query = {
@@ -383,28 +396,10 @@ export default {
       }
       fetchData(query)
         .then((res) => {
-          var a = this.getTreeMenu(null, null)
-          console.log(a)
-          console.log(res)
         })
         .catch((error) => {
           console.log(error)
         })
-      // var url = '/api/dbsource/queryByParamKey'
-      // var data01 = { sqlId: 'select_grid_info_tree', whereId: '0', params: { grid_name: '' } }
-      // // {"sqlId":"select_grid_info_tree","whereId":"0","params":{"grid_name":""}}
-      // data01 = 'args=' + JSON.stringify(data01)
-      // // console.log('访问参数：', data01)
-      // // 后台数据访问
-      // this.dataAccess(url, data01, function (res) {
-      //   var queryData = res.data.data.data
-      //   var resData = res.data.data.data
-      //   this.getTreeMenu(queryData, resData)
-      //   console.log('后端返回数据结果json：', res.data)
-      //   // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
-      // }, function (err) {
-      //   console.log('后端数据访问出错!', err)
-      // })
     },
     options () {},
     reset () {
@@ -415,7 +410,7 @@ export default {
     onReset () {}
   },
   watch: {
-    // 监听事件
+    // 监听事件，左侧节点菜单点击事件
     selected: function (newQuestion, oldQuestion) {
       // this.$router.push({ path: '/about' })
       if (this.selected === null) {
@@ -444,6 +439,9 @@ export default {
           console.log(error)
         })
     },
+    /**
+     * 界面关闭移除表单内容
+     */
     addDialog: function (newQuestion, oldQuestion) {
       if (this.addDialog === false) {
         this.removeGridForm()
