@@ -104,7 +104,7 @@
                 style="width: 400px"
                 standout="bg-blue-6 text-white"
                 label="是否启用"
-                v-model="addIsEnable"
+                v-model="gridForm.isEnable"
                 :options="choose"
                 :dense="dense"
                 :options-dense="denseOpts"
@@ -160,9 +160,10 @@
       <q-table
         :data="data"
         :columns="columns"
-        row-key="grid_name"
+        row-key="id"
         card-style="margin:15px;height:85vh"
-        :filter="filter"
+        no-data-label="暂无数据"
+        :filter="queryName || enableType"
       >
         <!-- <template v-slot:top-right>
         <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
@@ -175,7 +176,7 @@
             <q-td key="start_type" :props="props">{{ props.row.start_type }}</q-td>
             <q-td key="cz" :props="props">
               <!-- <span><q-btn dense color="red" label="删除"  icon="highlight_off" size="8px" @click="delRecord(props.row)"/></span> -->
-              <q-btn color="primary" label="修改网格" />
+              <q-btn color="primary" label="修改网格" @click="update(props.row)"/>
             </q-td>
           </q-tr>
         </template>
@@ -186,7 +187,7 @@
               style="width: 265px;margin-left: 10px"
               dense
               standout="bg-blue-6 text-white"
-              v-model="gridName"
+              v-model="queryName"
               input-class="text-left"
               class="q-ml-md"
               label-color="primary"
@@ -208,7 +209,7 @@
             <q-btn color="primary" label="查询" icon="search" />
             <q-btn color="primary" label="重置" icon="navigation" @click="reset" />
             <q-btn color="primary" label="删除" icon="delete" />
-            <q-btn color="primary" label="添加网格" icon="add" @click="addDialog = !addDialog" />
+            <q-btn color="primary" label="添加网格" icon="add" @click="addGrid()" />
           </div>
         </template>
       </q-table>
@@ -225,11 +226,10 @@ export default {
       selected: 'Food',
       totalNode: [],
       addDialog: false,
-      filter: '',
-      gridName: '',
+      queryName: '',
       enableType: null,
       addIsEnable: '',
-      choose: ['是', '否'],
+      choose: [],
       dense: true,
       denseOpts: true,
       gridNodeSearch: '',
@@ -241,7 +241,12 @@ export default {
         isEnable: ''
       },
       treeNode: [],
-      simple: [],
+      simple: [{
+        label: '网格节点',
+        icon: 'share',
+        grid_bm: '-1',
+        children: []
+      }],
       columns: [
         {
           name: 'grid_name',
@@ -267,7 +272,8 @@ export default {
     }
   },
   mounted () {
-    this.getList()
+    this.getTreeNode()
+    // this.getAllNode()
   },
   methods: {
     // 'Content-Type': 'application/json'
@@ -281,31 +287,21 @@ export default {
         .then(successCallback)
         .catch(errorCallback)
     },
-    getList () {
-      var url = '/api/dbsource/queryByParamKey'
-      var data01 = { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 }
-      data01 = 'args=' + JSON.stringify(data01)
-      console.log('访问参数：', data01)
-      // 后台数据访问
-      this.dataAccess(url, data01, function (res) {
-        console.log('后端返回数据结果json：', res.data)
-        // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
-      }, function (err) {
-        console.log('后端数据访问出错!', err)
-      })
-      // const query = {
-      //   // url: 'http://10.168.2.206:8080/api-b/menus/me/giveanalarm-center',
-      //   // url: 'http://10.168.2.206:8080/api-grid/dbsource/queryByParamKey',
-      //   url: 'http://10.168.2.21:8090/dbsource/queryByParamKey',
-      //   data: { args: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 } },
-      //   // url: 'http://10.168.2.206:8080/sys/login/admin/admin',
-      //   method: 'post',
-      //   type: 'db_search'
-      // }
-      // fetchData(query).then(res => {
-      //   console.log(res)
+    /**
+     * 获取网格节点
+     */
+    getTreeNode () {
+      // var url = '/api/dbsource/queryByParamKey'
+      // var data01 = { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 }
+      // // {"sqlId":"select_grid_info_tree","whereId":"0","params":{"grid_name":""}}
+      // data01 = 'args=' + JSON.stringify(data01)
+      // // console.log('访问参数：', data01)
+      // // 后台数据访问
+      // this.dataAccess(url, data01, function (res) {
+      //   // console.log('后端返回数据结果json：', res.data)
+      //   // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
       // }, function (err) {
-      //   console.log(err)
+      //   console.log('后端数据访问出错!', err)
       // })
       const query = {
         url: 'api/dbsource/queryByParamKey',
@@ -322,36 +318,97 @@ export default {
       }
       fetchData(query)
         .then((res) => {
+          console.log(res)
           const resData = res.data.data.data
-          const len = res.data.data.data.length
-          for (let i = 0; i < len; i++) {
-            this.treeNode.label = resData[i].grid_name
-            this.treeNode.children = [{
-              label: 'Food',
-              icon: 'restaurant_menu'
-            },
-            {
-              label: 'Room service',
-              icon: 'room_service'
-            },
-            {
-              label: 'Room view',
-              icon: 'photo'
-            }]
-            // this.treeNode.icon = 'add'
-            this.treeNode.grid_bm = resData[i].grid_bm
-            this.simple.push(this.treeNode)
-            this.treeNode = []
+          for (let i = 0; i < resData.length; i++) {
+            // 添加label属性
+            resData[i].label = resData[i].grid_name
           }
+          console.log(resData)
+          // 树节点数据绑定
+          this.simple[0].children = resData
+          // 表格数据绑定
           this.data = resData
         })
         .catch((error) => {
           console.log(error)
         })
     },
+    addGrid () {
+      this.addDialog = true
+      this.choose = []
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: { sqlId: 'select_grid_info_tree', whereId: '0', params: { grid_name: '' } },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data
+          for (let i = 0; i < resData.length; i++) {
+            this.choose.push(resData[i].grid_name)
+          }
+          console.log(resData)
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    update (params) {
+      console.log(params)
+      this.addDialog = true
+      this.gridForm.name = params.grid_name
+      this.gridForm.code = params.grid_bm
+      this.gridForm.parentNode = params.parent_bm
+      this.gridForm.location = params.location
+      this.gridForm.isEnable = (params.is_enable === '0') ? '启用' : '不启用'
+    },
+    removeGridForm () {
+      this.gridForm.name = ''
+      this.gridForm.code = ''
+      this.gridForm.parentNode = ''
+      this.gridForm.location = ''
+      this.gridForm.isEnable = ''
+    },
+    /**
+     * 获取全部节点
+     */
+    getAllNode () {
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: { sqlId: 'select_grid_info_tree', whereId: '0', params: { grid_name: '' } },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          var a = this.getTreeMenu(null, null)
+          console.log(a)
+          console.log(res)
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+      // var url = '/api/dbsource/queryByParamKey'
+      // var data01 = { sqlId: 'select_grid_info_tree', whereId: '0', params: { grid_name: '' } }
+      // // {"sqlId":"select_grid_info_tree","whereId":"0","params":{"grid_name":""}}
+      // data01 = 'args=' + JSON.stringify(data01)
+      // // console.log('访问参数：', data01)
+      // // 后台数据访问
+      // this.dataAccess(url, data01, function (res) {
+      //   var queryData = res.data.data.data
+      //   var resData = res.data.data.data
+      //   this.getTreeMenu(queryData, resData)
+      //   console.log('后端返回数据结果json：', res.data)
+      //   // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
+      // }, function (err) {
+      //   console.log('后端数据访问出错!', err)
+      // })
+    },
     options () {},
     reset () {
-      this.gridName = ''
+      this.queryName = ''
       this.enableType = ''
     },
     onSubmit () {},
@@ -361,6 +418,9 @@ export default {
     // 监听事件
     selected: function (newQuestion, oldQuestion) {
       // this.$router.push({ path: '/about' })
+      if (this.selected === null) {
+        this.selected = oldQuestion
+      }
       const query = {
         url: 'api/dbsource/queryByParamKey',
         data: {
@@ -376,12 +436,18 @@ export default {
       }
       fetchData(query)
         .then((res) => {
+          console.log(res)
           const resData = res.data.data.data
           this.data = resData
         })
         .catch((error) => {
           console.log(error)
         })
+    },
+    addDialog: function (newQuestion, oldQuestion) {
+      if (this.addDialog === false) {
+        this.removeGridForm()
+      }
     }
   }
 }

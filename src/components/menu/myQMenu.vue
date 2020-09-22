@@ -112,6 +112,7 @@ export default {
               name: '设备配置',
               css: '',
               url: '/api-alarm/pages/ruleManagement/ruleManagement.html',
+              path: '/deviceConfig',
               sort: 1003001,
               createTime: '2020-08-13T05:31:44.000+0000',
               updateTime: '2020-08-13T05:34:18.000+0000',

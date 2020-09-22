@@ -69,12 +69,13 @@ const routes = [
         path: '/gridInfo',
         name: 'gridInfo',
         hidden: false,
-        meta: {
-          title: '主页',
-          icon: 'inbox',
-          noCache: true
-        },
         component: () => import('../views/home/gridInfo.vue')
+      },
+      {
+        path: '/deviceConfig',
+        name: 'deviceConfig',
+        hidden: false,
+        component: () => import('../views/home/deviceConfig.vue')
       },
       {
         path: '/device_info',

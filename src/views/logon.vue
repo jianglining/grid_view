@@ -108,28 +108,29 @@ export default {
   },
   methods: {
     logon () {
-      this.$q.loadingBar.start()
-      const query = {
-        url: 'http://10.168.2.206:8080/sys/login/admin/admin',
-        method: 'post'
-      }
-      // 登录系统
-      fetchData(query).then(res => {
-        localStorage.setItem('access_token', res.data.access_token)
-        localStorage.setItem('refresh_token', res.data.refresh_token)
-        this.$q.loadingBar.stop()
-        this.$router.push('/home')
-        this.getMenu()
-        this.$q.notify({
-          message: 'hi，cimo 欢迎回来',
-          color: 'green',
-          position: 'top',
-          timeout: 1500
-        })
-      }).catch(error => {
-        console.log(error)
-        this.$router.push('/home')
-      })
+      // this.$q.loadingBar.start()
+      // const query = {
+      //   url: 'http://10.168.2.206:8080/sys/login/admin/admin',
+      //   method: 'post'
+      // }
+      // // 登录系统
+      // fetchData(query).then(res => {
+      //   localStorage.setItem('access_token', res.data.access_token)
+      //   localStorage.setItem('refresh_token', res.data.refresh_token)
+      //   this.$q.loadingBar.stop()
+      //   this.$router.push('/home')
+      //   this.getMenu()
+      //   this.$q.notify({
+      //     message: 'hi，cimo 欢迎回来',
+      //     color: 'green',
+      //     position: 'top',
+      //     timeout: 1500
+      //   })
+      // }).catch(error => {
+      //   console.log(error)
+      //   this.$router.push('/home')
+      // })
+      this.$router.push('/home')
     },
     // 获取菜单
     getMenu () {
