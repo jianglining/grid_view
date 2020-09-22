@@ -14,7 +14,7 @@
       >
       </q-uploader>
     </div>
-    <div ref="svgContent">  {{msg}}</div>
+    <div ref="svgContent" class="">  {{msg}}</div>
   </q-card>
 
 </template>
@@ -25,7 +25,7 @@ export default {
   name: 'SceneConfig',
   data () {
     return {
-      msg: '场景配置！'
+      msg: '场景预览'
     }
   },
   methods: {
@@ -39,10 +39,34 @@ export default {
       // console.log('解析文件：', event.target.result)
       // this.setSvgContent(event.target.result)
       // 取出svg原文件中的字符串格式
+      // 以文本方式开始读取指定的Blob中的内容。一旦完成，result属性中将包含一个字符串以表示所读取的文件内容。
       var svtStr = event.target.result
       var contentDiv = this.$refs.svgContent
       contentDiv.innerHTML = svtStr
       // console.log('svg显示容器', contentDiv, svtStr)
+      // 返回的是一个同名节点的数组
+      var svgdoc = document.getElementsByTagName('svg')
+      var svgdocjs = svgdoc[0].getElementsByTagName('script')
+      console.log('svg中的脚本对象:', svgdocjs)
+      var outerPetals = document.querySelector("g[name='外层花瓣']")
+      console.log('外层花瓣通过属性查找:', outerPetals)
+      // 调用svg中的脚本
+      // svgJs('2222222222222')
+      // var childNodes = this.$refs.svgref.childNodes
+      // 因为只作单一场景所以，第0个索引下的数组对象就是场景图
+      console.log('svg节点', svgdoc, svgdoc[0].childNodes)
+      // svg作为innerHTML被加进来没办法执行里面的js方法
+      // svgdoc[0].onload()
+    },
+    svgJs (evt) {
+      console.log('这里是vue中的方法:', evt)
+    },
+    setInnerHTML (el, htmlCode) {
+      // navigator.userAgent属性是一个只读的字符串，声明了浏览器用于 HTTP 请求的用户代理头的值
+      var ua = navigator.userAgent.toLowerCase()
+      if (ua.indexOf('msie') >= 0 && ua.indexOf('opera') < 0) {
+        htmlCode = '<div style="display:none">for IE</div>' + htmlCode
+      }
     },
     uploaderFactoryFailed (err, files) {
       // 上传文件选择不符合要求的事件回调
@@ -67,7 +91,7 @@ export default {
       reader2scene.onload = this.setSvgContent
       // 要把文件转换成Blob Url
       // reader2scene.readAsDataURL(files)
-      // 以文本方式读
+      // 以文本方式开始读取指定的Blob中的内容。一旦完成，result属性中将包含一个字符串以表示所读取的文件内容。
       reader2scene.readAsText(files[0])
       console.log('oReq.....', oReq)
     },
@@ -108,4 +132,12 @@ export default {
 }
 </script>
 <style scoped>
+  .svgContent {
+    height: 100%;
+    width: 100%;
+  }
+  .main_content {
+    height: 100%;
+    width: 100%;
+  }
 </style>
