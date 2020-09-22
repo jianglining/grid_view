@@ -21,7 +21,7 @@
             </q-input>
             <q-tree
               :nodes="simple"
-              node-key="label"
+              node-key="id"
               selected-color="primary"
               :selected.sync="selected"
               default-expand-all
@@ -165,57 +165,9 @@
       </template>
 
       <template v-slot:after>
-        <q-tab-panels
-          v-model="selected"
-          animated
-          transition-prev="jump-up"
-          transition-next="jump-up"
-        >
-          <q-tab-panel name="获取网格设备列表信息">
-            <div class="text-h4 q-mb-md">获取网格设备列表信息</div>
-            <p>请求方式<br>
-               请求地址<br>
-               请求参数<br>
-               响应结果
-            </p>
-          </q-tab-panel>
-
-          <q-tab-panel name="获取网格告警列表信息">
-            <div class="text-h4 q-mb-md">获取网格告警列表信息</div>
-            <p>请求方式<br>
-               请求地址<br>
-               请求参数<br>
-               响应结果
-            </p>
-          </q-tab-panel>
-
-          <q-tab-panel name="获取网格卡号列表信息">
-            <div class="text-h4 q-mb-md">获取网格卡号列表信息</div>
-            <p>请求方式<br>
-               请求地址<br>
-               请求参数<br>
-               响应结果
-            </p>
-          </q-tab-panel>
-
-          <q-tab-panel name="获取网格下的子网格信息">
-            <div class="text-h4 q-mb-md">获取网格下的子网格信息</div>
-            <p>请求方式<br>
-               请求地址<br>
-               请求参数<br>
-               响应结果
-            </p>
-          </q-tab-panel>
-
-          <q-tab-panel name="通过网格ID和设备ID获取信息">
-            <div class="text-h4 q-mb-md">通过网格ID和设备ID获取信息</div>
-            <p>请求方式<br>
-               请求地址<br>
-               请求参数<br>
-               响应结果
-            </p>
-          </q-tab-panel>
-        </q-tab-panels>
+        <div class="q-gutter-xs q-px-lg q-pt-lg">
+          {{ detailData }}
+        </div>
       </template>
     </q-splitter>
   </div>
@@ -229,57 +181,17 @@ export default {
       deleted: false,
       increase: false,
       edited: false,
-      address: '',
       name: '',
+      address: '',
+      api_name: '',
       text: '',
-      selected: '获取网格设备列表信息',
-      simple: [
-        {
-          label: '开放服务',
-          icon: 'photo',
-          // avatar: 'https://cdn.quasar.dev/img/boy-avatar.png',
-          children: [
-            {
-              label: '获取网格设备列表信息',
-              icon: 'photo'
-              // children: [
-              //   { label: 'Quality ingredients' },
-              //   { label: 'Good recipe' }
-              // ]
-            },
-            {
-              label: '获取网格告警列表信息',
-              icon: 'room_service'
-              // disabled: true
-              // children: [
-              //   { label: 'Prompt attention' },
-              //   { label: 'Professional waiter' }
-              // ]
-            },
-            {
-              label: '获取网格卡号列表信息',
-              icon: 'photo'
-              // children: [
-              //   {
-              //     label: 'Happy atmosphere (with image)',
-              //     img: 'https://cdn.quasar.dev/img/logo_calendar_128px.png'
-              //   },
-              //   { label: 'Good table presentation' },
-              //   { label: 'Pleasing decor' }
-              // ]
-            },
-            {
-              label: '获取网格下的子网格信息',
-              icon: 'photo'
-            },
-            {
-              label: '通过网格ID和设备ID获取信息',
-              icon: 'photo'
-            }
-          ]
-        }
-      ]
+      selected: '',
+      simple: [],
+      detailData: ''
     }
+  },
+  mounted () {
+    this.getList()
   },
   methods: {
     onsubmit () {
@@ -294,6 +206,61 @@ export default {
         alert('请输入事件行为识别')
       } else {
         this.edited = false
+      }
+    },
+    dataAccess (accessUrl, pdata, successCallback, errorCallback) {
+      this.$axios({
+        method: 'post',
+        url: accessUrl,
+        data: pdata,
+        type: 'json'
+      })
+        .then(successCallback)
+        .catch(errorCallback)
+    },
+    getList () {
+      var that = this
+      var url = 'api/dbsource/query'
+      var data01 = { sqlId: 'select_api_description' }
+      // var data01 = { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 }
+      data01 = 'args=' + JSON.stringify(data01)
+      // console.log('访问参数：', data01)
+      // 后台数据访问
+      this.dataAccess(url, data01, function (res) {
+        // console.log('后端返回数据结果json：', res.data)
+        var result = res.data.data
+        for (let i = 0; i < result.length; i++) {
+          result[i].label = result[i].api_name
+          // result[i].icon = 'add'
+          // 加小图标
+        }
+        // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
+        that.simple = result
+        console.log(result)
+        // console.log(that.simple)
+        // // 查看有没有取到的数据
+      }, function (err) {
+        console.log('后端数据访问出错!', err)
+      })
+    }
+  },
+  watch: {
+    selected: function (newData, oldData) {
+      // console.log(this.selected)
+      // console.log(this.simple)
+      for (let i = 0; i < this.simple.length; i++) {
+        if (this.simple[i].id === this.selected) {
+          this.detailData = this.simple[i].api_description
+          var a = this.detailData.split('\n')
+          for (let i = 0; i < a.length; i++) {
+            a[i] = a[i].replace('<p>', '')
+            a[i] = a[i].replace('</p>', '')
+          }
+          this.detailData = a
+          console.log(a)
+          break
+        }
+        // console.log(this.detailData)
       }
     }
   }
