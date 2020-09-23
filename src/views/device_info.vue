@@ -3,13 +3,17 @@
     <q-table
       :data="data"
       :columns="columns"
-      row-key="id"
+      row-key="rn"
       :filter="filter"
       virtual-scroll
       separator="cell"
       card-style="height:85vh"
+      selection="multiple"
+      :selected.sync="selected"
+      :selected-rows-label="getSelectedString"
       pagination.sync="selected"
-      :rows-per-page-options="[10]"
+      rows-per-page-label="每页显示"
+      :rows-per-page-options="[10,20,30]"
       no-data-label="暂无数据"
       table-header-class="bg-blue-8 text-white"
       :pagination-label="getPaginationLabel"
@@ -19,14 +23,14 @@
           <strong style="float:left;margin-left:10px;margin-right:10px;">设备名称</strong>
           <q-input
           outlined
-          v-model="filterForm.deviceName"
+          v-model.trim="filterForm.deviceName"
           dense
           style="width:200px;float:left;" />
 
           <strong style="float:left;margin-left:10px;margin-right:10px;">在线状态</strong>
           <q-select
           outlined
-          v-model="filterForm.status"
+          v-model.trim="filterForm.status"
           :options="options"
           dense
           style="width:200px;float:left;margin-right:10px;" />
@@ -51,22 +55,17 @@
           color="primary"
           dense
           label="更新设备信息"
+          @click="update()"
           unelevated
           icon="add"
           style="float:left;height:37px;width:180px"/>
      </template>
 
-     <template v-slot:header-cell-select="props" >
-        <q-th :props="props"  >
-          <input type="checkbox" @click="selectAll"  :checked ="checked" style="zoom: 160%;"/>
-        </q-th>
-     </template>
-
      <!--表格内容-->
     <template v-slot:body="props">
         <q-tr  :props="props" :class="{ 'selected': changeColor }" >
-          <q-td align="center" @dblclick="look(props.row)">
-            <input type="checkbox" style="zoom: 160%;" @click="change($event,props.row)" :checked ="checked" v-model="selected" :value="props.row.equipment_name" dense  size="45px"/>
+          <q-td @dblclick="look(props.row)">
+            <q-checkbox key="props.row.rn" v-model="props.selected"/>
           </q-td>
 
           <q-td key="equipment_name" :props="props" @dblclick="look(props.row)">
@@ -123,69 +122,59 @@
 </template>
 <script>
 export default {
-  watch: {
-    // 监听选中事件
-    selected (curVal) {
-      if (this.selected !== undefined && this.selected.length > 0 && curVal.length === this.data.length) {
-        this.checked = true
-        this.changeColor = true
-      } else {
-        this.checked = false
-        this.changeColor = false
-      }
-    }
-  },
   mounted () {
     this.getList()
   },
   methods: {
+    // 更新设备信息
+    update () {
+
+    },
     // 搜索
     search () {
       if (this.filterForm.deviceName === '' && this.filterForm.status === '') {
-        // this.searchData = this.data
-        // this.data = this.searchData
         this.$q.notify({
           message: '正在查询中......',
           color: 'black',
           position: 'center',
-          timeout: 5
+          timeout: 1
         })
+        this.data = this.basicData
       } else if (this.filterForm.deviceName !== '' && this.filterForm.status !== '') {
+        this.$q.notify({
+          message: '正在查询中......',
+          color: 'black',
+          position: 'center',
+          timeout: 1
+        })
         this.data = this.basicData.filter(item => {
           if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1 && item.equipment_state.indexOf(this.filterForm.status) !== -1) {
             return item
           }
         })
       } else if (this.filterForm.deviceName !== '' && this.filterForm.status === '') {
+        this.$q.notify({
+          message: '正在查询中......',
+          color: 'black',
+          position: 'center',
+          timeout: 1
+        })
         this.data = this.basicData.filter(item => {
           if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1) {
             return item
           }
         })
       } else if (this.filterForm.deviceName === '' && this.filterForm.status !== '') {
+        this.$q.notify({
+          message: '正在查询中......',
+          color: 'black',
+          position: 'center',
+          timeout: 1
+        })
         this.data = this.basicData.filter(item => {
           if (item.equipment_state.indexOf(this.filterForm.status) !== -1) {
             return item
           }
-        })
-      }
-    },
-    // 改变颜色
-    change (e, r) {
-      if (e.target.checked === true) {
-        this.changeColor = true
-      } else {
-        this.changeColor = false
-      }
-    },
-    // 全选
-    selectAll (event) {
-      if (!event.currentTarget.checked) {
-        this.selected = []
-      } else { // 实现全选
-        this.selected = []
-        this.data.forEach((item, i) => {
-          this.selected.push(this.data[i].equipment_name)
         })
       }
     },
@@ -209,8 +198,13 @@ export default {
       this.equipment_state = s.equipment_state
       this.equipment_type = s.equipment_type
     },
+    // 获取分页标签
     getPaginationLabel (firstRowIndex, endRowIndex, totalRowsNumber) {
       return '显示 ' + firstRowIndex + ' ~ ' + endRowIndex + ' 条记录，总共' + totalRowsNumber + ' 条'
+    },
+    // 选中的记录
+    getSelectedString (numberOfRows) {
+      return '共选中' + numberOfRows + '条记录'
     },
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
       this.$axios({
@@ -259,13 +253,11 @@ export default {
         '在线', '离线'
       ],
       columns: [
-        { name: 'select', align: 'center' },
-        { name: 'equipment_name', required: true, label: '备注名称', align: 'center', field: row => row.equipment_name },
+        { name: 'equipment_name', required: true, label: '备注名称', align: 'center', field: 'equipment_name' },
         { name: 'equipment_type', align: 'center', label: '所属产品', field: 'equipment_type' },
         { name: 'equipment_state', label: '在线状态', align: 'center', field: 'equipment_state' }
       ],
       data: [],
-      searchData: [],
       basicData: []
     }
   }
@@ -277,6 +269,7 @@ table tr:nth-child(odd)
 {
     background: #F8F8FF;
 }
+/*选中后字体颜色改变*/
 .selected{
       color: #4169E1;
 }
