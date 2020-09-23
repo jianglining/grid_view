@@ -35,23 +35,22 @@
         row-key="id"
         card-style="margin:15px;height:85vh"
         no-data-label="暂无数据"
+        :selected-rows-label="getSelectedString"
+        selection="multiple"
+        :selected.sync="checkSelect"
       >
         <!-- <template v-slot:top-right>
         <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
         <q-btn class="q-ml-sm" color="teal-7" :disable="loading" label="删除" @click="removeRow" />
         </template>-->
-        <template v-slot:body="props">
-          <q-tr :props="props">
-            <q-td key="grid_name" :props="props">{{ props.row.grid_name }}</q-td>
-            <q-td key="equipment_id" :props="props">{{ props.row.equipment_id }}</q-td>
-            <q-td key="equipment_name" :props="props">{{ props.row.equipment_name }}</q-td>
-          </q-tr>
 
-        </template>
-         <!-- <template v-slot:bottom>
+        <!-- <template v-slot:bottom>
         <q-btn color="primary" label="修改网格" />
-      </template> -->
+        </template>-->
       </q-table>
+          <div class="q-mt-md">
+      Selected: {{ JSON.stringify(checkSelect) }}
+    </div>
     </template>
   </q-splitter>
 </template>
@@ -64,6 +63,7 @@ export default {
       splitterModel: 20,
       selected: '',
       totalNode: [],
+      checkSelect: [],
       addIsEnable: '',
       gridNodeSearch: '',
       gridForm: {
@@ -74,18 +74,21 @@ export default {
         isEnable: ''
       },
       treeNode: [],
-      simple: [{
-        label: '网格节点',
-        icon: 'share',
-        id: '0',
-        children: []
-      }],
+      simple: [
+        {
+          label: '网格节点',
+          icon: 'share',
+          id: '0',
+          children: []
+        }
+      ],
       columns: [
         {
           name: 'grid_name',
           required: true,
           label: '网格名称',
-          align: 'center'
+          align: 'center',
+          field: 'grid_name'
         },
         {
           name: 'equipment_id',
@@ -93,7 +96,12 @@ export default {
           label: '网格位置',
           field: 'equipment_id'
         },
-        { name: 'equipment_name', align: 'center', label: '是否启用', field: 'equipment_name' }
+        {
+          name: 'equipment_name',
+          align: 'center',
+          label: '是否启用',
+          field: 'equipment_name'
+        }
       ],
       data: []
     }
@@ -120,7 +128,11 @@ export default {
     getTreeNode () {
       const query = {
         url: 'api/dbsource/queryByParamKey',
-        data: { sqlId: 'select_grid_info_tree', whereId: '0', params: { grid_name: '' } },
+        data: {
+          sqlId: 'select_grid_info_tree',
+          whereId: '0',
+          params: { grid_name: '' }
+        },
         method: 'post',
         type: 'db_search'
       }
@@ -136,7 +148,7 @@ export default {
           this.simple[0].children = resData
           console.log(this.simple)
           // 表格数据绑定
-        //   this.data = resData
+          //   this.data = resData
         })
         .catch((error) => {
           console.log(error)
@@ -156,7 +168,11 @@ export default {
     getAllNode () {
       const query = {
         url: 'api/dbsource/queryByParamKey',
-        data: { sqlId: 'select_grid_info_tree', whereId: '0', params: { grid_name: '' } },
+        data: {
+          sqlId: 'select_grid_info_tree',
+          whereId: '0',
+          params: { grid_name: '' }
+        },
         method: 'post',
         type: 'db_search'
       }
@@ -169,6 +185,9 @@ export default {
         .catch((error) => {
           console.log(error)
         })
+    },
+    getSelectedString () {
+      return this.selected.length === 0 ? '' : `${this.selected.length} record${this.selected.length > 1 ? 's' : ''} selected of ${this.data.length}`
     },
     options () {},
     onReset () {}
@@ -183,7 +202,13 @@ export default {
       }
       const query = {
         url: 'api/dbsource/queryByParamKey',
-        data: { sqlId: 'select_equipment_in_grid', whereId: '0', params: { grid_id: this.selected }, minRow: 0, maxRow: 19 },
+        data: {
+          sqlId: 'select_equipment_in_grid',
+          whereId: '0',
+          params: { grid_id: this.selected },
+          minRow: 0,
+          maxRow: 19
+        },
         method: 'post',
         type: 'db_search'
       }

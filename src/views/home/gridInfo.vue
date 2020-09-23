@@ -223,6 +223,7 @@ export default {
   data () {
     return {
       splitterModel: 20,
+      // 选择的节点
       selected: '',
       totalNode: [],
       addDialog: false,
@@ -250,6 +251,7 @@ export default {
         grid_bm: '-1',
         children: []
       }],
+      // 表格（每列标题）数据
       columns: [
         {
           name: 'grid_name',
@@ -357,6 +359,7 @@ export default {
         .then((res) => {
           const resData = res.data.data
           for (let i = 0; i < resData.length; i++) {
+            // 追加父节点数据
             this.choose.push(resData[i].grid_name)
           }
           console.log(resData)

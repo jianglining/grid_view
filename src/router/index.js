@@ -100,6 +100,39 @@ const routes = [
         component: () => import('../views/openService.vue')
       },
       {
+        path: '/alarmInfo',
+        name: 'alarmInfo',
+        hidden: false,
+        meta: {
+          title: '测试',
+          icon: 'inbox',
+          noCache: true
+        },
+        component: () => import('../views/alarmInfo.vue')
+      },
+      {
+        path: '/calibrationInfo',
+        name: 'calibrationInfo',
+        hidden: false,
+        meta: {
+          title: '测试',
+          icon: 'inbox',
+          noCache: true
+        },
+        component: () => import('../views/calibrationInfo.vue')
+      },
+      {
+        path: '/dataStatistics',
+        name: 'dataStatistics',
+        hidden: false,
+        meta: {
+          title: '测试',
+          icon: 'inbox',
+          noCache: true
+        },
+        component: () => import('../views/dataStatistics.vue')
+      },
+      {
         path: '/sceneConfig',
         name: 'sceneConfig',
         hidden: false,

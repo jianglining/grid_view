@@ -9,8 +9,7 @@
       separator="cell"
       card-style="height:85vh"
       pagination.sync="selected"
-      :rows-per-page-options="[10]"
-      no-data-label="暂无数据"
+      :rows-per-page-options="[12]"
       table-header-class="bg-blue-8 text-white"
       :pagination-label="getPaginationLabel"
     >
@@ -55,13 +54,11 @@
           icon="add"
           style="float:left;height:37px;width:180px"/>
      </template>
-
      <template v-slot:header-cell-select="props" >
         <q-th :props="props"  >
           <input type="checkbox" @click="selectAll"  :checked ="checked" style="zoom: 160%;"/>
         </q-th>
      </template>
-
      <!--表格内容-->
     <template v-slot:body="props">
         <q-tr  :props="props" :class="{ 'selected': changeColor }" >
@@ -150,24 +147,8 @@ export default {
           position: 'center',
           timeout: 5
         })
-      } else if (this.filterForm.deviceName !== '' && this.filterForm.status !== '') {
-        this.data = this.basicData.filter(item => {
-          if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1 && item.equipment_state.indexOf(this.filterForm.status) !== -1) {
-            return item
-          }
-        })
-      } else if (this.filterForm.deviceName !== '' && this.filterForm.status === '') {
-        this.data = this.basicData.filter(item => {
-          if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1) {
-            return item
-          }
-        })
-      } else if (this.filterForm.deviceName === '' && this.filterForm.status !== '') {
-        this.data = this.basicData.filter(item => {
-          if (item.equipment_state.indexOf(this.filterForm.status) !== -1) {
-            return item
-          }
-        })
+      } else if (this.filterForm.deviceName !== '') {
+
       }
     },
     // 改变颜色
@@ -191,15 +172,8 @@ export default {
     },
     // 重置
     reset () {
-      this.$q.notify({
-        message: '正在重置中......',
-        color: 'black',
-        position: 'center',
-        timeout: 5
-      })
-      this.filterForm.deviceName = ''
-      this.filterForm.status = ''
-      this.data = this.basicData
+      this.filterForm.deviceName = null
+      this.filterForm.status = null
     },
     // 查看详情
     look (s) {
@@ -231,9 +205,9 @@ export default {
       // 后台数据访问
       this.dataAccess(url, data01, function (res) {
         console.log('后端返回数据结果json：', res)
-        // 获取数据传给basicData,data
-        that.basicData = res.data.data.data
-        that.data = that.basicData
+        // 获取数据传给data
+        that.data = res.data.data.data
+        // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
       }, function (err) {
         console.log('后端数据访问出错!', err)
       })
@@ -265,8 +239,7 @@ export default {
         { name: 'equipment_state', label: '在线状态', align: 'center', field: 'equipment_state' }
       ],
       data: [],
-      searchData: [],
-      basicData: []
+      searchData: []
     }
   }
 }
