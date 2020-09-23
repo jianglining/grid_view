@@ -193,7 +193,7 @@ export default {
     getList () {
       var that = this
       var url = '/api/dbsource/queryByParamKey'
-      var data01 = { sqlId: 'select_picketage_info', orderId: '0', params: {}, minRow: 0, maxRow: 19 }
+      var data01 = { sqlId: 'select_picketage_info', orderId: '0', params: {}, minRow: 0, maxRow: 94622 }
       data01 = 'args=' + JSON.stringify(data01)
       console.log('访问参数：', data01)
       // 后台数据访问
