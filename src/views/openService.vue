@@ -19,6 +19,7 @@
                 <q-icon v-else name="clear" class="cursor-pointer" @click="search = ''" />
               </template>
             </q-input>
+            <!-- 树结构 -->
             <q-tree
               :nodes="simple"
               node-key="id"
@@ -145,8 +146,8 @@
                 <q-card-section class="bg-light-blue-6">
                   <div class="text-h6">删除
                     <!-- <div style="margin-left:200px;margin-bottom: 30px;border-style:solid;border-width:0.5px;"> -->
-                      <q-btn class="float-right" flat icon="close" v-close-popup />
-                    </div>
+                    <q-btn class="float-right" flat icon="close" v-close-popup />
+                  </div>
                   <!-- </div> -->
                 </q-card-section>
 
@@ -165,6 +166,7 @@
       </template>
 
       <template v-slot:after>
+        <!-- 内容显示区域 -->
         <div class="q-gutter-xs q-px-lg q-pt-lg">
           {{ detailData }}
         </div>
@@ -187,13 +189,16 @@ export default {
       text: '',
       selected: '',
       simple: [],
-      detailData: ''
+      detailData: []
     }
   },
   mounted () {
     this.getList()
   },
   methods: {
+    /*
+    *  新增按钮响应事件
+    */
     onsubmit () {
       if (this.text === '') {
         alert('请输入事件行为识别')
@@ -201,6 +206,9 @@ export default {
         this.increase = false
       }
     },
+    /*
+    *  编辑按钮响应事件
+    */
     submitEdit () {
       if (this.text === '') {
         alert('请输入事件行为识别')
@@ -222,7 +230,6 @@ export default {
       var that = this
       var url = 'api/dbsource/query'
       var data01 = { sqlId: 'select_api_description' }
-      // var data01 = { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 }
       data01 = 'args=' + JSON.stringify(data01)
       // console.log('访问参数：', data01)
       // 后台数据访问
@@ -244,6 +251,9 @@ export default {
       })
     }
   },
+  /*
+  *  监听左侧点击事件
+  */
   watch: {
     selected: function (newData, oldData) {
       // console.log(this.selected)
@@ -255,6 +265,7 @@ export default {
           for (let i = 0; i < a.length; i++) {
             a[i] = a[i].replace('<p>', '')
             a[i] = a[i].replace('</p>', '')
+            // a[i] = a[i].replace('\\', '')
           }
           this.detailData = a
           console.log(a)
