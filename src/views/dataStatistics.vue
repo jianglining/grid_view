@@ -1,191 +1,189 @@
 <template>
-  <div class="q-pa-md " >
-    <q-table
-      :data="data"
-      :columns="columns"
-      row-key="id"
-      :filter="filter"
-      virtual-scroll
-      separator="cell"
-      card-style="height:85vh"
-      pagination.sync="selected"
-      :rows-per-page-options="[12]"
-      table-header-class="bg-blue-8 text-white"
-      :pagination-label="getPaginationLabel"
-    >
-    <!--操作选项-->
-     <template v-slot:top>
-          <strong style="float:left;margin-left:10px;margin-right:10px;">设备名称</strong>
-          <q-input
-          outlined
-          v-model="filterForm.deviceName"
-          dense
-          style="width:200px;float:left;" />
-
-          <strong style="float:left;margin-left:10px;margin-right:10px;">在线状态</strong>
-          <q-select
-          outlined
-          v-model="filterForm.status"
-          :options="options"
-          dense
-          style="width:200px;float:left;margin-right:10px;" />
-
-          <q-btn
-          color="primary"
-          dense
-          label="查询"
-          unelevated
-          @click="search()"
-          icon="search"
-          style="float:left;height:37px;width:80px;margin-right:10px"/>
-          <q-btn
-          color="primary"
-          dense
-          label="重置"
-          unelevated
-          icon="navigation"
-          @click="reset()"
-          style="float:left;height:37px;width:80px;margin-right:10px"/>
-          <q-btn
-          color="primary"
-          dense
-          label="更新设备信息"
-          unelevated
-          icon="add"
-          style="float:left;height:37px;width:180px"/>
-     </template>
-     <template v-slot:header-cell-select="props" >
-        <q-th :props="props"  >
-          <input type="checkbox" @click="selectAll"  :checked ="checked" style="zoom: 160%;"/>
-        </q-th>
-     </template>
-     <!--表格内容-->
-    <template v-slot:body="props">
-        <q-tr  :props="props" :class="{ 'selected': changeColor }" >
-          <q-td align="center" @dblclick="look(props.row)">
-            <input type="checkbox" style="zoom: 160%;" @click="change($event,props.row)" :checked ="checked" v-model="selected" :value="props.row.equipment_name" dense  size="45px"/>
-          </q-td>
-
-          <q-td key="equipment_name" :props="props" @dblclick="look(props.row)">
-            {{ props.row.equipment_name }}
-          </q-td>
-
-          <q-td key="equipment_type" :props="props" @dblclick="look(props.row)">
-            {{ props.row.equipment_type }}
-          </q-td>
-
-          <q-td key="equipment_state" :props="props" @dblclick="look(props.row)">
-            {{ props.row.equipment_state }}
-          </q-td>
-    </q-tr>
-      <!--弹窗-->
-      <q-dialog v-model="prompt" seamless >
-      <q-card style="min-width: 47%;height:45%;box-shadow:0px 0px 3px #aaa;">
-        <q-card-section class="text-h6 text-white bg-blue-8 " style="width:100%;height:60px;">
-          <div>设备信息<q-icon name="close" style="float:right" v-close-popup/></div>
-        </q-card-section>
-        <!--弹框滚动条-->
-        <div>
-          <q-scroll-area style="width:100% ; height:200px; margin-top:0px" >
-            <q-card-section style="width:100% ;height:40px;">
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex">
-              <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
-                设备名称：
-              </div>
-              <q-input outlined disable class="bg-grey-2" v-model="equipment_name" :dense="true" style="height:40px;float:left;margin-right:10px"/>
-              <div class="text-body1" style="width:100px;height:40px;float:left;text-align:left;line-height:40px;">
-                设备ID：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="module_equipment_id" :dense="true" style="height:40px;float:left"/>
-              </div>
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex;margin-top:15px">
-              <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
-                所选产品：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="equipment_type" :dense="true" style="height:40px;float:left;margin-right:10px"/>
-              <div class="text-body1" style="width:100px;height:40px;float:left;text-align:left;line-height:40px;">
-                在线状态：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="equipment_state" :dense="true" style="height:40px;float:left"/>
-              </div>
-             </q-card-section>
-          </q-scroll-area>
-          <q-separator inset size="1.5px" />
-        </div>
+  <q-splitter v-model="splitterModel" style="height: 90vh">
+    <div class="q-pa-md">
+      <q-dialog v-model="addDialog">
+        <q-card style="max-width:90vh;width:80%">
+          <q-card-section class="row items-center q-pb-none">
+            <div class="text-h6">网格下的卡</div>
+            <q-space />
+            <q-btn icon="close" flat round dense v-close-popup />
+          </q-card-section>
+          <q-card-section>
+            <q-table
+              :data="detailData"
+              :columns="gridDetail"
+              row-key="id"
+              card-style="margin:15px;"
+              no-data-label="暂无数据"
+              :filter="queryName"
+            >
+              <template v-slot:body="props">
+                <q-tr :props="props">
+                  <q-td key="grid_name" :props="props">{{ props.row.grid_name }}</q-td>
+                  <q-td key="card_number" :props="props">{{ props.row.card_number }}</q-td>
+                  <q-td key="update_time" :props="props">{{ props.row.update_time }}</q-td>
+                </q-tr>
+              </template>
+              <template v-slot:top-left>
+                <div class="q-gutter-md row items-start">
+                  <q-input
+                    label="网格名称"
+                    style="width: 265px;margin-left: 10px"
+                    dense
+                    standout="bg-blue-6 text-white"
+                    v-model="queryName"
+                    input-class="text-left"
+                    class="q-ml-md"
+                    label-color="primary"
+                  />
+                  <q-btn color="primary" label="查询" icon="search" />
+                </div>
+              </template>
+            </q-table>
+          </q-card-section>
         </q-card>
       </q-dialog>
-      </template>
-    </q-table>
     </div>
+    <template v-slot:before>
+      <div class="q-pa-md">
+        <div class="row" style="margin:10px">
+          <q-input
+            label="网格节点搜索"
+            style="width: 265px;margin-left: 0px"
+            dense
+            standout="bg-blue-6 text-white"
+            v-model="gridNodeSearch"
+            input-class="text-right"
+            class="q-ml-md"
+            label-color="primary"
+          >
+            <template v-slot:append>
+              <q-icon v-if="gridNodeSearch === ''" name="search" />
+              <q-icon v-else name="clear" class="cursor-pointer" @click="gridNodeSearch = ''" />
+            </template>
+          </q-input>
+        </div>
+        <q-tree
+          :nodes="simple"
+          node-key="grid_bm"
+          selected-color="primary"
+          :selected.sync="selected"
+          default-expand-all
+        />
+      </div>
+    </template>
+    <template v-slot:after>
+      <q-table
+        :data="data"
+        :columns="columns"
+        row-key="id"
+        card-style="margin:15px;height:85vh"
+        no-data-label="暂无数据"
+      >
+        <!-- <template v-slot:top-right>
+        <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
+        <q-btn class="q-ml-sm" color="teal-7" :disable="loading" label="删除" @click="removeRow" />
+        </template>-->
+        <template v-slot:body="props">
+          <q-tr :props="props">
+            <q-td key="grid_name" :props="props">{{ props.row.grid_name }}</q-td>
+            <q-td key="cardNumber" :props="props">{{ props.row.cardNumber }}</q-td>
+            <q-td key="cz" :props="props">
+              <!-- <span><q-btn dense color="red" label="删除"  icon="highlight_off" size="8px" @click="delRecord(props.row)"/></span> -->
+              <q-btn color="primary" label="查看详情" @click="detailView(props.row)" />
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+    </template>
+  </q-splitter>
 </template>
 <script>
+// import {fetchData}
+import { fetchData } from '../api/index'
 export default {
-  watch: {
-    // 监听选中事件
-    selected (curVal) {
-      if (this.selected !== undefined && this.selected.length > 0 && curVal.length === this.data.length) {
-        this.checked = true
-        this.changeColor = true
-      } else {
-        this.checked = false
-        this.changeColor = false
-      }
+  data () {
+    return {
+      splitterModel: 20,
+      // 选择的节点
+      selected: '',
+      totalNode: [],
+      addDialog: false,
+      queryName: '',
+      enableType: null,
+      addIsEnable: '',
+      // 父节点数据
+      choose: [],
+      dense: true,
+      denseOpts: true,
+      // 网格节点查询数据
+      gridNodeSearch: '',
+      // 表单数据
+      gridForm: {
+        name: '',
+        code: '',
+        parentNode: '',
+        location: '',
+        isEnable: ''
+      },
+      // 树
+      simple: [
+        {
+          label: '网格节点',
+          icon: 'share',
+          grid_bm: '-1',
+          children: []
+        }
+      ],
+      // 表格（每列标题）数据
+      columns: [
+        {
+          name: 'grid_name',
+          required: true,
+          label: '网格名称',
+          align: 'center'
+        },
+        {
+          name: 'cardNumber',
+          align: 'center',
+          label: '卡数量',
+          field: 'cardNumber'
+        },
+        {
+          name: 'cz',
+          align: 'center',
+          label: '操作',
+          field: 'id'
+        }
+      ],
+      // 网格详情页table 标题数据
+      gridDetail: [
+        {
+          name: 'grid_name',
+          required: true,
+          label: '网格名称',
+          align: 'center'
+        },
+        {
+          name: 'card_number',
+          align: 'center',
+          label: '卡号',
+          field: 'card_number'
+        },
+        { name: 'update_time', label: '更新时间', field: 'update_time' }
+      ],
+      data: [],
+      detailData: []
     }
   },
   mounted () {
-    this.getList()
+    // 获取网格节点菜单
+    this.getTreeNode()
+    // this.getAllNode()
   },
   methods: {
-    // 搜索
-    search () {
-      if (this.filterForm.deviceName === '' && this.filterForm.status === '') {
-        // this.searchData = this.data
-        // this.data = this.searchData
-        this.$q.notify({
-          message: '正在查询中......',
-          color: 'black',
-          position: 'center',
-          timeout: 5
-        })
-      } else if (this.filterForm.deviceName !== '') {
-
-      }
-    },
-    // 改变颜色
-    change (e, r) {
-      if (e.target.checked === true) {
-        this.changeColor = true
-      } else {
-        this.changeColor = false
-      }
-    },
-    // 全选
-    selectAll (event) {
-      if (!event.currentTarget.checked) {
-        this.selected = []
-      } else { // 实现全选
-        this.selected = []
-        this.data.forEach((item, i) => {
-          this.selected.push(this.data[i].equipment_name)
-        })
-      }
-    },
-    // 重置
-    reset () {
-      this.filterForm.deviceName = null
-      this.filterForm.status = null
-    },
-    // 查看详情
-    look (s) {
-      this.prompt = true
-      this.module_equipment_id = s.module_equipment_id
-      this.equipment_name = s.equipment_name
-      this.equipment_state = s.equipment_state
-      this.equipment_type = s.equipment_type
-    },
-    getPaginationLabel (firstRowIndex, endRowIndex, totalRowsNumber) {
-      return '显示 ' + firstRowIndex + ' ~ ' + endRowIndex + ' 条记录，总共' + totalRowsNumber + ' 条'
-    },
+    // axios方法，获取后台数据
+    // 'Content-Type': 'application/json'
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
       this.$axios({
         method: 'post',
@@ -196,61 +194,177 @@ export default {
         .then(successCallback)
         .catch(errorCallback)
     },
-    getList () {
-      var that = this
-      var url = '/api/dbsource/queryByParamKey'
-      var data01 = { sqlId: 'select_equipment_info', whereId: '4', orderId: '0', params: {}, minRow: 0, maxRow: 19 }
-      data01 = 'args=' + JSON.stringify(data01)
-      console.log('访问参数：', data01)
-      // 后台数据访问
-      this.dataAccess(url, data01, function (res) {
-        console.log('后端返回数据结果json：', res)
-        // 获取数据传给data
-        that.data = res.data.data.data
-        // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
-      }, function (err) {
-        console.log('后端数据访问出错!', err)
-      })
+    /**
+     * 获取网格节点(左菜单)
+     */
+    getTreeNode () {
+      // 构建树
+      this.createTree(this.simple)
+    },
+    /**
+     * 构建树
+     */
+    createTree (params) {
+      console.log(params)
+      for (let i = 0; i < params.length; i++) {
+        const query = {
+          url: 'api/dbsource/queryByParamKey',
+          data: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: params[i].grid_bm } },
+          method: 'post',
+          type: 'db_search'
+        }
+        fetchData(query)
+          .then((res) => {
+            const resData = res.data.data
+            // 如果子树为空，停止查询
+            if (resData.length === 0) {
+              return
+            }
+            for (let i = 0; i < resData.length; i++) {
+            // 添加label属性
+              resData[i].label = resData[i].grid_name
+            }
+            params[i].children = resData
+            // 递归查询子树
+            this.createTree(params[i].children)
+            // 设置含有子树的节点的图标
+            if (params[i].children.length > 0) {
+              params[i].icon = 'share'
+            }
+          })
+
+          .catch((error) => {
+            console.log(error)
+          })
+      }
+    },
+    /**
+     * 查看网格详情
+     */
+    detailView (params) {
+      console.log(params)
+      this.addDialog = true
+
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_statistics_card_info',
+          orderId: '0',
+          params: { grid_id: params.grid_bm },
+          minRow: 0,
+          maxRow: 15
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          console.log(res)
+          const resData = res.data.data.data
+          this.detailData = resData
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    /**
+     * 移除表单内容
+     */
+    removeGridForm () {
+      this.gridForm.name = ''
+      this.gridForm.code = ''
+      this.gridForm.parentNode = ''
+      this.gridForm.location = ''
+      this.gridForm.isEnable = ''
+    },
+    /**
+     * 获取全部网格节点
+     */
+    getAllNode () {
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info_tree',
+          whereId: '0',
+          params: { grid_name: '' }
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {})
+        .catch((error) => {
+          console.log(error)
+        })
     }
   },
-  data () {
-    return {
-      filterForm: {
-        status: '',
-        deviceName: ''
-      },
-      changeColor: false,
-      module_equipment_id: '',
-      equipment_name: '',
-      equipment_type: '',
-      filter: '',
-      equipment_state: '',
-      checked: false,
-      selected: [],
-      dense: false,
-      prompt: false,
-      options: [
-        '在线', '离线'
-      ],
-      columns: [
-        { name: 'select', align: 'center' },
-        { name: 'equipment_name', required: true, label: '备注名称', align: 'center', field: row => row.equipment_name },
-        { name: 'equipment_type', align: 'center', label: '所属产品', field: 'equipment_type' },
-        { name: 'equipment_state', label: '在线状态', align: 'center', field: 'equipment_state' }
-      ],
-      data: [],
-      searchData: []
+  watch: {
+    // 监听事件，左侧节点菜单点击事件
+    selected: function (newQuestion, oldQuestion) {
+      // this.$router.push({ path: '/about' })
+      if (this.selected === null) {
+        this.selected = oldQuestion
+      }
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info',
+          whereId: '2',
+          orderId: '0',
+          params: { parent_bm: this.selected },
+          minRow: 0,
+          maxRow: 19
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          console.log(res)
+          const resData = res.data.data.data
+          for (let i = 0; i < resData.length; i++) {
+            resData[i].cardNumber = '0'
+            // 添加label属性
+            resData[i].label = resData[i].grid_name
+            const query01 = {
+              url: 'api/dbsource/queryByParamKey',
+              data: {
+                sqlId: 'select_grid_statistics_card_info',
+                params: { grid_id: resData[i].grid_bm }
+              },
+              method: 'post',
+              type: 'db_search'
+            }
+            fetchData(query01)
+              .then((res) => {
+                const resData01 = res.data.data
+                console.log(resData01)
+                if (resData01 === null) {
+                  resData[i].cardNumber = '0'
+                } else {
+                  resData[i].cardNumber = resData01.length + ''
+                }
+              })
+              .catch((error) => {
+                console.log(error)
+              })
+          }
+          this.data = resData
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    /**
+     * 界面关闭移除表单内容
+     */
+    addDialog: function (newQuestion, oldQuestion) {
+      if (this.addDialog === false) {
+        this.queryName = ''
+      }
     }
   }
 }
 </script>
-<style lang="scss" scoped>
-/*设置奇数行颜色*/
-table tr:nth-child(odd)
-{
-    background: #F8F8FF;
-}
-.selected{
-      color: #4169E1;
-}
+<style>
 </style>

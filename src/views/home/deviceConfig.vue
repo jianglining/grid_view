@@ -21,7 +21,7 @@
         </div>
         <q-tree
           :nodes="simple"
-          node-key="id"
+          node-key="grid_bm"
           selected-color="primary"
           :selected.sync="selected"
           default-expand-all
@@ -32,21 +32,13 @@
       <q-table
         :data="data"
         :columns="columns"
-        row-key="id"
+        row-key="index"
         card-style="margin:15px;height:85vh"
         no-data-label="暂无数据"
         :selected-rows-label="getSelectedString"
         selection="multiple"
         :selected.sync="checkSelect"
       >
-        <!-- <template v-slot:top-right>
-        <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
-        <q-btn class="q-ml-sm" color="teal-7" :disable="loading" label="删除" @click="removeRow" />
-        </template>-->
-
-        <!-- <template v-slot:bottom>
-        <q-btn color="primary" label="修改网格" />
-        </template>-->
       </q-table>
           <div class="q-mt-md">
       Selected: {{ JSON.stringify(checkSelect) }}
@@ -62,26 +54,14 @@ export default {
     return {
       splitterModel: 20,
       selected: '',
-      totalNode: [],
       checkSelect: [],
-      addIsEnable: '',
       gridNodeSearch: '',
-      gridForm: {
-        name: '',
-        code: '',
-        parentNode: '',
-        location: '',
-        isEnable: ''
-      },
-      treeNode: [],
-      simple: [
-        {
-          label: '网格节点',
-          icon: 'share',
-          id: '0',
-          children: []
-        }
-      ],
+      simple: [{
+        label: '网格节点',
+        icon: 'share',
+        grid_bm: '-1',
+        children: []
+      }],
       columns: [
         {
           name: 'grid_name',
@@ -93,13 +73,13 @@ export default {
         {
           name: 'equipment_id',
           align: 'center',
-          label: '网格位置',
+          label: '设备ID',
           field: 'equipment_id'
         },
         {
           name: 'equipment_name',
           align: 'center',
-          label: '是否启用',
+          label: '设备名称',
           field: 'equipment_name'
         }
       ],
@@ -126,65 +106,41 @@ export default {
      * 获取网格节点
      */
     getTreeNode () {
-      const query = {
-        url: 'api/dbsource/queryByParamKey',
-        data: {
-          sqlId: 'select_grid_info_tree',
-          whereId: '0',
-          params: { grid_name: '' }
-        },
-        method: 'post',
-        type: 'db_search'
-      }
-      fetchData(query)
-        .then((res) => {
-          const resData = res.data.data
-          for (let i = 0; i < resData.length; i++) {
-            // 添加label属性
-            resData[i].label = resData[i].grid_name
-          }
-          console.log(resData)
-          // 树节点数据绑定
-          this.simple[0].children = resData
-          console.log(this.simple)
-          // 表格数据绑定
-          //   this.data = resData
-        })
-        .catch((error) => {
-          console.log(error)
-        })
+      this.createTree(this.simple)
     },
-    findChildrenNode (gridId, query) {
-      for (let i = 0; i < query.length; i++) {
-        var childrenNode = []
-        if (query.grid_bm === gridId) {
-          childrenNode.push(query[i])
+    createTree (params) {
+      console.log(params)
+      for (let i = 0; i < params.length; i++) {
+        const query = {
+          url: 'api/dbsource/queryByParamKey',
+          data: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: params[i].grid_bm } },
+          method: 'post',
+          type: 'db_search'
         }
+        fetchData(query)
+          .then((res) => {
+            const resData = res.data.data
+            // 如果子树为空，停止查询
+            if (resData.length === 0) {
+              return
+            }
+            for (let i = 0; i < resData.length; i++) {
+            // 添加label属性
+              resData[i].label = resData[i].grid_name
+            }
+            params[i].children = resData
+            // 递归查询子树
+            this.createTree(params[i].children)
+
+            if (params[i].children.length > 0) {
+              params[i].icon = 'share'
+            }
+          })
+
+          .catch((error) => {
+            console.log(error)
+          })
       }
-    },
-    /**
-     * 获取全部节点
-     */
-    getAllNode () {
-      const query = {
-        url: 'api/dbsource/queryByParamKey',
-        data: {
-          sqlId: 'select_grid_info_tree',
-          whereId: '0',
-          params: { grid_name: '' }
-        },
-        method: 'post',
-        type: 'db_search'
-      }
-      fetchData(query)
-        .then((res) => {
-          var a = this.getTreeMenu(null, null)
-          console.log(a)
-          console.log(res)
-        })
-        .catch((error) => {
-          console.log(error)
-        })
     },
     getSelectedString () {
       return this.selected.length === 0 ? '' : `${this.selected.length} record${this.selected.length > 1 ? 's' : ''} selected of ${this.data.length}`
@@ -214,8 +170,11 @@ export default {
       }
       fetchData(query)
         .then((res) => {
-          console.log(res)
           const resData = res.data.data.data
+          for (let i = 0; i < resData.length; i++) {
+            // index为表格唯一标识
+            resData[i].index = i
+          }
           this.data = resData
         })
         .catch((error) => {

@@ -163,6 +163,7 @@
         row-key="id"
         card-style="margin:15px;height:85vh"
         no-data-label="暂无数据"
+              table-header-class="bg-blue-8 text-white"
         :filter="queryName || enableType"
       >
         <!-- <template v-slot:top-right>
@@ -310,36 +311,45 @@ export default {
       // }, function (err) {
       //   console.log('后端数据访问出错!', err)
       // })
-      const query = {
-        url: 'api/dbsource/queryByParamKey',
-        data: {
-          sqlId: 'select_grid_info',
-          whereId: '2',
-          orderId: '0',
-          params: { parent_bm: '-1' },
-          minRow: 0,
-          maxRow: 19
-        },
-        method: 'post',
-        type: 'db_search'
-      }
-      fetchData(query)
-        .then((res) => {
-          console.log(res)
-          const resData = res.data.data.data
-          for (let i = 0; i < resData.length; i++) {
+      // 构建树
+      this.createTree(this.simple)
+    },
+    /**
+     * 构建树
+     */
+    createTree (params) {
+      console.log(params)
+      for (let i = 0; i < params.length; i++) {
+        const query = {
+          url: 'api/dbsource/queryByParamKey',
+          data: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: params[i].grid_bm } },
+          method: 'post',
+          type: 'db_search'
+        }
+        fetchData(query)
+          .then((res) => {
+            const resData = res.data.data
+            // 如果子树为空，停止查询
+            if (resData.length === 0) {
+              return
+            }
+            for (let i = 0; i < resData.length; i++) {
             // 添加label属性
-            resData[i].label = resData[i].grid_name
-          }
-          console.log(resData)
-          // 树节点数据绑定
-          this.simple[0].children = resData
-          // 表格数据绑定
-          this.data = resData
-        })
-        .catch((error) => {
-          console.log(error)
-        })
+              resData[i].label = resData[i].grid_name
+            }
+            params[i].children = resData
+            // 递归查询子树
+            this.createTree(params[i].children)
+            // 设置含有子树的节点的图标
+            if (params[i].children.length > 0) {
+              params[i].icon = 'share'
+            }
+          })
+
+          .catch((error) => {
+            console.log(error)
+          })
+      }
     },
     /**
      * 添加网格前置操作
