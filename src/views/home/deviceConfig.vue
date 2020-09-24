@@ -37,6 +37,7 @@
         no-data-label="暂无数据"
         :selected-rows-label="getSelectedString"
         selection="multiple"
+        table-header-class="bg-blue-8 text-white"
         :selected.sync="checkSelect"
       >
       </q-table>
@@ -131,7 +132,7 @@ export default {
             params[i].children = resData
             // 递归查询子树
             this.createTree(params[i].children)
-
+            // 设置含有子树的节点的图标
             if (params[i].children.length > 0) {
               params[i].icon = 'share'
             }

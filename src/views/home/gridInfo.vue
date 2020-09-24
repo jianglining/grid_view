@@ -14,7 +14,7 @@
               <q-input
                 filled
                 label="网格名称"
-                v-model="gridForm.name"
+                v-model="gridForm.grid_name"
                 outlined
                 autogrow
                 dense
@@ -35,18 +35,14 @@
 
               <q-input
                 filled
-                type="text"
-                v-model="gridForm.code"
+                v-model="gridForm.grid_bm"
                 outlined
                 autogrow
                 dense
                 style="width:400px"
                 label="网格编码"
                 lazy-rules
-                :rules="[
-          val => val !== null && val !== '' || '请输入正确的网格编码',
-          val => val > 0 && val < 100 || '请输入正确的网格编码'
-        ]"
+                :rules="[ val => val && val.length > 0 || '请输入正确的网格名称']"
               >
                 <template v-slot:before>
                   <span
@@ -62,8 +58,10 @@
                 style="width: 400px"
                 standout="bg-blue-6 text-white"
                 label="父节点"
-                v-model="gridForm.parentNode"
+                v-model="gridForm.parent_bm"
                 :options="choose"
+                option-label="label"
+                option-value="value"
                 :dense="dense"
                 :options-dense="denseOpts"
               >
@@ -85,10 +83,7 @@
                 label="网格位置"
                 lazy-rules
                 style="width:400px"
-                :rules="[
-          val => val !== null && val !== '' || '请输入正确的网格位置',
-          val => val > 0 && val < 100 || '请输入正确的网格位置'
-        ]"
+                :rules="[ val => val && val.length > 0 || '请输入正确的网格名称']"
               >
                 <template v-slot:before>
                   <span
@@ -104,8 +99,10 @@
                 style="width: 400px"
                 standout="bg-blue-6 text-white"
                 label="是否启用"
-                v-model="gridForm.isEnable"
-                :options="choose"
+                v-model="gridForm.is_enable"
+                :options="chooseType"
+                option-value="value"
+                option-label="label"
                 :dense="dense"
                 :options-dense="denseOpts"
               >
@@ -163,8 +160,8 @@
         row-key="id"
         card-style="margin:15px;height:85vh"
         no-data-label="暂无数据"
-              table-header-class="bg-blue-8 text-white"
-        :filter="queryName || enableType"
+        table-header-class="bg-blue-8 text-white"
+        :filter="queryName"
       >
         <!-- <template v-slot:top-right>
         <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
@@ -177,7 +174,7 @@
             <q-td key="start_type" :props="props">{{ props.row.start_type }}</q-td>
             <q-td key="cz" :props="props">
               <!-- <span><q-btn dense color="red" label="删除"  icon="highlight_off" size="8px" @click="delRecord(props.row)"/></span> -->
-              <q-btn color="primary" label="修改网格" @click="update(props.row)"/>
+              <q-btn color="primary" label="修改网格" @click="update(props.row)" />
             </q-td>
           </q-tr>
         </template>
@@ -193,13 +190,14 @@
               class="q-ml-md"
               label-color="primary"
             />
-
             <q-select
               style="width: 265px;margin-left: 10px"
               standout="bg-blue-6 text-white"
               label="启用类型"
-              v-model="enableType"
-              :options="choose"
+              v-model="enable_type"
+              :options="chooseType"
+              option-value="value"
+              option-label="label"
               :dense="dense"
               :options-dense="denseOpts"
             >
@@ -226,32 +224,51 @@ export default {
       splitterModel: 20,
       // 选择的节点
       selected: '',
+      queryType: '',
       totalNode: [],
       addDialog: false,
       queryName: '',
-      enableType: null,
+      enable_type: '',
       addIsEnable: '',
       // 父节点数据
       choose: [],
+      parseNode: [],
+      noModify: {},
+      chooseType: [
+        { label: '启用', value: '0' },
+        { label: '不启用', value: '1' }
+      ],
       dense: true,
       denseOpts: true,
       // 网格节点查询数据
       gridNodeSearch: '',
       // 表单数据
       gridForm: {
-        name: '',
-        code: '',
-        parentNode: '',
+        id: '',
+        grid_name: '',
+        parent_bm: '',
+        parent_name: '',
+        is_enable: '',
+        start_type: '',
         location: '',
-        isEnable: ''
+        grid_bm: '',
+        create_by: '',
+        create_name: '',
+        create_time: '',
+        update_by: '',
+        update_name: '',
+        update_time: '',
+        node_bm: ''
       },
       // 树
-      simple: [{
-        label: '网格节点',
-        icon: 'share',
-        grid_bm: '-1',
-        children: []
-      }],
+      simple: [
+        {
+          label: '网格节点',
+          icon: 'share',
+          grid_bm: '-1',
+          children: []
+        }
+      ],
       // 表格（每列标题）数据
       columns: [
         {
@@ -280,6 +297,8 @@ export default {
   mounted () {
     // 获取网格节点菜单
     this.getTreeNode()
+    // 初始化表格数据
+    this.selected = '-1'
     // this.getAllNode()
   },
   methods: {
@@ -318,11 +337,15 @@ export default {
      * 构建树
      */
     createTree (params) {
-      console.log(params)
       for (let i = 0; i < params.length; i++) {
         const query = {
           url: 'api/dbsource/queryByParamKey',
-          data: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: params[i].grid_bm } },
+          data: {
+            sqlId: 'select_grid_info',
+            whereId: '2',
+            orderId: '0',
+            params: { parent_bm: params[i].grid_bm }
+          },
           method: 'post',
           type: 'db_search'
         }
@@ -334,7 +357,7 @@ export default {
               return
             }
             for (let i = 0; i < resData.length; i++) {
-            // 添加label属性
+              // 添加label属性
               resData[i].label = resData[i].grid_name
             }
             params[i].children = resData
@@ -359,9 +382,35 @@ export default {
     addGrid () {
       this.addDialog = true
       this.choose = []
+      this.queryType = 'insert_grid_info'
+      this.renderParentNode()
+    },
+    /**
+     * 修改网格前置操作
+     */
+    update (params) {
+      this.noModify = params
+      this.queryType = 'update_grid_info'
+      this.addDialog = true
+      this.gridForm.grid_name = params.grid_name
+      this.gridForm.grid_bm = params.grid_bm
+      this.gridForm.location = params.location
+      this.gridForm.is_enable = params.is_enable === '0' ? '启用' : '不启用'
+      this.renderParentNode()
+      // var updateParams = [{ sqlId: 'update_grid_info', params: [{ id: 'a6e216a7-8fc8-418a-8fc8-59b2104ac449', grid_name: 'AB门入口', parent_bm: '1', parent_name: 'AB门车行通道', is_enable: '0', start_type: '启用', location: 'AB门入口', grid_bm: '2', create_by: '', create_name: '', create_time: '', update_by: '', update_name: '', update_time: '', node_bm: '2' }] }]
+      // var updateParams = [{ sqlId: 'insert_grid_info', params: [{ id: 'c56659ad-9f30-4b43-b7c9-5bada879c41f', grid_name: '01', parent_bm: '-1', parent_name: 'AB门测试', is_enable: '0', start_type: '启用', location: '3', grid_bm: '004', create_by: '', create_name: '', create_time: '', update_by: '', update_name: '', update_time: '', node_bm: '' }] }]
+    },
+    /**
+     * 渲染父节点
+     */
+    renderParentNode () {
       const query = {
         url: 'api/dbsource/queryByParamKey',
-        data: { sqlId: 'select_grid_info_tree', whereId: '0', params: { grid_name: '' } },
+        data: {
+          sqlId: 'select_grid_info_tree',
+          whereId: '0',
+          params: { grid_name: '' }
+        },
         method: 'post',
         type: 'db_search'
       }
@@ -369,33 +418,34 @@ export default {
         .then((res) => {
           const resData = res.data.data
           for (let i = 0; i < resData.length; i++) {
+            var sel = { label: '', value: '' }
             // 追加父节点数据
-            this.choose.push(resData[i].grid_name)
+            sel.label = resData[i].grid_name
+            sel.value = resData[i].id
+            this.choose.push(sel)
+            if (this.noModify.parent_bm === resData[i].id) {
+              this.gridForm.parent_bm = resData[i].grid_name
+            }
+            if (this.noModify.parent_bm === '-1') {
+              this.gridForm.parent_bm = '当前无父节点'
+            }
           }
-          console.log(resData)
         })
         .catch((error) => {
           console.log(error)
         })
     },
-    update (params) {
-      console.log(params)
-      this.addDialog = true
-      this.gridForm.name = params.grid_name
-      this.gridForm.code = params.grid_bm
-      this.gridForm.parentNode = params.parent_bm
-      this.gridForm.location = params.location
-      this.gridForm.isEnable = (params.is_enable === '0') ? '启用' : '不启用'
-    },
     /**
      * 移除表单内容
      */
     removeGridForm () {
-      this.gridForm.name = ''
-      this.gridForm.code = ''
-      this.gridForm.parentNode = ''
+      this.gridForm.grid_name = ''
+      this.gridForm.grid_bm = ''
+      this.gridForm.parent_bm = ''
       this.gridForm.location = ''
-      this.gridForm.isEnable = ''
+      this.gridForm.is_enable = ''
+      this.noModify = {}
+      this.choose = []
     },
     /**
      * 获取全部网格节点
@@ -403,13 +453,16 @@ export default {
     getAllNode () {
       const query = {
         url: 'api/dbsource/queryByParamKey',
-        data: { sqlId: 'select_grid_info_tree', whereId: '0', params: { grid_name: '' } },
+        data: {
+          sqlId: 'select_grid_info_tree',
+          whereId: '0',
+          params: { grid_name: '' }
+        },
         method: 'post',
         type: 'db_search'
       }
       fetchData(query)
-        .then((res) => {
-        })
+        .then((res) => {})
         .catch((error) => {
           console.log(error)
         })
@@ -419,7 +472,58 @@ export default {
       this.queryName = ''
       this.enableType = ''
     },
-    onSubmit () {},
+    onSubmit () {
+      // vue 处理__ob__: Observer 的数组
+      const t = JSON.parse(JSON.stringify(this.gridForm.is_enable))
+      const v = JSON.parse(JSON.stringify(this.gridForm.parent_bm))
+      console.log(t, v)
+      this.gridForm.is_enable = t.value
+      this.gridForm.start_type = t.label
+      this.gridForm.parent_bm = v.value
+      this.gridForm.parent_name = v.label
+      if (t.value === undefined) {
+        this.gridForm.start_type = t
+        if (t === '启用') {
+          this.gridForm.id = this.noModify.id
+          this.gridForm.is_enable = '0'
+        } else {
+          this.gridForm.is_enable = '1'
+        }
+      }
+      if (v.value === undefined) {
+        this.gridForm.parent_name = v
+      }
+      this.gridForm.parent_bm = this.noModify.parent_bm
+      // var params = []
+      // params.push(this.gridForm)
+      // console.log('params', params)
+      // if (this.gridForm.is_enable === '0') {
+      //   this.gridForm.start_type = '是'
+      // } else {
+      //   this.gridForm.start_type = '否'
+      // }
+      // var updateParams = [{ sqlId: 'insert_grid_info', params: [{ id: 'c56659ad-9f30-4b43-b7c9-5bada879c41f', grid_name: '01', parent_bm: '-1', parent_name: 'AB门测试', is_enable: '0', start_type: '启用', location: '3', grid_bm: '004', create_by: '', create_name: '', create_time: '', update_by: '', update_name: '', update_time: '', node_bm: '' }] }]
+
+      // const query = {
+      //   url: 'api/dbsource/updateByParamKey',
+      //   data: [{
+      //     sqlId: 'insert_grid_info',
+      //     params: [this.gridForm]
+      //   }],
+      //   method: 'post',
+      //   type: 'db_search'
+      // }
+      // fetchData(query)
+      //   .then((res) => {
+      //     console.log(res)
+      //     this.getTreeNode()
+      //     this.addDialog = false
+      //   })
+      //   .catch((error) => {
+      //     console.log(error)
+      //   })
+      console.log(this.gridForm)
+    },
     onReset () {}
   },
   watch: {
@@ -444,7 +548,6 @@ export default {
       }
       fetchData(query)
         .then((res) => {
-          console.log(res)
           const resData = res.data.data.data
           this.data = resData
         })

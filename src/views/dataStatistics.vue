@@ -65,7 +65,7 @@
         </div>
         <q-tree
           :nodes="simple"
-          node-key="grid_bm"
+          node-key="id"
           selected-color="primary"
           :selected.sync="selected"
           default-expand-all
@@ -78,6 +78,7 @@
         :columns="columns"
         row-key="id"
         card-style="margin:15px;height:85vh"
+        table-header-class="bg-blue-8 text-white"
         no-data-label="暂无数据"
       >
         <!-- <template v-slot:top-right>
@@ -132,6 +133,7 @@ export default {
           label: '网格节点',
           icon: 'share',
           grid_bm: '-1',
+          id: '-1',
           children: []
         }
       ],
@@ -200,12 +202,55 @@ export default {
     getTreeNode () {
       // 构建树
       this.createTree(this.simple)
+
+      /**
+       * 初始化表格数据
+       */
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: { sqlId: 'select_grid_info_tree', whereId: '0', params: { grid_name: '' } },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data
+          for (let i = 0; i < resData.length; i++) {
+            resData[i].cardNumber = '0'
+            // 添加label属性
+            resData[i].label = resData[i].grid_name
+            const query01 = {
+              url: 'api/dbsource/queryByParamKey',
+              data: {
+                sqlId: 'select_grid_statistics_card_info',
+                params: { grid_id: resData[i].id }
+              },
+              method: 'post',
+              type: 'db_search'
+            }
+            fetchData(query01)
+              .then((res) => {
+                const resData01 = res.data.data
+                if (resData01 === null) {
+                  resData[i].cardNumber = '0'
+                } else {
+                  resData[i].cardNumber = resData01.length + ''
+                }
+              })
+              .catch((error) => {
+                console.log(error)
+              })
+          }
+          this.data = resData
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     },
     /**
      * 构建树
      */
     createTree (params) {
-      console.log(params)
       for (let i = 0; i < params.length; i++) {
         const query = {
           url: 'api/dbsource/queryByParamKey',
@@ -296,15 +341,8 @@ export default {
         .catch((error) => {
           console.log(error)
         })
-    }
-  },
-  watch: {
-    // 监听事件，左侧节点菜单点击事件
-    selected: function (newQuestion, oldQuestion) {
-      // this.$router.push({ path: '/about' })
-      if (this.selected === null) {
-        this.selected = oldQuestion
-      }
+    },
+    renderData (params) {
       const query = {
         url: 'api/dbsource/queryByParamKey',
         data: {
@@ -315,6 +353,60 @@ export default {
           minRow: 0,
           maxRow: 19
         },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          console.log(res)
+          const resData = res.data.data.data
+          for (let i = 0; i < resData.length; i++) {
+            resData[i].cardNumber = '0'
+            // 添加label属性
+            resData[i].label = resData[i].grid_name
+            const query01 = {
+              url: 'api/dbsource/queryByParamKey',
+              data: {
+                sqlId: 'select_grid_statistics_card_info',
+                params: { grid_id: resData[i].grid_bm }
+              },
+              method: 'post',
+              type: 'db_search'
+            }
+            fetchData(query01)
+              .then((res) => {
+                const resData01 = res.data.data
+                console.log(resData01)
+                if (resData01 === null) {
+                  resData[i].cardNumber = '0'
+                } else {
+                  resData[i].cardNumber = resData01.length + ''
+                }
+              })
+              .catch((error) => {
+                console.log(error)
+              })
+          }
+          this.data = resData
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    }
+  },
+  watch: {
+    // 监听事件，左侧节点菜单点击事件
+    selected: function (newQuestion, oldQuestion) {
+      // this.$router.push({ path: '/about' })
+      if (this.selected === null) {
+        this.selected = oldQuestion
+      }
+      if (this.selected === '-1') {
+        return
+      }
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: { sqlId: 'select_grid_info', whereId: '1', params: { id: this.selected }, minRow: 0, maxRow: 19 },
         method: 'post',
         type: 'db_search'
       }
