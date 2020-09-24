@@ -1,0 +1,29 @@
+/*设置奇数行颜色*/
+.my-sticky-header-table tr:nth-child(odd){
+    background: #F8F8FF
+  }
+/*固定头部标题*/
+.my-sticky-header-table thead tr th {
+  position: sticky;
+  z-index: 1;
+}
+.my-sticky-header-table thead tr:first-child th {
+  top: 0;
+}
+/*多选框颜色*/
+.my-sticky-header-table .q-checkbox__inner .q-checkbox__bg{
+    border: 1px solid #1976d2;
+    outline: 1px solid white;
+}
+.my-sticky-header-table .q-checkbox__inner--truthy .q-checkbox__bg{
+    background: #1976d2;
+    border: 1px solid #1976d2;
+}
+.my-sticky-header-table .q-checkbox__inner--indet .q-checkbox__bg{
+    background: #1976d2;
+    border: 0px solid #1976d2;
+}
+/*选中后字体颜色改变*/
+.my-sticky-header-table .selected{
+      color:#1976d2;
+}

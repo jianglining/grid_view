@@ -6,7 +6,7 @@
       rowsNumber=100
       row-key="rn"
       :filter="filter"
-      class="table"
+      class="my-sticky-header-table"
       virtual-scroll
       separator="cell"
       card-style="height:85vh"
@@ -42,7 +42,7 @@
           dense
           label="重置"
           unelevated
-          icon="navigation"
+           icon="refresh"
           @click="reset()"
           style="float:left;height:37px;width:80px;margin-right:10px"/>
      </template>
@@ -125,7 +125,9 @@ export default {
     this.getList()
   },
   methods: {
-    // 查询
+    /**
+     * 查询
+     */
     search () {
       if (this.filterForm.cardNumber === '') {
         this.$q.notify({
@@ -149,7 +151,9 @@ export default {
         })
       }
     },
-    // 重置
+    /**
+     * 重置
+     */
     reset () {
       this.$q.notify({
         message: '正在重置中......',
@@ -160,7 +164,10 @@ export default {
       this.filterForm.cardNumber = ''
       this.data = this.basicData
     },
-    // 查看详情
+    /**
+     * 双击查看详情
+     * @param s 该行的数组
+     */
     look (s) {
       this.prompt = true
       this.devicename = s.devicename
@@ -170,15 +177,24 @@ export default {
       this.requesttime = s.requesttime
       this.identifier = s.identifier
     },
-    // 获取分页标签
+    /**
+     * 重写分页标签
+     * @param firstRowIndex 第一条下标
+     * @param endRowIndex 最后一条下标
+     * @param totalRowsNumber 总条数下标
+     */
     getPaginationLabel (firstRowIndex, endRowIndex, totalRowsNumber) {
       return '显示 ' + firstRowIndex + ' ~ ' + endRowIndex + ' 条记录，总共' + totalRowsNumber + ' 条'
     },
-    // 选中的记录
+    /**
+     * 重写选中显示的文字
+     */
     getSelectedString (numberOfRows) {
       return '共选中' + numberOfRows + '条记录'
     },
-    // 数据访问
+    /**
+     * 数据访问
+     */
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
       this.$axios({
         method: 'post',
@@ -189,7 +205,9 @@ export default {
         .then(successCallback)
         .catch(errorCallback)
     },
-    // 获取数据
+    /**
+     * 获取数据
+     */
     getList () {
       var that = this
       var url = '/api/dbsource/queryByParamKey'
@@ -227,7 +245,6 @@ export default {
       dense: false,
       prompt: false,
       columns: [
-        // { name: 'select', align: 'center' },
         { name: 'card_number', align: 'center', label: '卡号', field: 'card_number' },
         { name: 'equipment_name', required: true, label: '备注名称', align: 'center', field: 'equipment_name' },
         { name: 'message', label: '动作消息', align: 'center', field: 'message' },
@@ -240,14 +257,6 @@ export default {
   }
 }
 </script>
-<style lang="scss" scoped>
-/*设置奇数行颜色*/
-table tr:nth-child(odd)
-{
-    background: #F8F8FF;
-}
-/*选中后字体颜色改变*/
-.selected{
-      color: #4169E1;
-}
+<style>
+@import "../assets/css/tableStyle.css";
 </style>
