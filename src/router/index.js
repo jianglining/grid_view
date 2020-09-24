@@ -144,15 +144,15 @@ const routes = [
         component: () => import('../views/scene/SceneConfig.vue')
       },
       {
-        path: '/test',
-        name: 'test',
+        path: '/eventAnalysis',
+        name: 'EventAnalysis',
         hidden: false,
         meta: {
           title: '测试',
           icon: 'inbox',
           noCache: true
         },
-        component: () => import('../views/test.vue')
+        component: () => import('../views/Events/EventAnalysis.vue')
       },
       {
         path: '/wl',
