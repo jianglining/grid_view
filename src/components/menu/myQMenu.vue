@@ -182,6 +182,7 @@ export default {
               name: '事件行为',
               css: '',
               url: '/api-alarm/pages/openservice/openapi.html',
+              path: '/eventBehavior',
               sort: 1004001,
               createTime: '2020-08-13T05:25:07.000+0000',
               updateTime: '2020-08-13T05:25:07.000+0000',

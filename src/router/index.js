@@ -155,6 +155,17 @@ const routes = [
         component: () => import('../views/Events/EventAnalysis.vue')
       },
       {
+        path: '/eventBehavior',
+        name: 'EventBehavior',
+        hidden: false,
+        meta: {
+          title: '事件行为',
+          icon: 'inbox',
+          noCache: true
+        },
+        component: () => import('../views/Events/EventBehavior.vue')
+      },
+      {
         path: '/wl',
         name: 'wl',
         hidden: false,
