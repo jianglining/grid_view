@@ -3,9 +3,13 @@
     <q-table
       :data="data"
       :columns="columns"
-      row-key="id"
+      row-key="rn"
+      class="my-sticky-header-table"
       :filter="filter"
       virtual-scroll
+      selection="multiple"
+      :selected.sync="selected"
+      :selected-rows-label="getSelectedString"
       separator="cell"
       card-style="height:85vh"
       pagination.sync="selected"
@@ -43,7 +47,7 @@
           dense
           label="重置"
           unelevated
-          icon="navigation"
+          icon="refresh"
           @click="reset()"
           style="float:left;height:37px;width:80px;margin-right:10px"/>
           <!-- <q-btn
@@ -54,16 +58,16 @@
           icon="add"
           style="float:left;height:37px;width:180px"/> -->
      </template>
-     <template v-slot:header-cell-select="props" >
+     <!-- <template v-slot:header-cell-select="props" >
         <q-th :props="props"  >
           <input type="checkbox" @click="selectAll"  :checked ="checked" style="zoom: 160%;"/>
         </q-th>
-     </template>
+     </template> -->
      <!--表格内容-->
     <template v-slot:body="props">
         <q-tr  :props="props" :class="{ 'selected': changeColor }" >
-          <q-td align="center" @dblclick="look(props.row)">
-            <input type="checkbox" style="zoom: 160%;" @click="change($event,props.row)" :checked ="checked" v-model="selected" :value="props.row.rn" dense  size="45px"/>
+          <q-td @dblclick="look(props.row)">
+            <q-checkbox key="props.row.rn" v-model="props.selected"/>
           </q-td>
 
           <q-td key="equipment_name" :props="props" @dblclick="look(props.row)">
@@ -132,18 +136,6 @@
 </template>
 <script>
 export default {
-  watch: {
-    // 监听选中事件
-    selected (curVal) {
-      if (this.selected !== undefined && this.selected.length > 0 && curVal.length === this.data.length) {
-        this.checked = true
-        this.changeColor = true
-      } else {
-        this.checked = false
-        this.changeColor = false
-      }
-    }
-  },
   mounted () {
     this.getList()
   },
@@ -161,7 +153,7 @@ export default {
         })
       } else if (this.filterForm.deviceName !== '' && this.filterForm.status !== '') {
         this.data = this.basicData.filter(item => {
-          if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1 && item.equipment_state.indexOf(this.filterForm.status) !== -1) {
+          if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1 && item.alarm_level.indexOf(this.filterForm.status) !== -1) {
             return item
           }
         })
@@ -179,25 +171,6 @@ export default {
         })
       }
     },
-    // 改变颜色
-    change (e, r) {
-      if (e.target.checked === true) {
-        this.changeColor = true
-      } else {
-        this.changeColor = false
-      }
-    },
-    // 全选
-    selectAll (event) {
-      if (!event.currentTarget.checked) {
-        this.selected = []
-      } else { // 实现全选
-        this.selected = []
-        this.data.forEach((item, i) => {
-          this.selected.push(this.data[i].rn)
-        })
-      }
-    },
     // 重置
     reset () {
       this.filterForm.deviceName = ''
@@ -212,6 +185,12 @@ export default {
       this.alarm_describe = s.alarm_describe
       this.alarm_time = s.alarm_time
       this.alarm_status = s.alarm_status
+    },
+    /**
+     * 重写选中显示的文字
+     */
+    getSelectedString (numberOfRows) {
+      return '共选中' + numberOfRows + '条记录'
     },
     getPaginationLabel (firstRowIndex, endRowIndex, totalRowsNumber) {
       return '显示 ' + firstRowIndex + ' ~ ' + endRowIndex + ' 条记录，总共' + totalRowsNumber + ' 条'
@@ -270,7 +249,6 @@ export default {
         '1', '2', '3', '四级', '五级', '六级', '七级', '八级', '九级', '十级'
       ],
       columns: [
-        { name: 'select', align: 'center' },
         { name: 'equipment_name', align: 'center', label: '设备名称', field: 'equipment_name' },
         { name: 'alarm_describe', align: 'center', label: '告警记录', field: row => row.alarm_describe },
         { name: 'alarm_status', align: 'center', label: '告警等级', field: 'alarm_status' },
@@ -282,13 +260,6 @@ export default {
   }
 }
 </script>
-<style lang="scss" scoped>
-/*设置奇数行颜色*/
-table tr:nth-child(odd)
-{
-    background: #F8F8FF;
-}
-.selected{
-      color: #4169E1;
-}
+<style>
+@import "../assets/css/tableStyle.css";
 </style>

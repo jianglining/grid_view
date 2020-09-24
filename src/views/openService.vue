@@ -48,7 +48,8 @@
                   <div class="text-h6">
                     <q-input
                       filled
-                      v-model="name"
+                      v-model="api_name"
+                      type="text"
                       label="API名称"
                       outlined
                       autogrow
@@ -64,7 +65,7 @@
                     </q-input>
                     <q-input
                       filled
-                      v-model="text"
+                      v-model="api_description"
                       type="textarea"
                       label="API说明"
                       outlined
@@ -78,12 +79,12 @@
                     </q-input>
                   </div>
                 </q-card-section>
+                </form>
 
                 <q-card-actions align="right" class="text-primary">
-                  <q-btn flat label="确定" @click="onsubmit"  />
+                  <q-btn flat label="确定" />
                   <q-btn flat label="取消" v-close-popup />
                 </q-card-actions>
-                </form>
                 </q-card>
               </q-dialog>
               <!-- 编辑 -->
@@ -92,9 +93,9 @@
                 <q-card style="width: 65%;height: 45%">
                 <q-card-section class="bg-light-blue-6">
                   <div class="text-h6">编辑
-                    <q-btn class="float-right" flat icon="close" v-close-popup size="12px"/>
-                    <q-btn class="float-right" flat icon="crop_square" size="12px"/>
-                    <q-btn class="float-right" flat icon="minimize" auto-close size="12px"/>
+                    <q-btn class="float-right" flat icon="close" v-close-popup size="12px" />
+                    <q-btn class="float-right" flat icon="crop_square" size="12px" @click="maximize"/>
+                    <q-btn class="float-right" flat icon="minimize" auto-close size="12px" @click="minimize"/>
                   </div>
                 </q-card-section>
                 <form>
@@ -134,7 +135,7 @@
                 </q-card-section>
 
                 <q-card-actions align="right" class="text-primary">
-                  <q-btn flat label="确定"  @click="submitEdit" />
+                  <q-btn flat label="确定" />
                   <q-btn flat label="取消" v-close-popup />
                 </q-card-actions>
                 </form>
@@ -156,7 +157,7 @@
                 </q-card-section>
 
                 <q-card-actions align="right" class="text-primary">
-                  <q-btn flat label="确定" v-close-popup />
+                  <q-btn flat label="确定" @click="onDelete" />
                   <q-btn flat label="取消" v-close-popup />
                 </q-card-actions>
                 </q-card>
@@ -186,19 +187,71 @@ export default {
       name: '',
       address: '',
       api_name: '',
+      api_description: '',
       text: '',
       selected: '',
       simple: [],
-      detailData: []
+      detailData: [],
+      addData: {
+        id: '',
+        api_name: '',
+        api_description: '',
+        label: ''
+      }
     }
   },
   mounted () {
     this.getList()
   },
+
   methods: {
+    onEdit () {},
     /*
     *  新增按钮响应事件
     */
+    save () {
+      // var that = this
+      this.addData.id = this.id
+      this.addData.api_name = this.api_name
+      this.addData.api_description = this.api_description
+      this.addData.label = this.label
+      var url = '/api/dbsource/updateByParamKey'
+      var data02 = [{ sqlId: 'insert_api_description', params: [{ }] }]
+      // var data01 = { sqlId: 'select_api_description' }
+      data02 = 'args=' + JSON.stringify(data02)
+      // console.log('访问参数：', data01)
+      // 后台数据访问
+      this.dataAccess(url, data02, function (res) {
+        // console.log('后端返回数据结果json：', res.data)
+        // var insertDate = res.data.data.data
+        // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
+        // that.simple = insertDate
+        // // 查看有没有取到的数据
+      }, function (err) {
+        console.log('后端数据访问出错!', err)
+      })
+      this.increase = false
+      location.reload()
+    },
+    /*
+    *  删除按钮事件
+    */
+    onDelete () {
+      var url = '/api/dbsource/updateByParamKey'
+      var data04 = [{ sqlId: 'delete_api_description', params: [{ id: 'this.selected', api_name: '', api_description: '' }] }]
+      data04 = 'args=' + JSON.stringify(data04)
+      // console.log('访问参数：', data01)
+      // 后台数据访问
+      this.dataAccess(url, data04, function (res) {
+        // console.log('后端返回数据结果json：', res.data)
+        // var insertDate = res.data.data.data
+        // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
+      }, function (err) {
+        console.log('后端数据访问出错!', err)
+      })
+      this.deleted = false
+      location.reload()
+    },
     onsubmit () {
       if (this.text === '') {
         alert('请输入事件行为识别')
@@ -249,6 +302,27 @@ export default {
       }, function (err) {
         console.log('后端数据访问出错!', err)
       })
+    },
+    minimize () {
+      if (process.env.MODE === 'electron') {
+        this.$q.electron.remote.BrowserWindow.getFocusedWindow().minimize()
+      }
+    },
+    maximize () {
+      if (process.env.MODE === 'electron') {
+        const win = this.$q.electron.remote.BrowserWindow.getFocusedWindow()
+
+        if (win.isMaximized()) {
+          win.unmaximize()
+        } else {
+          win.maximize()
+        }
+      }
+    },
+    closeApp () {
+      if (process.env.MODE === 'electron') {
+        this.$q.electron.remote.BrowserWindow.getFocusedWindow().close()
+      }
     }
   },
   /*
@@ -256,7 +330,7 @@ export default {
   */
   watch: {
     selected: function (newData, oldData) {
-      // console.log(this.selected)
+      console.log(this.selected)
       // console.log(this.simple)
       for (let i = 0; i < this.simple.length; i++) {
         if (this.simple[i].id === this.selected) {
