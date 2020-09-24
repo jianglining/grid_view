@@ -6,6 +6,7 @@
       rowsNumber=100
       row-key="rn"
       :filter="filter"
+      :loading="loading"
       class="my-sticky-header-table"
       virtual-scroll
       separator="cell"
@@ -116,6 +117,34 @@
         </q-card>
       </q-dialog>
       </template>
+      <template v-slot:bottom class="justify-end">
+        <div class="foot q-pa-md flex flex-center">
+          <span>
+            {{ pagination.rowsPerPage }}条/页 共
+            {{ pagination.rowsNumber }}
+            条数据
+          </span>
+          <q-pagination
+            v-model="pagination.page"
+            :max="pages"
+            :max-pages="5"
+            ellipsess
+            :direction-links="true"
+            @input="changePagination"
+          >
+          </q-pagination>
+          <span>跳至 </span>
+          <q-input
+            outlined
+            v-model="toPage"
+            dense
+            class="pagination-input"
+            @input="changeToPage"
+            @keyup.enter.native="refreshTableData"
+          ></q-input>
+          <span> 页</span>
+        </div>
+      </template>
     </q-table>
     </div>
 </template>
@@ -206,12 +235,12 @@ export default {
         .catch(errorCallback)
     },
     /**
-     * 获取数据
+     * 数据访问
      */
     getList () {
       var that = this
       var url = '/api/dbsource/queryByParamKey'
-      var data01 = { sqlId: 'select_picketage_info', orderId: '0', params: {}, minRow: 0, maxRow: 94622 }
+      var data01 = { sqlId: 'select_picketage_info', orderId: '0', params: {}, minRow: 0, maxRow: 19 }
       data01 = 'args=' + JSON.stringify(data01)
       console.log('访问参数：', data01)
       // 后台数据访问
@@ -227,11 +256,20 @@ export default {
   },
   data () {
     return {
+      loading: true,
+      pages: 10, // 数据总页数
+      toPage: '', // 跳转至
+      pagination: {
+        sortBy: 'desc',
+        descending: false,
+        page: 1,
+        rowsPerPage: 5,
+        rowsNumber: 50 // 总共数据条数
+      },
       filterForm: {
         cardNumber: ''
       },
       dataLabel: '暂无数据',
-      loading: true,
       requesttime: '',
       message: '',
       changeColor: false,
@@ -257,6 +295,38 @@ export default {
   }
 }
 </script>
-<style>
-@import "../assets/css/tableStyle.css";
+<style lang="sass">
+/*设置奇数行颜色*/
+.my-sticky-header-table tr:nth-child(odd)
+    background: #F8F8FF
+/*固定头部标题*/
+.my-sticky-header-table
+  thead tr th
+    position: sticky
+    z-index: 1
+  thead tr:first-child th
+    top: 0
+.my-sticky-header-table .q-checkbox__inner .q-checkbox__bg
+    border: 1px solid #1976d2
+    outline: 1px solid white
+.my-sticky-header-table .q-checkbox__inner--truthy .q-checkbox__bg
+    background: #1976d2
+    border: 1px solid #1976d2
+    outline: 1px solid white
+.my-sticky-header-table  .q-checkbox__inner--indet .q-checkbox__bg
+    background: #1976d2
+    color: #000
+    border: 0px solid #1976d2
+    outline: 1px solid white
+
+.my-sticky-header-table .pagination-input
+    display: inline-block
+    width: 55px
+    margin-top: 0px
+.my-sticky-header-table  .q-table__bottom
+    justify-content: flex-left
+    height: 80px
+/*选中后字体颜色改变*/
+.my-sticky-header-table .selected
+      color: #4169E1
 </style>
