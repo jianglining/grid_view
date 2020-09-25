@@ -197,7 +197,7 @@ export default {
       })
       this.filterForm.deviceName = ''
       this.filterForm.status = ''
-      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
+      this.getTableData(1, 10, this.filterForm.deviceName, this.filterForm.status)
     },
     /**
      * 双击查看详情
@@ -343,7 +343,7 @@ export default {
       pages: '', // 数据总页数
       toPage: '', // 跳转至
       pagination: {
-        page: '',
+        page: 0,
         rowsPerPage: 10,
         rowsNumber: '' // 总共数据条数
       },
