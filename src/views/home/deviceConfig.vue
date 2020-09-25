@@ -54,7 +54,7 @@ export default {
   data () {
     return {
       splitterModel: 20,
-      selected: '',
+      selected: '-1',
       checkSelect: [],
       gridNodeSearch: '',
       simple: [{
@@ -107,41 +107,79 @@ export default {
      * 获取网格节点
      */
     getTreeNode () {
-      this.createTree(this.simple)
-    },
-    createTree (params) {
-      console.log(params)
-      for (let i = 0; i < params.length; i++) {
-        const query = {
-          url: 'api/dbsource/queryByParamKey',
-          data: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: params[i].grid_bm } },
-          method: 'post',
-          type: 'db_search'
-        }
-        fetchData(query)
-          .then((res) => {
-            const resData = res.data.data
-            // 如果子树为空，停止查询
-            if (resData.length === 0) {
-              return
-            }
-            for (let i = 0; i < resData.length; i++) {
-            // 添加label属性
-              resData[i].label = resData[i].grid_name
-            }
-            params[i].children = resData
-            // 递归查询子树
-            this.createTree(params[i].children)
-            // 设置含有子树的节点的图标
-            if (params[i].children.length > 0) {
-              params[i].icon = 'share'
-            }
-          })
-
-          .catch((error) => {
-            console.log(error)
-          })
+      // 刷新表格数据
+      // this.refreshView()
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info_tree',
+          whereId: '0',
+          params: { grid_name: '' }
+        },
+        method: 'post',
+        type: 'db_search'
       }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data
+          console.log(resData)
+          this.createTree(this.simple, resData)
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    /**
+     * 构建树（节点）
+     */
+    createTree (params, treeData) {
+      // 循环父节点
+      for (let i = 0; i < params.length; i++) {
+        var childrenNode = []
+        // 寻找子节点
+        for (let j = 0; j < treeData.length; j++) {
+          // 设置子节点label
+          treeData[j].label = treeData[j].grid_name
+          // 设置子节点grid_bm （tree的key绑定的是grid_bm）等于id
+          treeData[j].grid_bm = treeData[j].id
+
+          // 判断当前节点是否是子节点
+          if (treeData[j].parent_bm === params[i].grid_bm) {
+            childrenNode.push(treeData[j])
+          }
+        }
+        // 给子节点赋值
+        params[i].children = childrenNode
+        // 如果子节点存在，继续遍历子节点
+        if (params[i].children.length > 0) {
+          params[i].icon = 'share'
+          this.createTree(params[i].children, treeData)
+        }
+      }
+    },
+    refreshView () {
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info',
+          whereId: '2',
+          orderId: '0',
+          params: { parent_bm: this.selected },
+          minRow: 0,
+          maxRow: 19
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data.data
+          console.log(resData)
+          this.data = resData
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     },
     getSelectedString () {
       return this.selected.length === 0 ? '' : `${this.selected.length} record${this.selected.length > 1 ? 's' : ''} selected of ${this.data.length}`

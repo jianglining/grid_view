@@ -116,9 +116,9 @@
                   </span>
                 </template>
               </q-select>
-              <div>
-                <q-btn label="添加" type="submit" color="primary" />
-                <q-btn label="重置" type="reset" color="red" class="q-ml-sm" />
+              <div align="center">
+                <q-btn style="width:30%" label="提交" type="submit" color="primary" />
+                <q-btn style="width:30%" label="重置" type="reset" color="red" class="q-ml-sm" />
               </div>
             </q-form>
           </q-card-section>
@@ -157,11 +157,13 @@
       <q-table
         :data="data"
         :columns="columns"
-        row-key="id"
+        row-key="rn"
         card-style="margin:15px;height:85vh"
         no-data-label="暂无数据"
         table-header-class="bg-blue-8 text-white"
         :filter="queryName"
+        selection="single"
+        :selected.sync="table_select"
       >
         <!-- <template v-slot:top-right>
         <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
@@ -169,6 +171,7 @@
         </template>-->
         <template v-slot:body="props">
           <q-tr :props="props">
+            <q-td><q-checkbox key="rn" v-model="props.selected"></q-checkbox></q-td>
             <q-td key="grid_name" :props="props">{{ props.row.grid_name }}</q-td>
             <q-td key="location" :props="props">{{ props.row.location }}</q-td>
             <q-td key="start_type" :props="props">{{ props.row.start_type }}</q-td>
@@ -205,13 +208,14 @@
                 <q-icon name="event" />
               </template>
             </q-select>
-            <q-btn color="primary" label="查询" icon="search" />
+            <q-btn color="primary" label="查询" icon="search" @click="gridQuery()"/>
             <q-btn color="primary" label="重置" icon="navigation" @click="reset" />
-            <q-btn color="primary" label="删除" icon="delete" />
+            <q-btn color="primary" label="删除" icon="delete"  @click="deletes()"/>
             <q-btn color="primary" label="添加网格" icon="add" @click="addGrid()" />
           </div>
         </template>
       </q-table>
+      <p>{{ table_select }} </p>
     </template>
   </q-splitter>
 </template>
@@ -223,7 +227,7 @@ export default {
     return {
       splitterModel: 20,
       // 选择的节点
-      selected: '',
+      selected: '-1',
       queryType: '',
       totalNode: [],
       addDialog: false,
@@ -232,6 +236,7 @@ export default {
       addIsEnable: '',
       // 父节点数据
       choose: [],
+      table_select: [],
       parseNode: [],
       noModify: {},
       chooseType: [
@@ -297,9 +302,6 @@ export default {
   mounted () {
     // 获取网格节点菜单
     this.getTreeNode()
-    // 初始化表格数据
-    this.selected = '-1'
-    // this.getAllNode()
   },
   methods: {
     // axios方法，获取后台数据
@@ -313,6 +315,9 @@ export default {
       })
         .then(successCallback)
         .catch(errorCallback)
+    },
+    getSelectedString () {
+      return this.selected.length === 0 ? '' : `选中${this.selected.length} 条记录`
     },
     /**
      * 获取网格节点(左菜单)
@@ -331,49 +336,99 @@ export default {
       //   console.log('后端数据访问出错!', err)
       // })
       // 构建树
-      this.createTree(this.simple)
+      // this.createTree(this.simple)
+
+      // 刷新表格数据
+      this.refreshView()
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info_tree',
+          whereId: '0',
+          params: { grid_name: '' }
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data
+          console.log(resData)
+          this.createTree(this.simple, resData)
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    /**
+     * 构建树（节点）
+     */
+    createTree (params, treeData) {
+      // 循环父节点
+      for (let i = 0; i < params.length; i++) {
+        var childrenNode = []
+        // 寻找子节点
+        for (let j = 0; j < treeData.length; j++) {
+          // 设置子节点label
+          treeData[j].label = treeData[j].grid_name
+          // 设置子节点grid_bm （tree的key绑定的是grid_bm）等于id
+          treeData[j].grid_bm = treeData[j].id
+
+          // 判断当前节点是否是子节点
+          if (treeData[j].parent_bm === params[i].grid_bm) {
+            childrenNode.push(treeData[j])
+          }
+        }
+        // 给子节点赋值
+        params[i].children = childrenNode
+        // 如果子节点存在，继续遍历子节点
+        if (params[i].children.length > 0) {
+          params[i].icon = 'share'
+          this.createTree(params[i].children, treeData)
+        }
+      }
     },
     /**
      * 构建树
      */
-    createTree (params) {
-      for (let i = 0; i < params.length; i++) {
-        const query = {
-          url: 'api/dbsource/queryByParamKey',
-          data: {
-            sqlId: 'select_grid_info',
-            whereId: '2',
-            orderId: '0',
-            params: { parent_bm: params[i].grid_bm }
-          },
-          method: 'post',
-          type: 'db_search'
-        }
-        fetchData(query)
-          .then((res) => {
-            const resData = res.data.data
-            // 如果子树为空，停止查询
-            if (resData.length === 0) {
-              return
-            }
-            for (let i = 0; i < resData.length; i++) {
-              // 添加label属性
-              resData[i].label = resData[i].grid_name
-            }
-            params[i].children = resData
-            // 递归查询子树
-            this.createTree(params[i].children)
-            // 设置含有子树的节点的图标
-            if (params[i].children.length > 0) {
-              params[i].icon = 'share'
-            }
-          })
+    // createTree (params) {
+    //   for (let i = 0; i < params.length; i++) {
+    //     const query = {
+    //       url: 'api/dbsource/queryByParamKey',
+    //       data: {
+    //         sqlId: 'select_grid_info',
+    //         whereId: '2',
+    //         orderId: '0',
+    //         params: { parent_bm: params[i].grid_bm }
+    //       },
+    //       method: 'post',
+    //       type: 'db_search'
+    //     }
+    //     fetchData(query)
+    //       .then((res) => {
+    //         const resData = res.data.data
+    //         // 如果子树为空，停止查询
+    //         if (resData.length === 0) {
+    //           return
+    //         }
+    //         for (let i = 0; i < resData.length; i++) {
+    //           // 添加label属性
+    //           resData[i].label = resData[i].grid_name
+    //         }
+    //         params[i].children = resData
+    //         // 递归查询子树
+    //         this.createTree(params[i].children)
+    //         // 设置含有子树的节点的图标
+    //         if (params[i].children.length > 0) {
+    //           params[i].icon = 'share'
+    //         }
+    //       })
 
-          .catch((error) => {
-            console.log(error)
-          })
-      }
-    },
+    //       .catch((error) => {
+    //         console.log(error)
+    //       })
+    //   }
+    // },
     /**
      * 添加网格前置操作
      * 获取更新父节点列表
@@ -401,7 +456,36 @@ export default {
       // var updateParams = [{ sqlId: 'insert_grid_info', params: [{ id: 'c56659ad-9f30-4b43-b7c9-5bada879c41f', grid_name: '01', parent_bm: '-1', parent_name: 'AB门测试', is_enable: '0', start_type: '启用', location: '3', grid_bm: '004', create_by: '', create_name: '', create_time: '', update_by: '', update_name: '', update_time: '', node_bm: '' }] }]
     },
     /**
-     * 渲染父节点
+     * 删除网格
+     */
+    deletes () {
+      if (this.table_select.length === 0) {
+        this.$q.notify({
+          message: '请选择要删除的网格',
+          color: 'red',
+          position: 'center',
+          timeout: 1500
+        })
+        return
+      }
+      const query = {
+        url: 'api/dbsource/updateByParamKey',
+        data: [{ sqlId: 'delete_grid_info', params: this.table_select }],
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          console.log(res)
+          this.getTreeNode()
+          // this.addDialog = false
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    /**
+     * 渲染父节点 （新增/修改网格）
      */
     renderParentNode () {
       const query = {
@@ -430,6 +514,7 @@ export default {
               this.gridForm.parent_bm = '当前无父节点'
             }
           }
+          this.choose.push({ label: '网格节点', value: '-1' })
         })
         .catch((error) => {
           console.log(error)
@@ -467,7 +552,52 @@ export default {
           console.log(error)
         })
     },
-    options () {},
+    /**
+     * 刷新当前表格数据
+     */
+    refreshView () {
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info',
+          whereId: '2',
+          orderId: '0',
+          params: { parent_bm: this.selected },
+          minRow: 0,
+          maxRow: 19
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data.data
+          console.log(resData)
+          this.data = resData
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    gridQuery () {
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: { sqlId: 'select_grid_info', whereId: '0', orderId: '0', params: { is_enable: this.enable_type.value || '', parent_bm: this.selected, grid_name: this.queryName }, minRow: 0, maxRow: 19 },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          this.data = res.data.data.data
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    nodeQuery () {},
+    /**
+     * 重置查询数据
+     */
     reset () {
       this.queryName = ''
       this.enableType = ''
@@ -481,6 +611,7 @@ export default {
       this.gridForm.start_type = t.label
       this.gridForm.parent_bm = v.value
       this.gridForm.parent_name = v.label
+      // 修改网格数据处理
       if (t.value === undefined) {
         this.gridForm.start_type = t
         if (t === '启用') {
@@ -490,10 +621,11 @@ export default {
           this.gridForm.is_enable = '1'
         }
       }
+      // 修改网格数据处理
       if (v.value === undefined) {
         this.gridForm.parent_name = v
+        this.gridForm.parent_bm = this.noModify.parent_bm
       }
-      this.gridForm.parent_bm = this.noModify.parent_bm
       // var params = []
       // params.push(this.gridForm)
       // console.log('params', params)
@@ -504,24 +636,24 @@ export default {
       // }
       // var updateParams = [{ sqlId: 'insert_grid_info', params: [{ id: 'c56659ad-9f30-4b43-b7c9-5bada879c41f', grid_name: '01', parent_bm: '-1', parent_name: 'AB门测试', is_enable: '0', start_type: '启用', location: '3', grid_bm: '004', create_by: '', create_name: '', create_time: '', update_by: '', update_name: '', update_time: '', node_bm: '' }] }]
 
-      // const query = {
-      //   url: 'api/dbsource/updateByParamKey',
-      //   data: [{
-      //     sqlId: 'insert_grid_info',
-      //     params: [this.gridForm]
-      //   }],
-      //   method: 'post',
-      //   type: 'db_search'
-      // }
-      // fetchData(query)
-      //   .then((res) => {
-      //     console.log(res)
-      //     this.getTreeNode()
-      //     this.addDialog = false
-      //   })
-      //   .catch((error) => {
-      //     console.log(error)
-      //   })
+      const query = {
+        url: 'api/dbsource/updateByParamKey',
+        data: [{
+          sqlId: this.queryType,
+          params: [this.gridForm]
+        }],
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          console.log(res)
+          this.getTreeNode()
+          this.addDialog = false
+        })
+        .catch((error) => {
+          console.log(error)
+        })
       console.log(this.gridForm)
     },
     onReset () {}
@@ -549,6 +681,7 @@ export default {
       fetchData(query)
         .then((res) => {
           const resData = res.data.data.data
+          console.log(resData)
           this.data = resData
         })
         .catch((error) => {

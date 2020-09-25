@@ -65,7 +65,7 @@
         </div>
         <q-tree
           :nodes="simple"
-          node-key="id"
+          node-key="grid_id"
           selected-color="primary"
           :selected.sync="selected"
           default-expand-all
@@ -107,7 +107,7 @@ export default {
     return {
       splitterModel: 20,
       // 选择的节点
-      selected: '',
+      selected: '-1',
       totalNode: [],
       addDialog: false,
       queryName: '',
@@ -119,20 +119,13 @@ export default {
       denseOpts: true,
       // 网格节点查询数据
       gridNodeSearch: '',
-      // 表单数据
-      gridForm: {
-        name: '',
-        code: '',
-        parentNode: '',
-        location: '',
-        isEnable: ''
-      },
       // 树
       simple: [
         {
           label: '网格节点',
           icon: 'share',
           grid_bm: '-1',
+          grid_id: '-1',
           id: '-1',
           children: []
         }
@@ -181,7 +174,6 @@ export default {
   mounted () {
     // 获取网格节点菜单
     this.getTreeNode()
-    // this.getAllNode()
   },
   methods: {
     // axios方法，获取后台数据
@@ -200,11 +192,59 @@ export default {
      * 获取网格节点(左菜单)
      */
     getTreeNode () {
-      // 构建树
-      this.createTree(this.simple)
+      // 刷新表格数据
+      this.refreshView()
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info_tree',
+          whereId: '0',
+          params: { grid_name: '' }
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data
+          console.log(resData)
+          this.createTree(this.simple, resData)
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    /**
+     * 构建树（节点）
+     */
+    createTree (params, treeData) {
+      // 循环父节点
+      for (let i = 0; i < params.length; i++) {
+        var childrenNode = []
+        // 寻找子节点
+        for (let j = 0; j < treeData.length; j++) {
+          // 设置子节点label
+          treeData[j].label = treeData[j].grid_name
+          // 设置子节点grid_bm （tree的key绑定的是grid_bm）等于id
+          treeData[j].grid_bm = treeData[j].id
 
+          // 判断当前节点是否是子节点
+          if (treeData[j].parent_bm === params[i].grid_bm) {
+            childrenNode.push(treeData[j])
+          }
+        }
+        // 给子节点赋值
+        params[i].children = childrenNode
+        // 如果子节点存在，继续遍历子节点
+        if (params[i].children.length > 0) {
+          params[i].icon = 'share'
+          this.createTree(params[i].children, treeData)
+        }
+      }
+    },
+    refreshView () {
       /**
-       * 初始化表格数据
+       * 刷新表格数据
        */
       const query = {
         url: 'api/dbsource/queryByParamKey',
@@ -219,6 +259,7 @@ export default {
             resData[i].cardNumber = '0'
             // 添加label属性
             resData[i].label = resData[i].grid_name
+            resData[i].grid_bm = resData[i].id
             const query01 = {
               url: 'api/dbsource/queryByParamKey',
               data: {
@@ -248,42 +289,6 @@ export default {
         })
     },
     /**
-     * 构建树
-     */
-    createTree (params) {
-      for (let i = 0; i < params.length; i++) {
-        const query = {
-          url: 'api/dbsource/queryByParamKey',
-          data: { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: params[i].grid_bm } },
-          method: 'post',
-          type: 'db_search'
-        }
-        fetchData(query)
-          .then((res) => {
-            const resData = res.data.data
-            // 如果子树为空，停止查询
-            if (resData.length === 0) {
-              return
-            }
-            for (let i = 0; i < resData.length; i++) {
-            // 添加label属性
-              resData[i].label = resData[i].grid_name
-            }
-            params[i].children = resData
-            // 递归查询子树
-            this.createTree(params[i].children)
-            // 设置含有子树的节点的图标
-            if (params[i].children.length > 0) {
-              params[i].icon = 'share'
-            }
-          })
-
-          .catch((error) => {
-            console.log(error)
-          })
-      }
-    },
-    /**
      * 查看网格详情
      */
     detailView (params) {
@@ -311,97 +316,18 @@ export default {
         .catch((error) => {
           console.log(error)
         })
-    },
-    /**
-     * 移除表单内容
-     */
-    removeGridForm () {
-      this.gridForm.name = ''
-      this.gridForm.code = ''
-      this.gridForm.parentNode = ''
-      this.gridForm.location = ''
-      this.gridForm.isEnable = ''
-    },
-    /**
-     * 获取全部网格节点
-     */
-    getAllNode () {
-      const query = {
-        url: 'api/dbsource/queryByParamKey',
-        data: {
-          sqlId: 'select_grid_info_tree',
-          whereId: '0',
-          params: { grid_name: '' }
-        },
-        method: 'post',
-        type: 'db_search'
-      }
-      fetchData(query)
-        .then((res) => {})
-        .catch((error) => {
-          console.log(error)
-        })
-    },
-    renderData (params) {
-      const query = {
-        url: 'api/dbsource/queryByParamKey',
-        data: {
-          sqlId: 'select_grid_info',
-          whereId: '2',
-          orderId: '0',
-          params: { parent_bm: this.selected },
-          minRow: 0,
-          maxRow: 19
-        },
-        method: 'post',
-        type: 'db_search'
-      }
-      fetchData(query)
-        .then((res) => {
-          console.log(res)
-          const resData = res.data.data.data
-          for (let i = 0; i < resData.length; i++) {
-            resData[i].cardNumber = '0'
-            // 添加label属性
-            resData[i].label = resData[i].grid_name
-            const query01 = {
-              url: 'api/dbsource/queryByParamKey',
-              data: {
-                sqlId: 'select_grid_statistics_card_info',
-                params: { grid_id: resData[i].grid_bm }
-              },
-              method: 'post',
-              type: 'db_search'
-            }
-            fetchData(query01)
-              .then((res) => {
-                const resData01 = res.data.data
-                console.log(resData01)
-                if (resData01 === null) {
-                  resData[i].cardNumber = '0'
-                } else {
-                  resData[i].cardNumber = resData01.length + ''
-                }
-              })
-              .catch((error) => {
-                console.log(error)
-              })
-          }
-          this.data = resData
-        })
-        .catch((error) => {
-          console.log(error)
-        })
     }
   },
   watch: {
     // 监听事件，左侧节点菜单点击事件
     selected: function (newQuestion, oldQuestion) {
       // this.$router.push({ path: '/about' })
+      console.log(this.selected)
       if (this.selected === null) {
         this.selected = oldQuestion
       }
       if (this.selected === '-1') {
+        this.refreshView()
         return
       }
       const query = {
@@ -412,7 +338,7 @@ export default {
       }
       fetchData(query)
         .then((res) => {
-          console.log(res)
+          console.log('res', res)
           const resData = res.data.data.data
           for (let i = 0; i < resData.length; i++) {
             resData[i].cardNumber = '0'
@@ -430,7 +356,7 @@ export default {
             fetchData(query01)
               .then((res) => {
                 const resData01 = res.data.data
-                console.log(resData01)
+                console.log('resData01', resData01)
                 if (resData01 === null) {
                   resData[i].cardNumber = '0'
                 } else {
