@@ -6,20 +6,15 @@
       rowsNumber=100
       row-key="rn"
       :filter="filter"
-      :loading="loading"
       class="my-sticky-header-table"
       virtual-scroll
       separator="cell"
       card-style="height:85vh"
       selection="multiple"
       :selected.sync="selected"
-      :selected-rows-label="getSelectedString"
-      pagination.sync="selected"
-      rows-per-page-label="每页显示"
-      :rows-per-page-options="[10,20,30]"
+      :pagination.sync="pagination"
       :no-data-label="dataLabel"
       table-header-class="bg-blue-8 text-white"
-      :pagination-label="getPaginationLabel"
     >
     <!--操作选项-->
      <template v-slot:top>
@@ -29,7 +24,6 @@
           v-model.trim="filterForm.cardNumber"
           dense
           style="width:200px;float:left;margin-right:10px;" />
-
           <q-btn
           color="primary"
           dense
@@ -118,13 +112,26 @@
       </q-dialog>
       </template>
       <template v-slot:bottom class="justify-end">
-        <div class="foot q-pa-md flex flex-center">
-          <span>
-            {{ pagination.rowsPerPage }}条/页 共
+          <span style="margin-right:5px;">
+            显示{{startPage}}~{{ endPage}}条记录，总
             {{ pagination.rowsNumber }}
             条数据
           </span>
+          <span style="margin-right:5px;">
+            每页
+          </span>
+          <q-select
+          outlined
+          v-model="pagination.rowsPerPage"
+          :options="options"
+          dense
+          @input="changeOptions"
+          style="float:left;margin-right:5px;" />
+          <span style="margin-right:5px;">
+            条记录
+          </span>
           <q-pagination
+          style="float:right"
             v-model="pagination.page"
             :max="pages"
             :max-pages="5"
@@ -143,7 +150,6 @@
             @keyup.enter.native="refreshTableData"
           ></q-input>
           <span> 页</span>
-        </div>
       </template>
     </q-table>
     </div>
@@ -151,7 +157,7 @@
 <script>
 export default {
   mounted () {
-    this.getList()
+    this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
   },
   methods: {
     /**
@@ -165,7 +171,7 @@ export default {
           position: 'center',
           timeout: 1
         })
-        this.data = this.basicData
+        this.getTableData(1, 10, this.filterForm.cardNumber)
       } else {
         this.$q.notify({
           message: '正在查询中......',
@@ -173,12 +179,47 @@ export default {
           position: 'center',
           timeout: 1
         })
-        this.data = this.basicData.filter(item => {
-          if (item.card_number.indexOf(this.filterForm.cardNumber) !== -1) {
-            return item
-          }
-        })
+        this.getTableData(1, 10, this.filterForm.cardNumber)
       }
+    },
+    /**
+     * 获取列表数据
+     */
+    getTableData (s, e, r) {
+      var that = this
+      var url = '/api/dbsource/queryByParamKey'
+      let minR = 0
+      let maxR = 0
+      maxR = that.pagination.rowsPerPage
+      if (that.pagination.page !== 1) {
+        minR = that.pagination.page
+      }
+      if (s !== '') {
+        minR = s
+        maxR = e
+      }
+      var data01 = { sqlId: 'select_picketage_info', orderId: '0', params: { card_number: r, requesttime: '' }, minRow: minR, maxRow: maxR, whereId: '0' }
+      data01 = 'args=' + JSON.stringify(data01)
+      // 后台数据访问
+      this.dataAccess(url, data01, function (res) {
+        console.log('后端返回数据结果json：', res)
+        // 获取数据传给basicData,data
+        that.basicData = res.data.data.data
+        that.data = that.basicData
+        that.pagination.rowsNumber = res.data.data.count
+        /* 设置分页页数 */
+        if (res.data.data.count % that.pagination.rowsPerPage === 0) {
+          that.pages = res.data.data.count / that.pagination.rowsPerPage
+        } else {
+          // 向上取整
+          that.pages = Math.ceil(res.data.data.count / that.pagination.rowsPerPage)
+        }
+      }, function (err) {
+        console.log('后端数据访问出错!', err)
+      })
+      setTimeout(() => {
+        this.loading = false
+      }, 2000)
     },
     /**
      * 重置
@@ -191,7 +232,7 @@ export default {
         timeout: 5
       })
       this.filterForm.cardNumber = ''
-      this.data = this.basicData
+      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
     },
     /**
      * 双击查看详情
@@ -207,21 +248,6 @@ export default {
       this.identifier = s.identifier
     },
     /**
-     * 重写分页标签
-     * @param firstRowIndex 第一条下标
-     * @param endRowIndex 最后一条下标
-     * @param totalRowsNumber 总条数下标
-     */
-    getPaginationLabel (firstRowIndex, endRowIndex, totalRowsNumber) {
-      return '显示 ' + firstRowIndex + ' ~ ' + endRowIndex + ' 条记录，总共' + totalRowsNumber + ' 条'
-    },
-    /**
-     * 重写选中显示的文字
-     */
-    getSelectedString (numberOfRows) {
-      return '共选中' + numberOfRows + '条记录'
-    },
-    /**
      * 数据访问
      */
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
@@ -235,36 +261,74 @@ export default {
         .catch(errorCallback)
     },
     /**
-     * 数据访问
-     */
-    getList () {
-      var that = this
-      var url = '/api/dbsource/queryByParamKey'
-      var data01 = { sqlId: 'select_picketage_info', orderId: '0', params: {}, minRow: 0, maxRow: 19 }
-      data01 = 'args=' + JSON.stringify(data01)
-      console.log('访问参数：', data01)
-      // 后台数据访问
-      this.dataAccess(url, data01, function (res) {
-        console.log('后端返回数据结果json：', res)
-        // 获取数据传给basicData,data
-        that.basicData = res.data.data.data
-        that.data = that.basicData
-      }, function (err) {
-        console.log('后端数据访问出错!', err)
-      })
+     * 改变显示条数
+      */
+    changeOptions (val) {
+      this.startPage = (this.pagination.page - 1) * val + 1
+      if (this.pagination.page * this.val > this.pagination.rowsNumber) {
+        this.endPage = this.startPage + 1
+      } else {
+        this.endPage = this.pagination.page * val
+      }
+      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
+    },
+    /**
+     * 改变分页
+      */
+    changePagination (val) {
+      // 设置开始记录数
+      this.startPage = (val - 1) * this.pagination.rowsPerPage + 1
+      if (val * this.pagination.rowsPerPage > this.pagination.rowsNumber) {
+        this.endPage = this.startPage + 1
+      } else {
+        this.endPage = val * this.pagination.rowsPerPage
+      }
+      this.toPage = val
+      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
+    },
+    /**
+      * 改变跳转分页
+      */
+    changeToPage (val) {
+      this.selected = []
+      var r = /^\+?[1-9][0-9]*$/
+      if (r.test(val) && parseInt(val) <= this.pages) {
+        // 输入正整数 且 小于最大页数
+        // console.log(`input toPage: ${val} 是一个正整数`)
+      } else {
+        this.toPage = ''
+      }
+    },
+    /**
+      * 刷新数据表数据
+      */
+    refreshTableData () {
+      if (this.toPage !== '') {
+        this.startPage = (parseInt(this.toPage) - 1) * this.pagination.rowsPerPage + 1
+        if (parseInt(this.toPage) * this.pagination.rowsPerPage > this.pagination.rowsNumber) {
+          this.endPage = this.startPage + 1
+        } else {
+          this.endPage = parseInt(this.toPage) * this.pagination.rowsPerPage
+        }
+        this.pagination.page = parseInt(this.toPage)
+        this.loading = true
+        this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
+      }
     }
   },
   data () {
     return {
-      loading: true,
-      pages: 10, // 数据总页数
+      options: [
+        10, 30, 50, 100
+      ],
+      startPage: 1, // 开始记录数
+      endPage: 10, // 结束记录数
+      pages: '', // 数据总页数
       toPage: '', // 跳转至
       pagination: {
-        sortBy: 'desc',
-        descending: false,
-        page: 1,
-        rowsPerPage: 5,
-        rowsNumber: 50 // 总共数据条数
+        page: '',
+        rowsPerPage: 10,
+        rowsNumber: '' // 总共数据条数
       },
       filterForm: {
         cardNumber: ''
@@ -295,38 +359,6 @@ export default {
   }
 }
 </script>
-<style lang="sass">
-/*设置奇数行颜色*/
-.my-sticky-header-table tr:nth-child(odd)
-    background: #F8F8FF
-/*固定头部标题*/
-.my-sticky-header-table
-  thead tr th
-    position: sticky
-    z-index: 1
-  thead tr:first-child th
-    top: 0
-.my-sticky-header-table .q-checkbox__inner .q-checkbox__bg
-    border: 1px solid #1976d2
-    outline: 1px solid white
-.my-sticky-header-table .q-checkbox__inner--truthy .q-checkbox__bg
-    background: #1976d2
-    border: 1px solid #1976d2
-    outline: 1px solid white
-.my-sticky-header-table  .q-checkbox__inner--indet .q-checkbox__bg
-    background: #1976d2
-    color: #000
-    border: 0px solid #1976d2
-    outline: 1px solid white
-
-.my-sticky-header-table .pagination-input
-    display: inline-block
-    width: 55px
-    margin-top: 0px
-.my-sticky-header-table  .q-table__bottom
-    justify-content: flex-left
-    height: 80px
-/*选中后字体颜色改变*/
-.my-sticky-header-table .selected
-      color: #4169E1
+<style>
+@import "../assets/css/tableStyle.css";
 </style>

@@ -118,13 +118,53 @@
         </q-card>
       </q-dialog>
       </template>
+     <template v-slot:bottom class="justify-end">
+          <span style="margin-right:5px;">
+            显示{{startPage}}~{{ endPage}}条记录，总
+            {{ pagination.rowsNumber }}
+            条数据
+          </span>
+          <span style="margin-right:5px;">
+            每页
+          </span>
+          <q-select
+          outlined
+          v-model="pagination.rowsPerPage"
+          :options="pageOptions"
+          dense
+          @input="changeOptions"
+          style="float:left;margin-right:5px;" />
+          <span style="margin-right:5px;">
+            条记录
+          </span>
+          <q-pagination
+          style="float:right"
+            v-model="pagination.page"
+            :max="pages"
+            :max-pages="5"
+            ellipsess
+            :direction-links="true"
+            @input="changePagination"
+          >
+          </q-pagination>
+          <span>跳至 </span>
+          <q-input
+            outlined
+            v-model="toPage"
+            dense
+            class="pagination-input"
+            @input="changeToPage"
+            @keyup.enter.native="refreshTableData"
+          ></q-input>
+          <span> 页</span>
+      </template>
     </q-table>
     </div>
 </template>
 <script>
 export default {
   mounted () {
-    this.getList()
+    this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
   },
   methods: {
     /**
@@ -137,51 +177,13 @@ export default {
      * 查询
      */
     search () {
-      if (this.filterForm.deviceName === '' && this.filterForm.status === '') {
-        this.$q.notify({
-          message: '正在查询中......',
-          color: 'black',
-          position: 'center',
-          timeout: 1
-        })
-        this.data = this.basicData
-      } else if (this.filterForm.deviceName !== '' && this.filterForm.status !== '') {
-        this.$q.notify({
-          message: '正在查询中......',
-          color: 'black',
-          position: 'center',
-          timeout: 1
-        })
-        this.data = this.basicData.filter(item => {
-          if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1 && item.equipment_state.indexOf(this.filterForm.status) !== -1) {
-            return item
-          }
-        })
-      } else if (this.filterForm.deviceName !== '' && this.filterForm.status === '') {
-        this.$q.notify({
-          message: '正在查询中......',
-          color: 'black',
-          position: 'center',
-          timeout: 1
-        })
-        this.data = this.basicData.filter(item => {
-          if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1) {
-            return item
-          }
-        })
-      } else if (this.filterForm.deviceName === '' && this.filterForm.status !== '') {
-        this.$q.notify({
-          message: '正在查询中......',
-          color: 'black',
-          position: 'center',
-          timeout: 1
-        })
-        this.data = this.basicData.filter(item => {
-          if (item.equipment_state.indexOf(this.filterForm.status) !== -1) {
-            return item
-          }
-        })
-      }
+      this.$q.notify({
+        message: '正在查询中......',
+        color: 'black',
+        position: 'center',
+        timeout: 1
+      })
+      this.getTableData(1, 10, this.filterForm.deviceName, this.filterForm.status)
     },
     /**
      * 重置
@@ -195,7 +197,7 @@ export default {
       })
       this.filterForm.deviceName = ''
       this.filterForm.status = ''
-      this.data = this.basicData
+      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
     },
     /**
      * 双击查看详情
@@ -239,10 +241,22 @@ export default {
     /**
      * 获取数据
      */
-    getList () {
+    getTableData (s, e, r1, r2) {
       var that = this
       var url = '/api/dbsource/queryByParamKey'
-      var data01 = { sqlId: 'select_equipment_info', whereId: '4', orderId: '0', params: {}, minRow: 0, maxRow: 19 }
+      let minR = 0
+      let maxR = 0
+      maxR = that.pagination.rowsPerPage
+      if (that.pagination.page !== 1) {
+        minR = that.pagination.page
+      }
+      if (s !== '' && s !== 1) {
+        minR = s
+        maxR = e
+      } else {
+        minR = 0
+      }
+      var data01 = { sqlId: 'select_equipment_info', whereId: '0', orderId: '0', params: { equipment_name: r1, equipment_state: r2 }, minRow: minR, maxRow: maxR }
       data01 = 'args=' + JSON.stringify(data01)
       console.log('访问参数：', data01)
       // 后台数据访问
@@ -251,13 +265,88 @@ export default {
         // 获取数据传给basicData,data
         that.basicData = res.data.data.data
         that.data = that.basicData
+        that.pagination.rowsNumber = res.data.data.count
+        /* 设置分页页数 */
+        if (res.data.data.count % that.pagination.rowsPerPage === 0) {
+          that.pages = res.data.data.count / that.pagination.rowsPerPage
+        } else {
+          // 向上取整
+          that.pages = Math.ceil(res.data.data.count / that.pagination.rowsPerPage)
+        }
       }, function (err) {
         console.log('后端数据访问出错!', err)
       })
+    },
+    /**
+     * 改变显示条数
+      */
+    changeOptions (val) {
+      this.startPage = (this.pagination.page - 1) * val + 1
+      if (this.pagination.page * this.val > this.pagination.rowsNumber) {
+        this.endPage = this.startPage + 1
+      } else {
+        this.endPage = this.pagination.page * val
+      }
+      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
+    },
+    /**
+     * 改变分页
+      */
+    changePagination (val) {
+      // 设置开始记录数
+      this.startPage = (val - 1) * this.pagination.rowsPerPage + 1
+      if (val * this.pagination.rowsPerPage > this.pagination.rowsNumber) {
+        this.endPage = this.startPage + 1
+      } else {
+        this.endPage = val * this.pagination.rowsPerPage
+      }
+      this.toPage = val
+      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
+    },
+    /**
+      * 改变跳转分页
+      */
+    changeToPage (val) {
+      this.selected = []
+      var r = /^\+?[1-9][0-9]*$/
+      if (r.test(val) && parseInt(val) <= this.pages) {
+        // 输入正整数 且 小于最大页数
+        // console.log(`input toPage: ${val} 是一个正整数`)
+      } else {
+        this.toPage = ''
+      }
+    },
+    /**
+      * 刷新数据表数据
+      */
+    refreshTableData () {
+      if (this.toPage !== '') {
+        this.startPage = (parseInt(this.toPage) - 1) * this.pagination.rowsPerPage + 1
+        if (parseInt(this.toPage) * this.pagination.rowsPerPage > this.pagination.rowsNumber) {
+          this.endPage = this.startPage + 1
+        } else {
+          this.endPage = parseInt(this.toPage) * this.pagination.rowsPerPage
+        }
+        this.pagination.page = parseInt(this.toPage)
+        this.loading = true
+        this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
+      }
     }
   },
   data () {
     return {
+      pageOptions: [
+        10, 30, 50, 100
+      ],
+      startPage: 1, // 开始记录数
+      endPage: 10, // 结束记录数
+      pages: '', // 数据总页数
+      toPage: '', // 跳转至
+      pagination: {
+        page: '',
+        rowsPerPage: 10,
+        rowsNumber: '' // 总共数据条数
+      },
       filterForm: {
         status: '',
         deviceName: ''

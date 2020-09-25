@@ -23,6 +23,15 @@
     background: #1976d2;
     border: 0px solid #1976d2;
 }
+.my-sticky-header-table .pagination-input{
+    display: inline-block;
+    width: 55px;
+    margin: 0 5px;
+}
+.my-sticky-header-table  .q-table__bottom{
+    justify-content: flex-start;
+    height: 10%;
+}
 /*选中后字体颜色改变*/
 .my-sticky-header-table .selected{
       color:#1976d2;
