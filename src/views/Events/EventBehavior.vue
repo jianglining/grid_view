@@ -1,53 +1,64 @@
 <template>
-    <div id="parent" class="fit row wrap justify-start items-start content-start" style="overflow: hidden;">
-        <div class="col-2 bg-grey-6" style="overflow: auto;">
-            <q-card bg-grey-6>
-                <q-card-section>
-                  <q-input borderless dense debounce="300" v-model="gridNodeSearch" placeholder="Search" label="网格节点搜索" label-color="grey-9">
-                    <template v-slot:append>
-                        <q-icon name="search" />
-                    </template>
-                  </q-input>
-                </q-card-section>
-                <q-separator />
-                <!-- 树 -->
-                <q-card-section>
-                    <q-tree
-                        :nodes="treeNodes"
-                        node-key="id"
-                        selected-color="primary"
-                        :selected.sync="selected"
-                        default-expand-all
-                    />
-                </q-card-section>
-            </q-card>
-        </div>
-        <div class="col-grow q-col-gutter-md" style="overflow: auto;">
-            <q-card bg-grey-6>
-                <q-card-section>
-                  表头上的钮
-                </q-card-section>
-                <q-card-section>
-                    <q-table
-                        :data="data"
-                        :columns="columns"
-                        row-key="index"
-                        card-style="margin:15px;height:85vh"
-                        no-data-label="暂无数据"
-                        :selected-rows-label="getSelectedString"
-                        selection="multiple"
-                        :selected.sync="checkSelect"
-                    >
-                    </q-table>
-                </q-card-section>
-            </q-card>
-        </div>
+    <div class="fit row wrap justify-start items-start content-start main_content" >
+      <div class="col-2 left-div">
+        <q-card bg-grey-6>
+          <q-card-section>
+            <q-input borderless dense debounce="300" v-model="gridNodeSearch" placeholder="Search" label="网格节点搜索" label-color="grey-9">
+              <template v-slot:append>
+                  <q-icon name="search" />
+              </template>
+            </q-input>
+          </q-card-section>
+          <q-separator />
+          <!-- 树 -->
+          <q-card-section>
+            <q-tree
+              :nodes="treeNodes"
+              node-key="id"
+              selected-color="primary"
+              :selected.sync="selected"
+              default-expand-all
+            />
+          </q-card-section>
+        </q-card>
+      </div>
+      <!-- 右边div -->
+      <div class="col-grow q-col-gutter-md right-div">
+        <q-card bg-grey-6>
+          <q-card-section>
+            <q-table
+              :data="data"
+              :columns="columns"
+              card-style="margin:15px;height:85vh"
+              rows-per-page-label="每页显示"
+              no-data-label="暂无数据"
+              :selected-rows-label="getSelectedString"
+              :pagination-label="getPaginationLabel"
+              selection="single"
+              :selected.sync="checkSelect"
+            >
+              <template v-slot:top>
+                <q-btn color="grey-9 " label="添加事件行为" @click="addRow" icon="add"/>
+                <q-btn color="grey-9 " label="删除事件行为" @click="removeRow" icon="delete_forever" class="q-ml-sm"  />
+                <q-space />
+                <q-input borderless dense debounce="300" color="primary" v-model="filter">
+                  <template v-slot:append>
+                    <q-icon name="search" />
+                  </template>
+                </q-input>
+              </template>
+            </q-table>
+          </q-card-section>
+        </q-card>
+      </div>
     </div>
 </template>
 <script>
 export default {
   data () {
     return {
+      loading: false,
+      filter: '',
       splitterModel: 20,
       selected: '',
       checkSelect: [],
@@ -101,6 +112,12 @@ export default {
     }
   },
   methods: {
+    addRow () {
+      this.loading = true
+    },
+    removeRow () {
+      this.loading = true
+    },
     myTweak (offset) {
       // “offset”是一个数字（像素），它表示基于QLayout“view”属性配置的屏幕上页眉+页脚的总高度
       // 这实际上是Quasar中默认style-fn的功能
@@ -226,8 +243,20 @@ export default {
       }
       // 设置树的默认选择项
     },
-    getSelectedString () {
-      return this.selected.length === 0 ? '' : `${this.selected.length} record${this.selected.length > 1 ? 's' : ''} selected of ${this.data.length}`
+    /**
+     * 重写分页标签
+     * @param firstRowIndex 第一条下标
+     * @param endRowIndex 最后一条下标
+     * @param totalRowsNumber 总条数下标
+     */
+    getPaginationLabel (firstRowIndex, endRowIndex, totalRowsNumber) {
+      return '显示 ' + firstRowIndex + ' ~ ' + endRowIndex + ' 条记录，总共' + totalRowsNumber + ' 条'
+    },
+    /**
+     * 重写选中显示的文字
+     */
+    getSelectedString (numberOfRows) {
+      return '共选中' + numberOfRows + '条记录'
     },
     /**
      * 选择树节点后要去查下该节点下的数据列表
@@ -279,8 +308,13 @@ export default {
 </script>
 <style scoped>
   .main_content {
-    height: 100%;
-    width: 100%;
+    overflow: hidden;
+  }
+  .right-div {
+    overflow: auto;
+  }
+  .left-div {
+    overflow: auto;
   }
   .my-card {
     width: 40%;
