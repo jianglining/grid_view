@@ -547,7 +547,8 @@ export default {
         type: 'db_search'
       }
       fetchData(query)
-        .then((res) => {})
+        .then((res) => {
+        })
         .catch((error) => {
           console.log(error)
         })
