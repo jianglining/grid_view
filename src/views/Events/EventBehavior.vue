@@ -292,6 +292,7 @@ export default {
       // grid_name: "AB门人行入口"
       // incident: "realTimeReadCart"
       // equipment_type: "门控板"
+      // !!!!!!!!!!!!!!!!!!!!这里返回的数据有相同的key,所以要作进一步的处理!!!!!!!!!!!!!!!!!
       this.data = res.data.data
     }
   },

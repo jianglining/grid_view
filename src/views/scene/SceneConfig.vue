@@ -1,22 +1,37 @@
 <template>
-  <q-card class="main_content" >
-    <div class="q-pa-md">
+<div class="fit row wrap justify-start items-start content-start main_content" >
+     <!-- 左边div用来显示上传的组件和显示场景图中有的那些子网格 -->
+    <div class="col-3 left-div q-pt-sm">
       <q-uploader url="http://localhost:4444/upload" label="场景图" accept=".svg,.SVG" color="grey-5" text-color="dark" bordered no-thumbnails
-        @factory-failed="uploaderFactoryFailed"
-        @added="uploaderAdded"
-        @removed="uploaderRemoved"
-        @start="uploaderStart"
-        @finish="uploaderFinish"
-        @uploaded="uploadedFunction"
-        @failed="uploadedFailed"
-        @uploading="uploading"
-        @rejected="uploadedRejected"
-      >
+          @factory-failed="uploaderFactoryFailed"
+          @added="uploaderAdded"
+          @removed="uploaderRemoved"
+          @start="uploaderStart"
+          @finish="uploaderFinish"
+          @uploaded="uploadedFunction"
+          @failed="uploadedFailed"
+          @uploading="uploading"
+          @rejected="uploadedRejected"
+        >
       </q-uploader>
+      <!-- 场景图中特定区域列表 -->
+      <q-table
+        table-header-class="table-header"
+        :v-if="subGridTableShow"
+        :data="subGridData"
+        :columns="subGridColumns"
+        :selected.sync="subGridSelected"
+        @update:selected ="updateSelected"
+        @selection = "selectionSubGrid"
+        row-key="subgrid"
+        selection="single"
+      />
     </div>
-    <div ref="svgContent" class="">  {{msg}}</div>
-  </q-card>
-
+    <!-- 右边div用来显示场景图 -->
+    <div class="col-grow q-col-gutter-md right-div">
+      <div ref="svgContent" class="">  {{msg}}</div>
+    </div>
+</div>
 </template>
 
 <script>
@@ -25,10 +40,65 @@ export default {
   name: 'SceneConfig',
   data () {
     return {
-      msg: '场景预览'
+      msg: '场景预览',
+      /**
+       * 对象数组
+       */
+      subGridColumns: [
+        { name: 'subGridName', label: '子网格(区域)', field: 'subGridName', sortable: false, align: 'left', style: 'width: 100px' },
+        { name: 'subgrid', label: 'id', field: 'subgrid', sortable: false, align: 'left', style: 'width: 100px' }
+      ],
+      subGridData: [],
+      subGridSelected: [],
+      subGridTableShow: false
     }
   },
   methods: {
+    selectionSubGrid (details) {
+      // 因为表格被设置成了单选,选择元素在第0个
+      var row = details.rows[0]
+      // 构造选择器
+      var selector = 'g[subgrid="' + row.subgrid + '"]'
+      var subGridsDOM = document.querySelectorAll(selector)
+      // 回为是querySelectorAll所以有可能是多个
+      console.log('----------勾选Dom:', subGridsDOM)
+      // 规定每一个子网格都要有一个用来表示报警的多边形区域,前且要定义报警时的填充色,以前及报警与不报警时填充色的透明度值,程序在改变报警状态时改变这个透明度值以示报警
+      // 为了能实现这个功能要求报警多边形要在该区域组中是最上边的层,且属于该组的第一子层
+      // 找到报警层,要求属于subGridsDOM该组的第一子层
+      // 选择子网格中的行
+      if (details.added) {
+        // 被添加到subGridSelected时
+        console.log('勾选:', details)
+        for (let i = 0; i < subGridsDOM[0].children.length; i++) {
+        // 如果是polygon alarmLayer="true" 就说明该层是报警层
+        // var alarmLayerDom = subGridsDOM[0].children[i].querySelectorAll('polygon[alarmLayer]')
+        // console.log('报警层', subGridsDOM[0].children[i].querySelector('polygon[alarmlayer="true"]'))
+        // console.log('报警层22', subGridsDOM[0].children[i].getAttribute('alarmlayer'))
+          if (subGridsDOM[0].children[i].getAttribute('alarmlayer')) {
+            // 改变报层层的属性
+            console.log('报警层22', subGridsDOM[0].children[i])
+            subGridsDOM[0].children[i].setAttribute('opacity', '0.8')
+          }
+        }
+      } else {
+        // 从subGridSelected数组中移除时
+        console.log('取消勾选:', details)
+        for (let i = 0; i < subGridsDOM[0].children.length; i++) {
+        // 如果是polygon alarmLayer="true" 就说明该层是报警层
+        // var alarmLayerDom = subGridsDOM[0].children[i].querySelectorAll('polygon[alarmLayer]')
+        // console.log('报警层', subGridsDOM[0].children[i].querySelector('polygon[alarmlayer="true"]'))
+        // console.log('报警层22', subGridsDOM[0].children[i].getAttribute('alarmlayer'))
+          if (subGridsDOM[0].children[i].getAttribute('alarmlayer')) {
+            // 改变报层层的属性
+            console.log('报警层22', subGridsDOM[0].children[i])
+            subGridsDOM[0].children[i].setAttribute('opacity', '0.1')
+          }
+        }
+      }
+    },
+    updateSelected (newSelected) {
+      // 当选择对象数组中选择的对象有变更时的设回调
+    },
     /**
      * 选择要上传的文件后的回调
      * 可以在这里进行对svg原文件的解析，从中解析出场景中各网格的信息
@@ -48,8 +118,20 @@ export default {
       var svgdoc = document.getElementsByTagName('svg')
       var svgdocjs = svgdoc[0].getElementsByTagName('script')
       console.log('svg中的脚本对象:', svgdocjs)
-      var outerPetals = document.querySelector("g[name='外层花瓣']")
-      console.log('外层花瓣通过属性查找:', outerPetals)
+      // 获取文档中有 "sub-grid" 属性的第一个 <g> 元素：
+      // 查找文档中共包含 "sub-grid" 属性的 <g> 标签
+      var subGrids = document.querySelectorAll('g[subgrid]')
+      if (subGrids.length > 0) {
+        this.subGridTableShow = true
+        // this.subGridData.push({ subGridName: treeNode.id })
+        for (let i = 0; i < subGrids.length; i++) {
+          // { name: 'subGridName', label: '子网格(区域)', field: 'subGridName', sortable: true, align: 'left' },
+          // { name: 'subgrid', label: 'id', field: 'subgrid', sortable: true, align: 'left' }
+          this.subGridData.push({ subGridName: subGrids[i].id, subgrid: subGrids[i].getAttribute('subgrid') })
+          console.log('子网格:', subGrids[i].id, subGrids[i].getAttribute('subgrid'), subGrids[i])
+        }
+      }
+      console.log('特殊属性查找:', subGrids)
       // 调用svg中的脚本
       // svgJs('2222222222222')
       // var childNodes = this.$refs.svgref.childNodes
@@ -100,6 +182,8 @@ export default {
       console.log('移除：uploaderRemoved(files).....', files)
       var contentDiv = this.$refs.svgContent
       contentDiv.innerHTML = ''
+      this.subGridData = []
+      this.subGridTableShow = false
     },
     uploaderStart () {
       // 上传组件开始事件是当点击上传按钮时被回调
@@ -132,12 +216,16 @@ export default {
 }
 </script>
 <style scoped>
-  .svgContent {
-    height: 100%;
-    width: 100%;
-  }
   .main_content {
-    height: 100%;
-    width: 100%;
+    overflow: hidden;
+  }
+  .right-div {
+    overflow: auto;
+  }
+  .left-div {
+    overflow: auto;
+  }
+  .table-header {
+    backgroundColor: '#ff0000'
   }
 </style>
