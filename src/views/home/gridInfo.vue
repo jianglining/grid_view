@@ -159,18 +159,21 @@
         :columns="columns"
         row-key="rn"
         card-style="margin:15px;height:85vh"
+        class="my-sticky-header-table"
         no-data-label="暂无数据"
         table-header-class="bg-blue-8 text-white"
-        :filter="queryName"
-        selection="single"
+        selection="multiple"
+        :pagination.sync="pagination"
         :selected.sync="table_select"
+        separator="cell"
+
       >
         <!-- <template v-slot:top-right>
         <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
         <q-btn class="q-ml-sm" color="teal-7" :disable="loading" label="删除" @click="removeRow" />
         </template>-->
         <template v-slot:body="props">
-          <q-tr :props="props">
+          <q-tr :props="props" >
             <q-td><q-checkbox key="rn" v-model="props.selected"></q-checkbox></q-td>
             <q-td key="grid_name" :props="props">{{ props.row.grid_name }}</q-td>
             <q-td key="location" :props="props">{{ props.row.location }}</q-td>
@@ -214,24 +217,78 @@
             <q-btn color="primary" label="添加网格" icon="add" @click="addGrid()" />
           </div>
         </template>
+        <template v-slot:bottom class="justify-end">
+          <span style="margin-right:5px;">
+            显示{{startPage}}~{{ endPage}}条记录，总
+            {{ pagination.rowsNumber }}
+            条数据
+          </span>
+          <span style="margin-right:5px;">
+            每页
+          </span>
+          <q-select
+          outlined
+          v-model="pagination.rowsPerPage"
+          :options="pageTotalumbe"
+          dense
+          @input="changeTotalumbe"
+          style="float:left;margin-right:5px;" />
+          <span style="margin-right:5px;">
+            条记录
+          </span>
+          <q-pagination
+          style="float:right"
+            v-model="pagination.page"
+            :max="pages"
+            :max-pages="maxPages"
+            ellipsess
+            :direction-links="true"
+            @input="changePagination"
+          >
+          </q-pagination>
+          <span>跳至 </span>
+          <q-input
+            outlined
+            v-model="toPage"
+            dense
+            class="pagination-input"
+            @keyup.enter.native="changeToPage"
+            style="width:50px;margin:10px"
+          ></q-input>
+          <span> 页</span>
+      </template>
       </q-table>
-      <p>{{ table_select }} </p>
     </template>
   </q-splitter>
 </template>
 <script>
 // import {fetchData}
 import { fetchData } from '../../api/index'
+import { uid } from 'quasar'
 export default {
   data () {
     return {
       splitterModel: 20,
+      pageTotalumbe: [
+        5, 10, 20, 50
+      ],
+      startPage: 0, // 开始记录数
+      endPage: 5, // 结束记录数
+      pages: '', // 数据总页数
+      maxPages: 5,
+      toPage: '', // 跳转至
+      pagination: {
+        page: 1,
+        rowsPerPage: 5,
+        rowsNumber: 0 // 总共数据条数
+      },
       // 选择的节点
       selected: '-1',
       queryType: '',
       totalNode: [],
       addDialog: false,
       queryName: '',
+      tableType: 'all',
       enable_type: '',
       addIsEnable: '',
       // 父节点数据
@@ -353,7 +410,7 @@ export default {
       fetchData(query)
         .then((res) => {
           const resData = res.data.data
-          console.log(resData)
+          // 构建树节点
           this.createTree(this.simple, resData)
         })
         .catch((error) => {
@@ -384,56 +441,11 @@ export default {
         // 如果子节点存在，继续遍历子节点
         if (params[i].children.length > 0) {
           params[i].icon = 'share'
+          // 继续遍历
           this.createTree(params[i].children, treeData)
         }
       }
     },
-    /**
-     * 构建树
-     */
-    // createTree (params) {
-    //   for (let i = 0; i < params.length; i++) {
-    //     const query = {
-    //       url: 'api/dbsource/queryByParamKey',
-    //       data: {
-    //         sqlId: 'select_grid_info',
-    //         whereId: '2',
-    //         orderId: '0',
-    //         params: { parent_bm: params[i].grid_bm }
-    //       },
-    //       method: 'post',
-    //       type: 'db_search'
-    //     }
-    //     fetchData(query)
-    //       .then((res) => {
-    //         const resData = res.data.data
-    //         // 如果子树为空，停止查询
-    //         if (resData.length === 0) {
-    //           return
-    //         }
-    //         for (let i = 0; i < resData.length; i++) {
-    //           // 添加label属性
-    //           resData[i].label = resData[i].grid_name
-    //         }
-    //         params[i].children = resData
-    //         // 递归查询子树
-    //         this.createTree(params[i].children)
-    //         // 设置含有子树的节点的图标
-    //         if (params[i].children.length > 0) {
-    //           params[i].icon = 'share'
-    //         }
-    //       })
-
-    //       .catch((error) => {
-    //         console.log(error)
-    //       })
-    //   }
-    // },
-    /**
-     * 添加网格前置操作
-     * 获取更新父节点列表
-     * 打开添加界面
-     */
     addGrid () {
       this.addDialog = true
       this.choose = []
@@ -447,13 +459,12 @@ export default {
       this.noModify = params
       this.queryType = 'update_grid_info'
       this.addDialog = true
+      this.gridForm.id = params.id
       this.gridForm.grid_name = params.grid_name
       this.gridForm.grid_bm = params.grid_bm
       this.gridForm.location = params.location
       this.gridForm.is_enable = params.is_enable === '0' ? '启用' : '不启用'
       this.renderParentNode()
-      // var updateParams = [{ sqlId: 'update_grid_info', params: [{ id: 'a6e216a7-8fc8-418a-8fc8-59b2104ac449', grid_name: 'AB门入口', parent_bm: '1', parent_name: 'AB门车行通道', is_enable: '0', start_type: '启用', location: 'AB门入口', grid_bm: '2', create_by: '', create_name: '', create_time: '', update_by: '', update_name: '', update_time: '', node_bm: '2' }] }]
-      // var updateParams = [{ sqlId: 'insert_grid_info', params: [{ id: 'c56659ad-9f30-4b43-b7c9-5bada879c41f', grid_name: '01', parent_bm: '-1', parent_name: 'AB门测试', is_enable: '0', start_type: '启用', location: '3', grid_bm: '004', create_by: '', create_name: '', create_time: '', update_by: '', update_name: '', update_time: '', node_bm: '' }] }]
     },
     /**
      * 删除网格
@@ -524,6 +535,7 @@ export default {
      * 移除表单内容
      */
     removeGridForm () {
+      this.gridForm.id = ''
       this.gridForm.grid_name = ''
       this.gridForm.grid_bm = ''
       this.gridForm.parent_bm = ''
@@ -564,8 +576,8 @@ export default {
           whereId: '2',
           orderId: '0',
           params: { parent_bm: this.selected },
-          minRow: 0,
-          maxRow: 19
+          minRow: this.startPage,
+          maxRow: this.endPage
         },
         method: 'post',
         type: 'db_search'
@@ -573,35 +585,96 @@ export default {
       fetchData(query)
         .then((res) => {
           const resData = res.data.data.data
-          console.log(resData)
           this.data = resData
+          // 设置表格数据总条数（行数）
+          this.pagination.rowsNumber = res.data.data.count
+          // 设置表格页码数数量
+          this.pages = Math.ceil(this.pagination.rowsNumber / this.pagination.rowsPerPage)
         })
         .catch((error) => {
           console.log(error)
         })
     },
     gridQuery () {
+      if (this.queryName !== '' || this.enable_type !== '') {
+        this.tableType = 'query'
+      }
       const query = {
         url: 'api/dbsource/queryByParamKey',
-        data: { sqlId: 'select_grid_info', whereId: '0', orderId: '0', params: { is_enable: this.enable_type.value || '', parent_bm: this.selected, grid_name: this.queryName }, minRow: 0, maxRow: 19 },
+        data: {
+          sqlId: 'select_grid_info',
+          whereId: '0',
+          orderId: '0',
+          params: { is_enable: this.enable_type.value || '', parent_bm: this.selected, grid_name: this.queryName },
+          minRow: this.startPage,
+          maxRow: this.endPage
+        },
         method: 'post',
         type: 'db_search'
       }
       fetchData(query)
         .then((res) => {
           this.data = res.data.data.data
+          // 设置表格数据总条数（行数）
+          this.pagination.rowsNumber = res.data.data.count
+          // 设置表格页码树数量
+          this.pages = Math.ceil(this.pagination.rowsNumber / this.pagination.rowsPerPage)
         })
         .catch((error) => {
           console.log(error)
         })
     },
-    nodeQuery () {},
+    // 分页跳转
+    changePagination () {
+      // 设置数据开始位置
+      this.startPage = (this.pagination.page - 1) * this.pagination.rowsPerPage
+      // 设置数据结束位置
+      this.endPage = this.startPage + this.pagination.rowsPerPage
+      if (this.startPage > this.pagination.rowsNumber) {
+        this.startPage = this.pagination.rowsNumber - this.pagination.rowsPerPage
+        if (this.startPage < 0) {
+          this.startPage = 0
+        }
+        this.endPage = this.pagination.rowsNumber
+      }
+      // 刷新页面
+      if (this.tableType === 'all') {
+        this.refreshView()
+      } else {
+        this.gridQuery()
+      }
+    },
+    // 设置显示总数目
+    changeTotalumbe () {
+      this.changePagination()
+    },
+    // 跳转页数
+    changeToPage () {
+      // 填写的页码为空直接结束
+      if (this.toPage === '') {
+        return
+      }
+      // 填写的页码大于最大页，提示信息并结束
+      if (this.toPage > this.pages || this.toPage <= 0) {
+        this.$q.notify({
+          message: '请选择正确的页码',
+          color: 'red',
+          position: 'center',
+          timeout: 1500
+        })
+        return
+      }
+      this.pagination.page = parseInt(this.toPage)
+      this.changePagination()
+    },
     /**
      * 重置查询数据
      */
     reset () {
       this.queryName = ''
-      this.enableType = ''
+      this.enable_type = ''
+      this.tableType = 'all'
+      this.refreshView()
     },
     onSubmit () {
       // vue 处理__ob__: Observer 的数组
@@ -626,6 +699,11 @@ export default {
       if (v.value === undefined) {
         this.gridForm.parent_name = v
         this.gridForm.parent_bm = this.noModify.parent_bm
+      }
+      // 生成id
+      const uids = uid()
+      if (this.gridForm.id === '') {
+        this.gridForm.id = uids
       }
       // var params = []
       // params.push(this.gridForm)
@@ -666,28 +744,30 @@ export default {
       if (this.selected === null) {
         this.selected = oldQuestion
       }
-      const query = {
-        url: 'api/dbsource/queryByParamKey',
-        data: {
-          sqlId: 'select_grid_info',
-          whereId: '2',
-          orderId: '0',
-          params: { parent_bm: this.selected },
-          minRow: 0,
-          maxRow: 19
-        },
-        method: 'post',
-        type: 'db_search'
-      }
-      fetchData(query)
-        .then((res) => {
-          const resData = res.data.data.data
-          console.log(resData)
-          this.data = resData
-        })
-        .catch((error) => {
-          console.log(error)
-        })
+      // 刷新表格数据
+      this.refreshView()
+      // const query = {
+      //   url: 'api/dbsource/queryByParamKey',
+      //   data: {
+      //     sqlId: 'select_grid_info',
+      //     whereId: '2',
+      //     orderId: '0',
+      //     params: { parent_bm: this.selected },
+      //     minRow: this.startPage,
+      //     maxRow: this.endPage
+      //   },
+      //   method: 'post',
+      //   type: 'db_search'
+      // }
+      // fetchData(query)
+      //   .then((res) => {
+      //     const resData = res.data.data.data
+      //     console.log(resData)
+      //     this.data = resData
+      //   })
+      //   .catch((error) => {
+      //     console.log(error)
+      //   })
     },
     /**
      * 界面关闭移除表单内容
@@ -701,4 +781,5 @@ export default {
 }
 </script>
 <style>
+@import "../../assets/css/tableStyle.css";
 </style>

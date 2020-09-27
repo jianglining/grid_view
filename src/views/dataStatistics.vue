@@ -39,6 +39,43 @@
                   <q-btn color="primary" label="查询" icon="search" />
                 </div>
               </template>
+                            <template v-slot:bottom class="justify-end">
+          <span style="margin-right: 5px">
+            显示{{ startPage }}~{{ endPage }}条记录，总
+            {{ pagination.rowsNumber }}
+            条数据
+          </span>
+          <span style="margin-right: 5px"> 每页 </span>
+          <q-select
+            outlined
+            v-model="pagination.rowsPerPage"
+            :options="pageTotalumbe"
+            dense
+            @input="changeTotalumbe"
+            style="float: left; margin-right: 5px"
+          />
+          <span style="margin-right: 5px"> 条记录 </span>
+          <q-pagination
+            style="float: right"
+            v-model="pagination.page"
+            :max="pages"
+            :max-pages="maxPages"
+            ellipsess
+            :direction-links="true"
+            @input="changePagination"
+          >
+          </q-pagination>
+          <span>跳至 </span>
+          <q-input
+            outlined
+            v-model="toPage"
+            dense
+            class="pagination-input"
+            @keyup.enter.native="changeToPage"
+            style="width: 50px; margin: 10px"
+          ></q-input>
+          <span> 页</span>
+        </template>
             </q-table>
           </q-card-section>
         </q-card>
@@ -106,6 +143,19 @@ export default {
   data () {
     return {
       splitterModel: 20,
+      pageTotalumbe: [
+        5, 10, 20, 50
+      ],
+      startPage: 0, // 开始记录数
+      endPage: 5, // 结束记录数
+      pages: 5, // 数据总页数
+      maxPages: 5,
+      toPage: '', // 跳转至
+      pagination: {
+        page: 1,
+        rowsPerPage: 5,
+        rowsNumber: 0 // 总共数据条数
+      },
       // 选择的节点
       selected: '-1',
       totalNode: [],
@@ -113,6 +163,7 @@ export default {
       queryName: '',
       enableType: null,
       addIsEnable: '',
+      detailBackup: [],
       // 父节点数据
       choose: [],
       dense: true,
@@ -207,7 +258,6 @@ export default {
       fetchData(query)
         .then((res) => {
           const resData = res.data.data
-          console.log(resData)
           this.createTree(this.simple, resData)
         })
         .catch((error) => {
@@ -288,11 +338,53 @@ export default {
           console.log(error)
         })
     },
+    changePagination () {
+      // 设置数据开始位置
+      this.startPage = (this.pagination.page - 1) * this.pagination.rowsPerPage
+      // 设置数据结束位置
+      this.endPage = this.startPage + this.pagination.rowsPerPage
+      if (this.startPage > this.pagination.rowsNumber) {
+        this.startPage =
+          this.pagination.rowsNumber - this.pagination.rowsPerPage
+        if (this.startPage < 0) {
+          this.startPage = 0
+        }
+        this.endPage = this.pagination.rowsNumber
+      }
+      // 刷新页面
+      this.refreshDetailView()
+    },
+    // 设置显示总数目
+    changeTotalumbe () {
+      this.changePagination()
+    },
+    // 跳转页数
+    changeToPage () {
+      // 填写的页码为空直接结束
+      if (this.toPage === '') {
+        return
+      }
+      // 填写的页码大于最大页，提示信息并结束
+      if (this.toPage > this.pages || this.toPage <= 0) {
+        this.$q.notify({
+          message: '请选择正确的页码',
+          color: 'red',
+          position: 'center',
+          timeout: 1500
+        })
+        return
+      }
+      this.pagination.page = parseInt(this.toPage)
+      this.changePagination()
+    },
     /**
      * 查看网格详情
      */
     detailView (params) {
-      console.log(params)
+      this.detailBackup = params
+      this.refreshDetailView()
+    },
+    refreshDetailView () {
       this.addDialog = true
 
       const query = {
@@ -300,18 +392,23 @@ export default {
         data: {
           sqlId: 'select_grid_statistics_card_info',
           orderId: '0',
-          params: { grid_id: params.grid_bm },
-          minRow: 0,
-          maxRow: 15
+          params: { grid_id: this.detailBackup.grid_bm },
+          minRow: this.startPage,
+          maxRow: this.endPage
         },
         method: 'post',
         type: 'db_search'
       }
       fetchData(query)
         .then((res) => {
-          console.log(res)
           const resData = res.data.data.data
           this.detailData = resData
+          // 设置表格数据总条数（行数）
+          this.pagination.rowsNumber = res.data.data.count
+          // 设置表格页码树数量
+          this.pages = Math.ceil(
+            this.pagination.rowsNumber / this.pagination.rowsPerPage
+          )
         })
         .catch((error) => {
           console.log(error)
@@ -322,7 +419,6 @@ export default {
     // 监听事件，左侧节点菜单点击事件
     selected: function (newQuestion, oldQuestion) {
       // this.$router.push({ path: '/about' })
-      console.log(this.selected)
       if (this.selected === null) {
         this.selected = oldQuestion
       }
@@ -338,7 +434,6 @@ export default {
       }
       fetchData(query)
         .then((res) => {
-          console.log('res', res)
           const resData = res.data.data.data
           for (let i = 0; i < resData.length; i++) {
             resData[i].cardNumber = '0'
@@ -356,7 +451,6 @@ export default {
             fetchData(query01)
               .then((res) => {
                 const resData01 = res.data.data
-                console.log('resData01', resData01)
                 if (resData01 === null) {
                   resData[i].cardNumber = '0'
                 } else {
