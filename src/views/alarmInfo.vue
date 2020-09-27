@@ -87,39 +87,36 @@
           </q-td>
     </q-tr>
       <!--弹窗-->
-      <q-dialog v-model="prompt" seamless >
+      <q-dialog v-model="prompt" seamless>
       <q-card style="min-width: 47%;height:45%;box-shadow:0px 0px 3px #aaa;">
-        <q-card-section class="text-h6 text-white bg-blue-8 " style="width:100%;height:60px;">
-          <div>告警信息<q-icon name="close" style="float:right" v-close-popup/></div>
+        <q-card-section class="text-h6 bg-light-blue-6 " style="width:100%;height:60px;">
+          <div>
+            告警信息
+            <q-btn class="float-right" flat icon="close" v-close-popup size="12px">
+              <q-tooltip content-class="bg-white text-primary">关闭</q-tooltip>
+            </q-btn>
+          </div>
         </q-card-section>
         <!--弹框滚动条-->
         <div>
           <q-scroll-area style="width:100% ; height:230px; margin-top:0px" >
             <q-card-section style="width:100% ;height:40px;">
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex">
+              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex;padding-top:5%">
                 <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
                   设备名称：
                 </div>
-               <q-input outlined disable class="bg-grey-2" v-model="equipment_name" :dense="true" style="height:40px;float:left;margin-right:10px"/>
-                <!-- <div class="text-body1" style="width:100px;height:40px;float:left;text-align:left;line-height:40px;">
-                  设备ID：
-                </div> -->
-                <!-- <q-input outlined  disable class="bg-grey-2" v-model="module_equipment_id" :dense="true" style="height:40px;float:left"/> -->
-              </div>
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex;margin-top:15px">
+               <q-input outlined disable class="bg-grey-2" v-model="equipment_name" :dense="true" style="height:40px;float:left;margin-right:20px"/>
                 <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
                   所选产品：
                 </div>
                 <q-input outlined  disable class="bg-grey-2" :dense="true" style="height:40px;float:left;margin-right:10px"/>
               </div>
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex;margin-top:15px">
+              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex;margin-top:5%">
                 <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
                   在线状态：
                 </div>
-                <q-input outlined  disable class="bg-grey-2" :dense="true" style="height:40px;float:left"/>
-              </div>
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex;margin-top:15px">
-                <div class="text-body1" style="width:13%;height:40px;float:left;text-align:left;line-height:40px;">
+               <q-input outlined disable class="bg-grey-2" v-model="equipment_name" :dense="true" style="height:40px;float:left;margin-right:20px"/>
+                <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
                   图标路径：
                 </div>
                 <q-input outlined class="bg-grey-2" :dense="true" style="height:40px;float:left;margin-right:10px"/>
@@ -136,6 +133,37 @@
 </template>
 <script>
 export default {
+  data () {
+    return {
+      filterForm: {
+        status: '',
+        deviceName: ''
+      },
+      changeColor: false,
+      module_equipment_id: '',
+      alarm_describe: '',
+      alarm_status: '',
+      filter: '',
+      alarm_time: '',
+      equipment_name: '',
+      checked: false,
+      test: 100,
+      selected: [],
+      dense: false,
+      prompt: false,
+      options: [
+        '1', '2', '3', '四级', '五级', '六级', '七级', '八级', '九级', '十级'
+      ],
+      columns: [
+        { name: 'equipment_name', align: 'center', label: '设备名称', field: 'equipment_name' },
+        { name: 'alarm_describe', align: 'center', label: '告警记录', field: row => row.alarm_describe },
+        { name: 'alarm_status', align: 'center', label: '告警等级', field: 'alarm_status' },
+        { name: 'alarm_time', label: '告警时间', align: 'center', field: 'alarm_time' }
+      ],
+      data: [],
+      searchData: []
+    }
+  },
   mounted () {
     this.getList()
   },
@@ -146,7 +174,7 @@ export default {
         // this.searchData = this.data
         // this.data = this.searchData
         this.$q.notify({
-          message: '正在查询中......',
+          message: '请输入搜索关键词',
           color: 'black',
           position: 'center',
           timeout: 5
@@ -211,10 +239,10 @@ export default {
       var data01 = { sqlId: 'select_alarm_info', orderId: '0', minRow: '0', maxRow: '560', params: {} }
       // { sqlId: 'select_equipment_info', whereId: '4', orderId: '0', params: {}, minRow: 0, maxRow: 19 }
       data01 = 'args=' + JSON.stringify(data01)
-      console.log('访问参数：', data01)
+      // console.log('访问参数：', data01)
       // 后台数据访问
       this.dataAccess(url, data01, function (res) {
-        console.log('后端返回数据结果json：', res)
+        // console.log('后端返回数据结果json：', res)
         // 获取数据传给data
         that.data = res.data.data.data
         that.basicData = res.data.data.data
@@ -225,37 +253,6 @@ export default {
       }, function (err) {
         console.log('后端数据访问出错!', err)
       })
-    }
-  },
-  data () {
-    return {
-      filterForm: {
-        status: '',
-        deviceName: ''
-      },
-      changeColor: false,
-      module_equipment_id: '',
-      alarm_describe: '',
-      alarm_status: '',
-      filter: '',
-      alarm_time: '',
-      equipment_name: '',
-      checked: false,
-      test: 100,
-      selected: [],
-      dense: false,
-      prompt: false,
-      options: [
-        '1', '2', '3', '四级', '五级', '六级', '七级', '八级', '九级', '十级'
-      ],
-      columns: [
-        { name: 'equipment_name', align: 'center', label: '设备名称', field: 'equipment_name' },
-        { name: 'alarm_describe', align: 'center', label: '告警记录', field: row => row.alarm_describe },
-        { name: 'alarm_status', align: 'center', label: '告警等级', field: 'alarm_status' },
-        { name: 'alarm_time', label: '告警时间', align: 'center', field: 'alarm_time' }
-      ],
-      data: [],
-      searchData: []
     }
   }
 }

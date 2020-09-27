@@ -35,17 +35,24 @@
               <!-- 弹出框 -->
               <!-- 增加 -->
               <q-dialog v-model="increase" persistent :maximized="maximizedToggle">
-                <q-card  style="width: 65%;height: 45%">
+                <q-card  style="min-width: 45%;max-width: 70%;min-height: 50%;max-height: 70%">
                 <q-card-section class="bg-light-blue-6">
                   <div class="text-h6">新增API说明
-                    <q-btn class="float-right" flat icon="close" v-close-popup size="12px"/>
-                    <q-btn class="float-right" flat icon="crop_square" size="12px" @click="maximizedToggle = true" :disable="maximizedToggle"/>
-                    <q-btn class="float-right" flat icon="minimize" size="12px" @click="maximizedToggle = false" :disable="!maximizedToggle"/>
+                    <q-btn class="float-right" flat icon="close" v-close-popup size="12px">
+                      <q-tooltip content-class="bg-white text-primary">关闭</q-tooltip>
+                    </q-btn>
+                    <q-btn class="float-right" flat icon="crop_square" size="12px" @click="maximizedToggle = true" :disable="maximizedToggle">
+                      <q-tooltip v-if="!maximizedToggle" content-class="bg-white text-primary">最大化</q-tooltip>
+                    </q-btn>
+                    <q-btn class="float-right" flat icon="minimize" size="12px" @click="maximizedToggle = false" :disable="!maximizedToggle">
+                      <q-tooltip v-if="maximizedToggle" content-class="bg-white text-primary">最小化</q-tooltip>
+                    </q-btn>
                   </div>
                 </q-card-section>
                 <form>
-                <q-card-section class="q-pt-none q-mt-md">
+                <q-card-section>
                   <div class="text-h6">
+                    <div style="width: 90%;height: 80%">
                     <q-input
                       filled
                       v-model="api_name"
@@ -58,11 +65,13 @@
                       :rules="[ val => val && val.length > 0 || '请输入API名称']"
                     >
                     <template v-slot:before>
-                      <span class="input-label text-right " style="font-size:18px">
+                      <span class="input-label text-right q-pl-lg" style="font-size:18px">
                         API名称:
                       </span>
                     </template>
                     </q-input>
+                    </div>
+                    <div style="width: 90%;height: 80%">
                     <q-input
                       filled
                       v-model="api_description"
@@ -72,35 +81,43 @@
                       dense
                     >
                     <template v-slot:before>
-                      <span class="input-label text-right " style="font-size:18px">
+                      <span class="input-label text-right q-pl-lg" style="font-size:18px">
                         API说明:
                       </span>
                     </template>
                     </q-input>
+                    </div>
                   </div>
                 </q-card-section>
                 </form>
-
-                <q-card-actions align="right" class="text-primary">
-                  <q-btn flat label="确定" @click="save" />
-                  <q-btn flat label="取消" v-close-popup />
+                <div class="absolute-bottom-right">
+                <q-card-actions class="text-primary " >
+                  <q-btn size="12px" color="primary" icon="send" label="保存" @click="save"/>
                 </q-card-actions>
+                </div>
                 </q-card>
               </q-dialog>
               <!-- 编辑 -->
               <!-- fit row wrap justify-end items-start content-start -->
               <q-dialog v-model="edited" persistent :maximized="maximizedToggle">
-                <q-card style="width: 65%;height: 45%">
+                <q-card style="min-width: 45%;max-width: 70%;min-height: 50%;max-height: 70%">
                 <q-card-section class="bg-light-blue-6">
                   <div class="text-h6">编辑
-                    <q-btn class="float-right" flat icon="close" v-close-popup size="12px" />
-                    <q-btn class="float-right" flat icon="crop_square" size="12px" @click="maximizedToggle = true" :disable="maximizedToggle"/>
-                    <q-btn class="float-right" flat icon="minimize" size="12px" @click="maximizedToggle = false" :disable="!maximizedToggle"/>
+                    <q-btn class="float-right" flat icon="close" v-close-popup size="12px">
+                      <q-tooltip content-class="bg-white text-primary">关闭</q-tooltip>
+                    </q-btn>
+                    <q-btn class="float-right" flat icon="crop_square" size="12px" @click="maximizedToggle = true" :disable="maximizedToggle">
+                      <q-tooltip v-if="!maximizedToggle" content-class="bg-white text-primary">最大化</q-tooltip>
+                    </q-btn>
+                    <q-btn class="float-right" flat icon="minimize" size="12px" @click="maximizedToggle = false" :disable="!maximizedToggle">
+                      <q-tooltip v-if="maximizedToggle" content-class="bg-white text-primary">最小化</q-tooltip>
+                    </q-btn>
                   </div>
                 </q-card-section>
                 <form>
                 <q-card-section class="q-pt-none q-mt-md">
                   <div class="text-h6">
+                    <div style="width: 90%;height: 80%">
                     <q-input
                       filled
                       v-model="addData.api_name"
@@ -112,7 +129,7 @@
                       :rules="[ val => val && val.length > 0 || '请输入API名称']"
                     >
                     <template v-slot:before>
-                      <span class="input-label text-right " style="font-size:18px">
+                      <span class="input-label text-right q-pl-lg" style="font-size:18px">
                         API名称:
                       </span>
                     </template>
@@ -126,18 +143,20 @@
                       dense
                     >
                     <template v-slot:before>
-                      <span class="input-label text-right " style="font-size:18px">
+                      <span class="input-label text-right q-pl-lg" style="font-size:18px">
                         API说明:
                       </span>
                     </template>
                     </q-input>
+                    </div>
                   </div>
                 </q-card-section>
-
+                <div class="absolute-bottom-right">
                 <q-card-actions align="right" class="text-primary">
                   <q-btn flat label="确定" @click="submitEdit"/>
                   <q-btn flat label="取消" v-close-popup />
                 </q-card-actions>
+                </div>
                 </form>
                 </q-card>
               </q-dialog>
@@ -176,6 +195,7 @@
   </div>
 </template>
 <script>
+import { uid } from 'quasar'
 export default {
   data () {
     return {
@@ -183,7 +203,7 @@ export default {
       deleted: false,
       increase: false,
       edited: false,
-      maximizedToggle: true,
+      maximizedToggle: false,
       filter: '',
       name: '',
       address: '',
@@ -204,7 +224,6 @@ export default {
   mounted () {
     this.getList()
   },
-
   methods: {
     // 搜索
     search () {
@@ -217,12 +236,12 @@ export default {
           position: 'center',
           timeout: 5
         })
-      // } else if (this.addData.api_name !== '') {
-      //   this.addData = this.result.filter(item => {
-      //     if (item.api_name.indexOf(this.addData.api_name) !== -1) {
-      //       return item
-      //     }
-      //   })
+      } else if (this.addData.api_name !== '') {
+        this.addData = this.result.filter(item => {
+          if (item.api_name.indexOf(this.addData.api_name) !== -1) {
+            return item
+          }
+        })
       }
     },
     /*
@@ -230,6 +249,8 @@ export default {
     */
     save () {
       // this.addData.id = ''
+      const uids = uid()
+      this.addData.id = uids
       this.addData.api_name = this.api_name
       this.addData.api_description = this.api_description
       // this.addData.label = ''
@@ -237,11 +258,12 @@ export default {
       var data02 = [{
         sqlId: 'insert_api_description',
         params: [{
-          id: '',
-          api_name: this.api_name,
-          api_description: this.api_description
+          id: this.addData.id,
+          api_name: this.addData.api_name,
+          api_description: this.addData.api_description
         }]
       }]
+      console.log(this.addData)
       // var data01 = { sqlId: 'select_api_description' }
       data02 = 'args=' + JSON.stringify(data02)
       // console.log('访问参数：', data01)
@@ -252,6 +274,12 @@ export default {
         // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
       }, function (err) {
         console.log('后端数据访问出错!', err)
+      })
+      this.$q.notify({
+        message: '保存成功',
+        color: 'black',
+        position: 'center',
+        timeout: 5
       })
       this.increase = false
       location.reload()
@@ -268,7 +296,7 @@ export default {
       var data03 = [{
         sqlId: 'update_api_description',
         params: [{
-          id: this.selected,
+          id: this.addData.id,
           api_name: this.addData.api_name,
           api_description: this.addData.api_description
         }]
@@ -277,9 +305,9 @@ export default {
       data03 = 'args=' + JSON.stringify(data03)
       // console.log('访问参数：', data01)
       // 后台数据访问
-      console.log(this.selected)
-      console.log(this.addData.api_name)
-      console.log(this.addData.api_description)
+      // console.log(this.addData.id)
+      // console.log(this.addData.api_name)
+      // console.log(this.addData.api_description)
       this.dataAccess(url, data03, function (res) {
         // var result = res.data.data
         // for (let i = 0; i < result.length; i++) {
@@ -303,7 +331,7 @@ export default {
       var data04 = [{
         sqlId: 'delete_api_description',
         params: [{
-          id: this.selected,
+          id: this.addData.id,
           api_name: this.addData.api_name,
           api_description: this.addData.api_description
         }]
@@ -312,17 +340,17 @@ export default {
       // console.log('访问参数：', data01)
       // 后台数据访问
       this.dataAccess(url, data04, function (res) {
+        this.$q.notify({
+          message: '删除成功',
+          color: 'black',
+          position: 'center',
+          timeout: 5
+        })
         // console.log('后端返回数据结果json：', res.data)
         // var insertDate = res.data.data.data
         // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
       }, function (err) {
         console.log('后端数据访问出错!', err)
-      })
-      this.$q.notify({
-        message: '删除成功',
-        color: 'black',
-        position: 'center',
-        timeout: 5
       })
       this.deleted = false
       location.reload()
