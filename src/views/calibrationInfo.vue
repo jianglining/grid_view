@@ -164,28 +164,21 @@ export default {
      * 查询
      */
     search () {
-      if (this.filterForm.cardNumber === '') {
-        this.$q.notify({
-          message: '正在查询中......',
-          color: 'black',
-          position: 'center',
-          timeout: 1
-        })
-        this.getTableData(1, 10, this.filterForm.cardNumber)
-      } else {
-        this.$q.notify({
-          message: '正在查询中......',
-          color: 'black',
-          position: 'center',
-          timeout: 1
-        })
-        this.getTableData(1, 10, this.filterForm.cardNumber)
-      }
+      this.$q.notify({
+        message: '正在查询中......',
+        color: 'black',
+        position: 'center',
+        timeout: 1
+      })
+      this.getTableData(1, 10, this.filterForm.cardNumber)
     },
     /**
      * 获取列表数据
+     * @param start 开始读取的页数
+     * @param end 结束读取的页数
+     * @param query 查询关键字
      */
-    getTableData (s, e, r) {
+    getTableData (start, end, query) {
       var that = this
       var url = '/api/dbsource/queryByParamKey'
       let minR = 0
@@ -194,24 +187,23 @@ export default {
       if (that.pagination.page !== 1) {
         minR = that.pagination.page
       }
-      if (s !== '') {
-        minR = s
-        maxR = e
+      if (start !== '') {
+        minR = start
+        maxR = end
       }
-      var data01 = { sqlId: 'select_picketage_info', orderId: '0', params: { card_number: r, requesttime: '' }, minRow: minR, maxRow: maxR, whereId: '0' }
+      var data01 = { sqlId: 'select_picketage_info', orderId: '0', params: { card_number: query, requesttime: '' }, minRow: minR, maxRow: maxR, whereId: '0' }
       data01 = 'args=' + JSON.stringify(data01)
       // 后台数据访问
       this.dataAccess(url, data01, function (res) {
-        console.log('后端返回数据结果json：', res)
         // 获取数据传给basicData,data
         that.basicData = res.data.data.data
         that.data = that.basicData
         that.pagination.rowsNumber = res.data.data.count
-        /* 设置分页页数 */
+        // 设置分页页数
         if (res.data.data.count % that.pagination.rowsPerPage === 0) {
           that.pages = res.data.data.count / that.pagination.rowsPerPage
         } else {
-          // 向上取整
+          // 分页页数向上取整
           that.pages = Math.ceil(res.data.data.count / that.pagination.rowsPerPage)
         }
       }, function (err) {
@@ -232,23 +224,27 @@ export default {
         timeout: 5
       })
       this.filterForm.cardNumber = ''
-      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
+      this.getTableData(1, 10, this.filterForm.cardNumber)
     },
     /**
      * 双击查看详情
-     * @param s 该行的数组
+     * @param row 该行的数组
      */
-    look (s) {
+    look (row) {
       this.prompt = true
-      this.devicename = s.devicename
-      this.equipment_name = s.equipment_name
-      this.message = s.message
-      this.card_number = s.card_number
-      this.requesttime = s.requesttime
-      this.identifier = s.identifier
+      this.devicename = row.devicename
+      this.equipment_name = row.equipment_name
+      this.message = row.message
+      this.card_number = row.card_number
+      this.requesttime = row.requesttime
+      this.identifier = row.identifier
     },
     /**
      * 数据访问
+     * @param accessUrl 访问路径
+     * @param pdata 参数
+     * @param successCallback 操作成功的回调函数
+     * @param errorCallback 操作失败的回调函数
      */
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
       this.$axios({
@@ -262,24 +258,38 @@ export default {
     },
     /**
      * 改变显示条数
-      */
+     * @param val 选中下拉按钮的值
+     */
     changeOptions (val) {
-      this.startPage = (this.pagination.page - 1) * val + 1
-      if (this.pagination.page * this.val > this.pagination.rowsNumber) {
-        this.endPage = this.startPage + 1
+      // 处理当处于分页的最后一页时,如果选择显示页数大于原来显示页数
+      if (this.pagination.page >= Math.ceil(this.pagination.rowsNumber / val)) {
+        this.startPage = (Math.ceil(this.pagination.rowsNumber / val) - 1) * val + 1
+        if (this.pagination.page * this.val > this.pagination.rowsNumber) {
+          this.endPage = this.pagination.rowsNumber
+        } else {
+          this.endPage = this.pagination.page * val
+        }
+        this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
       } else {
-        this.endPage = this.pagination.page * val
+        // 设置开始记录数
+        this.startPage = (this.pagination.page - 1) * val + 1
+        if (this.pagination.page * this.val > this.pagination.rowsNumber) {
+          this.endPage = this.pagination.rowsNumber
+        } else {
+          this.endPage = this.pagination.page * val
+        }
+        this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
       }
-      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
     },
     /**
      * 改变分页
-      */
+     * @param val 选中的分页码
+     */
     changePagination (val) {
       // 设置开始记录数
       this.startPage = (val - 1) * this.pagination.rowsPerPage + 1
       if (val * this.pagination.rowsPerPage > this.pagination.rowsNumber) {
-        this.endPage = this.startPage + 1
+        this.endPage = this.pagination.rowsNumber
       } else {
         this.endPage = val * this.pagination.rowsPerPage
       }
@@ -306,12 +316,11 @@ export default {
       if (this.toPage !== '') {
         this.startPage = (parseInt(this.toPage) - 1) * this.pagination.rowsPerPage + 1
         if (parseInt(this.toPage) * this.pagination.rowsPerPage > this.pagination.rowsNumber) {
-          this.endPage = this.startPage + 1
+          this.endPage = this.pagination.rowsNumber
         } else {
           this.endPage = parseInt(this.toPage) * this.pagination.rowsPerPage
         }
         this.pagination.page = parseInt(this.toPage)
-        this.loading = true
         this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
       }
     }
@@ -326,8 +335,8 @@ export default {
       pages: '', // 数据总页数
       toPage: '', // 跳转至
       pagination: {
-        page: '',
-        rowsPerPage: 10,
+        page: '', // 当前记录数
+        rowsPerPage: 10, // 每页记录数
         rowsNumber: '' // 总共数据条数
       },
       filterForm: {

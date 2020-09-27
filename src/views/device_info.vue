@@ -17,7 +17,6 @@
       :rows-per-page-options="[10,20,30]"
       no-data-label="暂无数据"
       table-header-class="bg-blue-8 text-white"
-      :pagination-label="getPaginationLabel"
     >
     <!--操作选项-->
      <template v-slot:top>
@@ -118,7 +117,7 @@
         </q-card>
       </q-dialog>
       </template>
-     <template v-slot:bottom class="justify-end">
+      <template v-slot:bottom class="justify-end">
           <span style="margin-right:5px;">
             显示{{startPage}}~{{ endPage}}条记录，总
             {{ pagination.rowsNumber }}
@@ -130,7 +129,7 @@
           <q-select
           outlined
           v-model="pagination.rowsPerPage"
-          :options="pageOptions"
+          :options="optionsPage"
           dense
           @input="changeOptions"
           style="float:left;margin-right:5px;" />
@@ -171,7 +170,36 @@ export default {
      * 更新设备信息
      */
     update () {
-
+      this.$q.notify({
+        message: '正在更新',
+        color: 'black',
+        position: 'center',
+        timeout: 1
+      })
+      var that = this
+      var url = '/api//equipment/save'
+      var data02 = []
+      // 后台数据访问
+      this.dataAccess(url, data02, function (res) {
+        that.updateFlag = res.data.success
+        if (that.updateFlag === true) {
+          that.$q.notify({
+            message: '更新成功',
+            color: 'black',
+            position: 'center',
+            timeout: 200
+          })
+        } else if (that.updateFlag === false) {
+          that.$q.notify({
+            message: '更新失败',
+            color: 'black',
+            position: 'center',
+            timeout: 200
+          })
+        }
+      }, function (err) {
+        console.log('后端数据访问出错!', err)
+      })
     },
     /**
      * 查询
@@ -183,7 +211,7 @@ export default {
         position: 'center',
         timeout: 1
       })
-      this.getTableData(1, 10, this.filterForm.deviceName, this.filterForm.status)
+      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
     },
     /**
      * 重置
@@ -197,27 +225,18 @@ export default {
       })
       this.filterForm.deviceName = ''
       this.filterForm.status = ''
-      this.getTableData(1, 10, this.filterForm.deviceName, this.filterForm.status)
+      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
     },
     /**
      * 双击查看详情
-     * @param s 该行的数组
+     * @param row 该行的数组
      */
-    look (s) {
+    look (row) {
       this.prompt = true
-      this.module_equipment_id = s.module_equipment_id
-      this.equipment_name = s.equipment_name
-      this.equipment_state = s.equipment_state
-      this.equipment_type = s.equipment_type
-    },
-    /**
-     * 重写分页标签
-     * @param firstRowIndex 第一条下标
-     * @param endRowIndex 最后一条下标
-     * @param totalRowsNumber 总条数下标
-     */
-    getPaginationLabel (firstRowIndex, endRowIndex, totalRowsNumber) {
-      return '显示 ' + firstRowIndex + ' ~ ' + endRowIndex + ' 条记录，总共' + totalRowsNumber + ' 条'
+      this.module_equipment_id = row.module_equipment_id
+      this.equipment_name = row.equipment_name
+      this.equipment_state = row.equipment_state
+      this.equipment_type = row.equipment_type
     },
     /**
      * 重写选中显示的文字
@@ -229,19 +248,34 @@ export default {
      * 数据访问
      */
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
-      this.$axios({
-        method: 'post',
-        url: accessUrl,
-        data: pdata,
-        type: 'json'
-      })
-        .then(successCallback)
-        .catch(errorCallback)
+      if (pdata === undefined || pdata.length <= 0) {
+        this.$axios({
+          method: 'GET',
+          url: accessUrl,
+          type: 'json'
+        })
+          .then(successCallback)
+          .catch(errorCallback)
+      } else {
+        this.$axios({
+          method: 'POST',
+          url: accessUrl,
+          data: pdata,
+          type: 'json'
+        })
+          .then(successCallback)
+          .catch(errorCallback)
+      }
     },
     /**
-     * 获取数据
+     * 获取列表数据
+     * @param start 开始读取的页数
+     * @param end 结束读取的页数
+     * @param query1 查询关键字1——设备名称
+     * @param query2 查询关键字2——设备名称
      */
-    getTableData (s, e, r1, r2) {
+    getTableData (start, end, query1, query2) {
+      console.log('查询参数1：', query1)
       var that = this
       var url = '/api/dbsource/queryByParamKey'
       let minR = 0
@@ -250,13 +284,18 @@ export default {
       if (that.pagination.page !== 1) {
         minR = that.pagination.page
       }
-      if (s !== '' && s !== 1) {
-        minR = s
-        maxR = e
-      } else {
-        minR = 0
+      if (start !== '') {
+        minR = start
+        maxR = end
       }
-      var data01 = { sqlId: 'select_equipment_info', whereId: '0', orderId: '0', params: { equipment_name: r1, equipment_state: r2 }, minRow: minR, maxRow: maxR }
+      // 对在线状态进行处理
+      if (query2 === '在线') {
+        query2 = '0'
+      } else if (query2 === '离线') {
+        query2 = '1'
+      }
+      // var data01 = { sqlId: 'select_equipment_info', whereId: '4', orderId: '0', params: {}, minRow: 0, maxRow: 19 }
+      var data01 = { sqlId: 'select_equipment_info', orderId: 0, params: { equipment_name: query1, equipment_state: query2 }, minRow: minR, maxRow: maxR, whereId: 0 }
       data01 = 'args=' + JSON.stringify(data01)
       console.log('访问参数：', data01)
       // 后台数据访问
@@ -266,11 +305,11 @@ export default {
         that.basicData = res.data.data.data
         that.data = that.basicData
         that.pagination.rowsNumber = res.data.data.count
-        /* 设置分页页数 */
+        // 设置分页页数
         if (res.data.data.count % that.pagination.rowsPerPage === 0) {
           that.pages = res.data.data.count / that.pagination.rowsPerPage
         } else {
-          // 向上取整
+          // 分页页数向上取整
           that.pages = Math.ceil(res.data.data.count / that.pagination.rowsPerPage)
         }
       }, function (err) {
@@ -279,24 +318,34 @@ export default {
     },
     /**
      * 改变显示条数
-      */
+     * @param val 选中下拉按钮的值
+     */
     changeOptions (val) {
-      this.startPage = (this.pagination.page - 1) * val + 1
-      if (this.pagination.page * this.val > this.pagination.rowsNumber) {
-        this.endPage = this.startPage + 1
+      // 处理当处于分页的最后一页时,如果选择显示页数大于原来显示页数
+      if (this.pagination.page >= Math.ceil(this.pagination.rowsNumber / val)) {
+        this.startPage = (Math.ceil(this.pagination.rowsNumber / val) - 1) * val + 1
+        this.endPage = this.pagination.rowsNumber
+        this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
       } else {
-        this.endPage = this.pagination.page * val
+        // 设置开始记录数
+        this.startPage = (this.pagination.page - 1) * val + 1
+        if (this.pagination.page * this.val > this.pagination.rowsNumber) {
+          this.endPage = this.pagination.rowsNumber
+        } else {
+          this.endPage = this.pagination.page * val
+        }
+        this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
       }
-      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
     },
     /**
      * 改变分页
-      */
+     * @param val 选中的分页码
+     */
     changePagination (val) {
       // 设置开始记录数
       this.startPage = (val - 1) * this.pagination.rowsPerPage + 1
       if (val * this.pagination.rowsPerPage > this.pagination.rowsNumber) {
-        this.endPage = this.startPage + 1
+        this.endPage = this.pagination.rowsNumber
       } else {
         this.endPage = val * this.pagination.rowsPerPage
       }
@@ -323,19 +372,18 @@ export default {
       if (this.toPage !== '') {
         this.startPage = (parseInt(this.toPage) - 1) * this.pagination.rowsPerPage + 1
         if (parseInt(this.toPage) * this.pagination.rowsPerPage > this.pagination.rowsNumber) {
-          this.endPage = this.startPage + 1
+          this.endPage = this.pagination.rowsNumber
         } else {
           this.endPage = parseInt(this.toPage) * this.pagination.rowsPerPage
         }
         this.pagination.page = parseInt(this.toPage)
-        this.loading = true
         this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
       }
     }
   },
   data () {
     return {
-      pageOptions: [
+      optionsPage: [
         10, 30, 50, 100
       ],
       startPage: 1, // 开始记录数
@@ -343,14 +391,15 @@ export default {
       pages: '', // 数据总页数
       toPage: '', // 跳转至
       pagination: {
-        page: 0,
-        rowsPerPage: 10,
+        page: 0, // 当前记录数
+        rowsPerPage: 10, // 每页记录数
         rowsNumber: '' // 总共数据条数
       },
       filterForm: {
         status: '',
         deviceName: ''
       },
+      updateFlag: '',
       changeColor: false,
       module_equipment_id: '',
       equipment_name: '',
