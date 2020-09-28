@@ -9,16 +9,18 @@
               style="width: 265px;margin-left: 0px"
               dense
               standout="bg-blue-6 text-white"
-              v-model="search"
+              v-model="treeSearch"
               input-class="text-right"
               class="q-ml-md"
               label-color="primary"
+              @keyup.enter.native="ontreeSearch"
             >
               <template v-slot:append>
-                <q-icon v-if="search === ''" name="search" />
-                <q-icon v-else name="clear" class="cursor-pointer" @click="search" />
+                <q-icon v-if="treeSearch === ''" name="search" />
+                <q-icon v-else name="clear" class="cursor-pointer" @click="treeSearch = ''" />
               </template>
             </q-input>
+             <q-separator inset />
             <!-- 树结构 -->
             <q-tree
               :nodes="simple"
@@ -38,7 +40,7 @@
                 <q-card  style="min-width: 45%;max-width: 70%;min-height: 50%;max-height: 70%">
                 <q-card-section class="bg-light-blue-6">
                   <div class="text-h6">新增API说明
-                    <q-btn class="float-right" flat icon="close" v-close-popup size="12px">
+                    <q-btn class="float-right" flat icon="close" v-close-popup size="12px" >
                       <q-tooltip content-class="bg-white text-primary">关闭</q-tooltip>
                     </q-btn>
                     <q-btn class="float-right" flat icon="crop_square" size="12px" @click="maximizedToggle = true" :disable="maximizedToggle">
@@ -54,13 +56,11 @@
                   <div class="text-h6">
                     <div style="width: 90%;height: 80%">
                     <q-input
-                      filled
                       v-model="api_name"
                       type="text"
-                      label="API名称"
+                      dense
                       outlined
                       autogrow
-                      dense
                       lazy-rules
                       :rules="[ val => val && val.length > 0 || '请输入API名称']"
                     >
@@ -73,12 +73,10 @@
                     </div>
                     <div style="width: 90%;height: 80%">
                     <q-input
-                      filled
                       v-model="api_description"
                       type="textarea"
-                      label="API说明"
-                      outlined
                       dense
+                      outlined
                     >
                     <template v-slot:before>
                       <span class="input-label text-right q-pl-lg" style="font-size:18px">
@@ -92,13 +90,12 @@
                 </form>
                 <div class="absolute-bottom-right">
                 <q-card-actions class="text-primary " >
-                  <q-btn size="12px" color="primary" icon="send" label="保存" @click="save"/>
+                  <q-btn size="13px" color="primary" icon="send" label="保存" @click="save"/>
                 </q-card-actions>
                 </div>
                 </q-card>
               </q-dialog>
               <!-- 编辑 -->
-              <!-- fit row wrap justify-end items-start content-start -->
               <q-dialog v-model="edited" persistent :maximized="maximizedToggle">
                 <q-card style="min-width: 45%;max-width: 70%;min-height: 50%;max-height: 70%">
                 <q-card-section class="bg-light-blue-6">
@@ -119,12 +116,10 @@
                   <div class="text-h6">
                     <div style="width: 90%;height: 80%">
                     <q-input
-                      filled
                       v-model="addData.api_name"
-                      label="API名称"
+                      dense
                       outlined
                       autogrow
-                      dense
                       lazy-rules
                       :rules="[ val => val && val.length > 0 || '请输入API名称']"
                     >
@@ -135,12 +130,10 @@
                     </template>
                     </q-input>
                     <q-input
-                      filled
                       v-model="addData.api_description"
                       type="textarea"
-                      label="API说明"
-                      outlined
                       dense
+                      outlined
                     >
                     <template v-slot:before>
                       <span class="input-label text-right q-pl-lg" style="font-size:18px">
@@ -153,8 +146,8 @@
                 </q-card-section>
                 <div class="absolute-bottom-right">
                 <q-card-actions align="right" class="text-primary">
-                  <q-btn flat label="确定" @click="submitEdit"/>
-                  <q-btn flat label="取消" v-close-popup />
+                  <q-btn size="13px" color="primary" icon="send" label="保存" @click="submitEdit"/>
+                  <q-btn size="13px" color="primary" icon="close" label="取消" v-close-popup />
                 </q-card-actions>
                 </div>
                 </form>
@@ -165,10 +158,10 @@
                 <q-card style="width: 25%;">
                 <q-card-section class="bg-light-blue-6">
                   <div class="text-h6">删除
-                    <!-- <div style="margin-left:200px;margin-bottom: 30px;border-style:solid;border-width:0.5px;"> -->
-                    <q-btn class="float-right" flat icon="close" v-close-popup />
+                    <q-btn class="float-right" flat icon="close" v-close-popup>
+                      <q-tooltip content-class="bg-white text-primary">关闭</q-tooltip>
+                    </q-btn>
                   </div>
-                  <!-- </div> -->
                 </q-card-section>
 
                 <q-card-section class="q-pt-none q-mt-md">
@@ -176,8 +169,8 @@
                 </q-card-section>
 
                 <q-card-actions align="right" class="text-primary">
-                  <q-btn flat label="确定" @click="onDelete" />
-                  <q-btn flat label="取消" v-close-popup />
+                  <q-btn size="12px" color="primary" icon="send" label="确定" @click="onDelete"/>
+                  <q-btn size="12px" color="primary" icon="close" label="取消" v-close-popup />
                 </q-card-actions>
                 </q-card>
               </q-dialog>
@@ -204,6 +197,7 @@ export default {
       increase: false,
       edited: false,
       maximizedToggle: false,
+      treeSearch: '',
       filter: '',
       name: '',
       address: '',
@@ -212,6 +206,7 @@ export default {
       text: '',
       selected: '',
       simple: [],
+      simpleBackup: [],
       detailData: [],
       addData: {
         id: '',
@@ -225,26 +220,24 @@ export default {
     this.getList()
   },
   methods: {
-    // 搜索
-    search () {
-      if (this.addData.api_name === '') {
-        // this.searchData = this.data
-        // this.data = this.searchData
-        this.$q.notify({
-          message: '请输入关键词',
-          color: 'black',
-          position: 'center',
-          timeout: 5
-        })
-      } else if (this.addData.api_name !== '') {
-        this.addData = this.result.filter(item => {
-          if (item.api_name.indexOf(this.addData.api_name) !== -1) {
-            return item
-          }
-        })
+    /**
+    *  搜索
+    */
+    ontreeSearch () {
+      console.log()
+      if (this.treeSearch === '') {
+        this.simple = this.simpleBackup
+        return
+      }
+      this.simple = []
+      for (let i = 0; i < this.simpleBackup.length; i++) {
+        const searchValue = this.simpleBackup[i].label.indexOf(this.treeSearch)
+        if (searchValue !== -1) {
+          this.simple.push(this.simpleBackup[i])
+        }
       }
     },
-    /*
+    /**
     *  新增按钮响应事件
     */
     save () {
@@ -263,7 +256,8 @@ export default {
           api_description: this.addData.api_description
         }]
       }]
-      console.log(this.addData)
+      // console.log(this.addData)
+      // console.log('*****保存的addData******')
       // var data01 = { sqlId: 'select_api_description' }
       data02 = 'args=' + JSON.stringify(data02)
       // console.log('访问参数：', data01)
@@ -277,14 +271,14 @@ export default {
       })
       this.$q.notify({
         message: '保存成功',
-        color: 'black',
+        color: 'green',
         position: 'center',
         timeout: 5
       })
       this.increase = false
       location.reload()
     },
-    /*
+    /**
     *  编辑按钮响应事件
     */
     submitEdit () {
@@ -320,10 +314,16 @@ export default {
         console.log('后端数据访问出错!', err)
       })
       // this.getList()
+      this.$q.notify({
+        message: '保存成功',
+        color: 'green',
+        position: 'center',
+        timeout: 5
+      })
       this.edited = false
       location.reload()
     },
-    /*
+    /**
     *  删除按钮事件
     */
     onDelete () {
@@ -341,7 +341,7 @@ export default {
       // 后台数据访问
       this.dataAccess(url, data04, function (res) {
         this.$q.notify({
-          message: '删除成功',
+          message: 'green',
           color: 'black',
           position: 'center',
           timeout: 5
@@ -355,7 +355,7 @@ export default {
       this.deleted = false
       location.reload()
     },
-    /*
+    /**
     *  响应事件
     */
     onsubmit () {
@@ -365,7 +365,7 @@ export default {
         this.increase = false
       }
     },
-    /*
+    /**
     *  获取后台数据
     */
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
@@ -395,17 +395,19 @@ export default {
         }
         // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
         that.simple = result
-        console.log(result)
+        that.simpleBackup = result
+        // console.log(result)
         // console.log(this.selected)
         // console.log(this.addData.id)
-        // console.log(that.simple)
+        console.log('*****请求数据的simple******')
+        console.log(that.simple)
         // // 查看有没有取到的数据
       }, function (err) {
         console.log('后端数据访问出错!', err)
       })
     }
   },
-  /*
+  /**
   *  监听左侧点击事件
   */
   watch: {
@@ -419,7 +421,7 @@ export default {
           for (let i = 0; i < a.length; i++) {
             a[i] = a[i].replace('<p>', '')
             a[i] = a[i].replace('</p>', '')
-            a[i] = a[i].replace(/[ '"\b\f\n\r\t]/g, '')
+            a[i] = a[i].replace(/['"\b\f\n\r\t]/g, '')
           }
           // console.log(this.addData.id)
           // console.log(this.addData.api_name)

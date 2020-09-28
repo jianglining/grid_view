@@ -9,22 +9,20 @@
       virtual-scroll
       selection="multiple"
       :selected.sync="selected"
-      :selected-rows-label="getSelectedString"
+      :pagination.sync="pagination"
       separator="cell"
       card-style="height:85vh"
-      pagination.sync="selected"
-      :rows-per-page-options="[19]"
       table-header-class="bg-blue-8 text-white"
-      :pagination-label="getPaginationLabel"
     >
     <!--操作选项-->
      <template v-slot:top>
           <strong style="float:left;margin-left:10px;margin-right:10px;">设备名称</strong>
           <q-input
-          outlined
-          v-model="filterForm.deviceName"
-          dense
-          style="width:200px;float:left;" />
+            outlined
+            v-model="filterForm.deviceName"
+            dense
+            style="width:200px;float:left;"
+          />
 
           <strong style="float:left;margin-left:10px;margin-right:10px;">告警等级</strong>
           <q-select
@@ -115,7 +113,7 @@
                 <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
                   在线状态：
                 </div>
-               <q-input outlined disable class="bg-grey-2" v-model="equipment_name" :dense="true" style="height:40px;float:left;margin-right:20px"/>
+               <q-input outlined disable class="bg-grey-2" :dense="true" style="height:40px;float:left;margin-right:20px"/>
                 <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
                   图标路径：
                 </div>
@@ -128,8 +126,34 @@
         </q-card>
       </q-dialog>
       </template>
+      <!-- <template v-slot:bottom class="justify-end">
+        <div class="q-pa-lg flex flex-center">
+        <span>
+          {{ pagination.rowsPerPage }}条/页
+          共 {{ pagination.rowsNumber }} 条数据
+        </span>
+          <q-pagination
+            v-model="pagination.page"
+            :max="pages"
+            :max-pages="5"
+            ellipsess
+            :direction-links="true"
+            @input="changePagination"
+          >
+          </q-pagination>
+          <span>跳至 </span>
+          <q-input
+            outlined
+            v-model="toPage"
+            class="pagination-input"
+            @input="changeToPage"
+            @keyup.enter.native="refreshTableData"
+          ></q-input>
+          <span> 页</span>
+        </div>
+      </template> -->
     </q-table>
-    </div>
+  </div>
 </template>
 <script>
 export default {
@@ -139,6 +163,16 @@ export default {
         status: '',
         deviceName: ''
       },
+      pages: '10', // 数据总页数
+      toPage: '', // 跳转至
+      pagination: {
+        sortBy: 'desc',
+        descending: false,
+        page: 1,
+        rowsPerPage: 5,
+        rowsNumber: 50 // 总共数据条数
+      },
+      current: 1,
       changeColor: false,
       module_equipment_id: '',
       alarm_describe: '',
@@ -152,7 +186,7 @@ export default {
       dense: false,
       prompt: false,
       options: [
-        '1', '2', '3', '四级', '五级', '六级', '七级', '八级', '九级', '十级'
+        '1', '2', '3', '4', '5', '6', '7', '8', '9', '10'
       ],
       columns: [
         { name: 'equipment_name', align: 'center', label: '设备名称', field: 'equipment_name' },
@@ -168,7 +202,26 @@ export default {
     this.getList()
   },
   methods: {
-    // 搜索
+    changePagination (val) {
+      this.selected = []
+      console.log(`changePagination: ${val}`)
+      this.pagination.page = val
+      this.loading = true
+      this.getTableData()
+    },
+    changeToPage (val) {
+      this.selected = []
+      var r = /^\+?[1-9][0-9]*$/
+      if (r.test(val) && parseInt(val) <= this.pages) {
+        // 输入正整数 且 小于最大页数
+        // console.log(`input toPage: ${val} 是一个正整数`)
+      } else {
+        this.toPage = ''
+      }
+    },
+    /**
+    *  搜索
+    */
     search () {
       if (this.filterForm.deviceName === '' && this.filterForm.status === '') {
         // this.searchData = this.data
@@ -199,13 +252,17 @@ export default {
         })
       }
     },
-    // 重置
+    /**
+    *  重置
+    */
     reset () {
       this.filterForm.deviceName = ''
       this.filterForm.status = ''
       this.data = this.basicData
     },
-    // 查看详情
+    /**
+    *  点击任一表格数据进行查看
+    */
     look (s) {
       this.prompt = true
       this.module_equipment_id = s.module_equipment_id
@@ -214,15 +271,18 @@ export default {
       this.alarm_time = s.alarm_time
       this.alarm_status = s.alarm_status
     },
+    // /**
+    //  * 重写选中显示的文字
+    //  */
+    // getSelectedString (numberOfRows) {
+    //   return '共选中' + numberOfRows + '条记录'
+    // },
+    // getPaginationLabel (firstRowIndex, endRowIndex, totalRowsNumber) {
+    //   return '显示 ' + firstRowIndex + ' ~ ' + endRowIndex + ' 条记录，总共' + totalRowsNumber + ' 条'
+    // },
     /**
-     * 重写选中显示的文字
-     */
-    getSelectedString (numberOfRows) {
-      return '共选中' + numberOfRows + '条记录'
-    },
-    getPaginationLabel (firstRowIndex, endRowIndex, totalRowsNumber) {
-      return '显示 ' + firstRowIndex + ' ~ ' + endRowIndex + ' 条记录，总共' + totalRowsNumber + ' 条'
-    },
+    *  获取后台数据
+    */
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
       this.$axios({
         method: 'post',
@@ -245,9 +305,11 @@ export default {
         // console.log('后端返回数据结果json：', res)
         // 获取数据传给data
         that.data = res.data.data.data
+        that.pagination.rowsNumber = res.data.data.count
         that.basicData = res.data.data.data
         that.totalData = res.data.data.count
-        // console.log(that.data)
+        console.log(that.data)
+        console.log(that.pagination.rowsNumber)
         // console.log(that.totalData)
         // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
       }, function (err) {
