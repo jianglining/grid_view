@@ -13,9 +13,11 @@
               :data="detailData"
               :columns="gridDetail"
               row-key="id"
+              class="my-sticky-header-table"
               card-style="margin:15px;"
               no-data-label="暂无数据"
-              :filter="queryName"
+                      separator="cell"
+                              :pagination.sync="pagination"
             >
               <template v-slot:body="props">
                 <q-tr :props="props">
@@ -36,7 +38,7 @@
                     class="q-ml-md"
                     label-color="primary"
                   />
-                  <q-btn color="primary" label="查询" icon="search" />
+                  <q-btn color="primary" label="查询" icon="search" @click="queryGridCard()"/>
                 </div>
               </template>
                             <template v-slot:bottom class="justify-end">
@@ -93,6 +95,7 @@
             input-class="text-right"
             class="q-ml-md"
             label-color="primary"
+            @input="queryNode"
           >
             <template v-slot:append>
               <q-icon v-if="gridNodeSearch === ''" name="search" />
@@ -105,7 +108,7 @@
           node-key="grid_id"
           selected-color="primary"
           :selected.sync="selected"
-          default-expand-all
+          :expanded.sync="expanded"
         />
       </div>
     </template>
@@ -164,6 +167,8 @@ export default {
       enableType: null,
       addIsEnable: '',
       detailBackup: [],
+      // 默认打开的树节点
+      expanded: ['-1'],
       // 父节点数据
       choose: [],
       dense: true,
@@ -181,6 +186,18 @@ export default {
           children: []
         }
       ],
+      // 树
+      baseSimple: [
+        {
+          label: '网格节点',
+          icon: 'share',
+          grid_bm: '-1',
+          grid_id: '-1',
+          id: '-1',
+          children: []
+        }
+      ],
+      simpleBackup: [],
       // 表格（每列标题）数据
       columns: [
         {
@@ -291,6 +308,8 @@ export default {
           this.createTree(params[i].children, treeData)
         }
       }
+      // 备份
+      this.simpleBackup = this.simple
     },
     refreshView () {
       /**
@@ -378,6 +397,30 @@ export default {
       this.changePagination()
     },
     /**
+     * 节点查询
+     */
+    queryNode () {
+      if (this.gridNodeSearch === '') {
+        this.simple = this.simpleBackup
+        return
+      }
+      this.baseSimple[0].children = []
+      this.queryNodeOperation(this.simpleBackup)
+    },
+    queryNodeOperation (params) {
+      for (let i = 0; i < params.length; i++) {
+        const index = params[i].label.indexOf(this.gridNodeSearch)
+        if (index !== -1) {
+          this.baseSimple[0].children.push(params[i])
+        } else {
+          if (params[i].children.length > 0) {
+            this.queryNodeOperation(params[i].children)
+          }
+        }
+      }
+      this.simple = this.baseSimple
+    },
+    /**
      * 查看网格详情
      */
     detailView (params) {
@@ -385,14 +428,19 @@ export default {
       this.refreshDetailView()
     },
     refreshDetailView () {
+      var param = null
+      if (this.queryName !== '') {
+        param = { cardNumber: this.queryName, grid_id: '' }
+      } else {
+        param = { grid_id: this.detailBackup.grid_bm }
+      }
       this.addDialog = true
-
       const query = {
         url: 'api/dbsource/queryByParamKey',
         data: {
           sqlId: 'select_grid_statistics_card_info',
           orderId: '0',
-          params: { grid_id: this.detailBackup.grid_bm },
+          params: param,
           minRow: this.startPage,
           maxRow: this.endPage
         },
@@ -413,6 +461,9 @@ export default {
         .catch((error) => {
           console.log(error)
         })
+    },
+    queryGridCard () {
+      this.refreshDetailView()
     }
   },
   watch: {

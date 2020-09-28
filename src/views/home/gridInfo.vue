@@ -2,7 +2,7 @@
   <q-splitter v-model="splitterModel" style="height: 90vh">
     <div class="q-pa-md">
       <q-dialog v-model="addDialog">
-        <q-card style="max-width:90vh">
+        <q-card style="max-width: 90vh">
           <q-card-section class="row items-center q-pb-none">
             <div class="text-h6">网格添加</div>
             <q-space />
@@ -13,19 +13,20 @@
             <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-md">
               <q-input
                 filled
-                label="网格名称"
                 v-model="gridForm.grid_name"
                 outlined
                 autogrow
                 dense
                 lazy-rules
-                style="width:400px"
-                :rules="[ val => val && val.length > 0 || '请输入正确的网格名称']"
+                style="width: 400px"
+                :rules="[
+                  (val) => (val && val.length > 0) || '请输入正确的网格名称',
+                ]"
               >
                 <template v-slot:before>
                   <span
                     class="input-label text-right text-grey-10"
-                    style="font-size:18px;width:110px"
+                    style="font-size: 18px; width: 110px"
                   >
                     网格名称
                     <span class="text-red text-weight-bolder">*</span>：
@@ -39,15 +40,16 @@
                 outlined
                 autogrow
                 dense
-                style="width:400px"
-                label="网格编码"
+                style="width: 400px"
                 lazy-rules
-                :rules="[ val => val && val.length > 0 || '请输入正确的网格名称']"
+                :rules="[
+                  (val) => (val && val.length > 0) || '请输入正确的网格名称',
+                ]"
               >
                 <template v-slot:before>
                   <span
                     class="input-label text-right text-grey-10"
-                    style="font-size:18px;width:110px"
+                    style="font-size: 18px; width: 110px"
                   >
                     网格编码
                     <span class="text-red text-weight-bolder">*</span>：
@@ -57,7 +59,6 @@
               <q-select
                 style="width: 400px"
                 standout="bg-blue-6 text-white"
-                label="父节点"
                 v-model="gridForm.parent_bm"
                 :options="choose"
                 option-label="label"
@@ -68,7 +69,7 @@
                 <template v-slot:before>
                   <span
                     class="input-label text-right text-grey-10"
-                    style="font-size:18px;width:110px"
+                    style="font-size: 18px; width: 110px"
                   >
                     父 节 点
                     <span class="text-red text-weight-bolder">*</span>：
@@ -80,15 +81,16 @@
                 type="text"
                 dense
                 v-model="gridForm.location"
-                label="网格位置"
                 lazy-rules
-                style="width:400px"
-                :rules="[ val => val && val.length > 0 || '请输入正确的网格名称']"
+                style="width: 400px"
+                :rules="[
+                  (val) => (val && val.length > 0) || '请输入正确的网格名称',
+                ]"
               >
                 <template v-slot:before>
                   <span
                     class="input-label text-right text-grey-10"
-                    style="font-size:18px;width:110px"
+                    style="font-size: 18px; width: 110px"
                   >
                     网格位置
                     <span class="text-red text-weight-bolder">*</span>：
@@ -98,7 +100,6 @@
               <q-select
                 style="width: 400px"
                 standout="bg-blue-6 text-white"
-                label="是否启用"
                 v-model="gridForm.is_enable"
                 :options="chooseType"
                 option-value="value"
@@ -109,7 +110,7 @@
                 <template v-slot:before>
                   <span
                     class="input-label text-right text-grey-10"
-                    style="font-size:18px;width:110px"
+                    style="font-size: 18px; width: 110px"
                   >
                     是否启用
                     <span class="text-red text-weight-bolder">*</span>：
@@ -117,8 +118,19 @@
                 </template>
               </q-select>
               <div align="center">
-                <q-btn style="width:30%" label="提交" type="submit" color="primary" />
-                <q-btn style="width:30%" label="重置" type="reset" color="red" class="q-ml-sm" />
+                <q-btn
+                  style="width: 30%"
+                  label="提交"
+                  type="submit"
+                  color="primary"
+                />
+                <q-btn
+                  style="width: 30%"
+                  label="重置"
+                  type="reset"
+                  color="red"
+                  class="q-ml-sm"
+                />
               </div>
             </q-form>
           </q-card-section>
@@ -127,20 +139,26 @@
     </div>
     <template v-slot:before>
       <div class="q-pa-md">
-        <div class="row" style="margin:10px">
+        <div class="row" style="margin: 10px">
           <q-input
             label="网格节点搜索"
-            style="width: 265px;margin-left: 0px"
+            style="width: 265px; margin-left: 0px"
             dense
             standout="bg-blue-6 text-white"
             v-model="gridNodeSearch"
             input-class="text-right"
             class="q-ml-md"
             label-color="primary"
+            @input="queryNode"
           >
             <template v-slot:append>
               <q-icon v-if="gridNodeSearch === ''" name="search" />
-              <q-icon v-else name="clear" class="cursor-pointer" @click="gridNodeSearch = ''" />
+              <q-icon
+                v-else
+                name="clear"
+                class="cursor-pointer"
+                @click="gridNodeSearch = ''"
+              />
             </template>
           </q-input>
         </div>
@@ -149,7 +167,7 @@
           node-key="grid_bm"
           selected-color="primary"
           :selected.sync="selected"
-          default-expand-all
+          :expanded.sync="expanded"
         />
       </div>
     </template>
@@ -166,21 +184,30 @@
         :pagination.sync="pagination"
         :selected.sync="table_select"
         separator="cell"
-
       >
         <!-- <template v-slot:top-right>
         <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
         <q-btn class="q-ml-sm" color="teal-7" :disable="loading" label="删除" @click="removeRow" />
         </template>-->
         <template v-slot:body="props">
-          <q-tr :props="props" >
-            <q-td><q-checkbox key="rn" v-model="props.selected"></q-checkbox></q-td>
-            <q-td key="grid_name" :props="props">{{ props.row.grid_name }}</q-td>
+          <q-tr :props="props">
+            <q-td
+              ><q-checkbox key="rn" v-model="props.selected"></q-checkbox
+            ></q-td>
+            <q-td key="grid_name" :props="props">{{
+              props.row.grid_name
+            }}</q-td>
             <q-td key="location" :props="props">{{ props.row.location }}</q-td>
-            <q-td key="start_type" :props="props">{{ props.row.start_type }}</q-td>
+            <q-td key="start_type" :props="props">{{
+              props.row.start_type
+            }}</q-td>
             <q-td key="cz" :props="props">
               <!-- <span><q-btn dense color="red" label="删除"  icon="highlight_off" size="8px" @click="delRecord(props.row)"/></span> -->
-              <q-btn color="primary" label="修改网格" @click="update(props.row)" />
+              <q-btn
+                color="primary"
+                label="修改网格"
+                @click="update(props.row)"
+              />
             </q-td>
           </q-tr>
         </template>
@@ -188,7 +215,7 @@
           <div class="q-gutter-md row items-start">
             <q-input
               label="网格名称"
-              style="width: 265px;margin-left: 10px"
+              style="width: 265px; margin-left: 10px"
               dense
               standout="bg-blue-6 text-white"
               v-model="queryName"
@@ -197,7 +224,7 @@
               label-color="primary"
             />
             <q-select
-              style="width: 265px;margin-left: 10px"
+              style="width: 265px; margin-left: 10px"
               standout="bg-blue-6 text-white"
               label="启用类型"
               v-model="enable_type"
@@ -211,33 +238,50 @@
                 <q-icon name="event" />
               </template>
             </q-select>
-            <q-btn color="primary" label="查询" icon="search" @click="gridQuery()"/>
-            <q-btn color="primary" label="重置" icon="navigation" @click="reset" />
-            <q-btn color="primary" label="删除" icon="delete"  @click="deletes()"/>
-            <q-btn color="primary" label="添加网格" icon="add" @click="addGrid()" />
+            <q-btn
+              color="primary"
+              label="查询"
+              icon="search"
+              @click="gridQuery()"
+            />
+            <q-btn
+              color="primary"
+              label="重置"
+              icon="navigation"
+              @click="reset"
+            />
+            <q-btn
+              color="primary"
+              label="删除"
+              icon="delete"
+              @click="deletes()"
+            />
+            <q-btn
+              color="primary"
+              label="添加网格"
+              icon="add"
+              @click="addGrid()"
+            />
           </div>
         </template>
         <template v-slot:bottom class="justify-end">
-          <span style="margin-right:5px;">
-            显示{{startPage}}~{{ endPage}}条记录，总
+          <span style="margin-right: 5px">
+            显示{{ startPage }}~{{ endPage }}条记录，总
             {{ pagination.rowsNumber }}
             条数据
           </span>
-          <span style="margin-right:5px;">
-            每页
-          </span>
+          <span style="margin-right: 5px"> 每页 </span>
           <q-select
-          outlined
-          v-model="pagination.rowsPerPage"
-          :options="pageTotalumbe"
-          dense
-          @input="changeTotalumbe"
-          style="float:left;margin-right:5px;" />
-          <span style="margin-right:5px;">
-            条记录
-          </span>
+            outlined
+            v-model="pagination.rowsPerPage"
+            :options="pageTotalumbe"
+            dense
+            @input="changeTotalumbe"
+            style="float: left; margin-right: 5px"
+          />
+          <span style="margin-right: 5px"> 条记录 </span>
           <q-pagination
-          style="float:right"
+            style="float: right"
             v-model="pagination.page"
             :max="pages"
             :max-pages="maxPages"
@@ -253,10 +297,10 @@
             dense
             class="pagination-input"
             @keyup.enter.native="changeToPage"
-            style="width:50px;margin:10px"
+            style="width: 50px; margin: 10px"
           ></q-input>
           <span> 页</span>
-      </template>
+        </template>
       </q-table>
     </template>
   </q-splitter>
@@ -269,9 +313,7 @@ export default {
   data () {
     return {
       splitterModel: 20,
-      pageTotalumbe: [
-        5, 10, 20, 50
-      ],
+      pageTotalumbe: [5, 10, 20, 50],
       startPage: 0, // 开始记录数
       endPage: 5, // 结束记录数
       pages: '', // 数据总页数
@@ -288,9 +330,12 @@ export default {
       totalNode: [],
       addDialog: false,
       queryName: '',
+      // 表格类型（查询出来的数据or全部数据）
       tableType: 'all',
       enable_type: '',
       addIsEnable: '',
+      // 默认打开的树节点
+      expanded: ['-1'],
       // 父节点数据
       choose: [],
       table_select: [],
@@ -331,6 +376,16 @@ export default {
           children: []
         }
       ],
+      // 树
+      baseSimple: [
+        {
+          label: '网格节点',
+          icon: 'share',
+          grid_bm: '-1',
+          children: []
+        }
+      ],
+      simpleBackup: [],
       // 表格（每列标题）数据
       columns: [
         {
@@ -374,7 +429,9 @@ export default {
         .catch(errorCallback)
     },
     getSelectedString () {
-      return this.selected.length === 0 ? '' : `选中${this.selected.length} 条记录`
+      return this.selected.length === 0
+        ? ''
+        : `选中${this.selected.length} 条记录`
     },
     /**
      * 获取网格节点(左菜单)
@@ -445,6 +502,8 @@ export default {
           this.createTree(params[i].children, treeData)
         }
       }
+      // 备份
+      this.simpleBackup = this.simple
     },
     addGrid () {
       this.addDialog = true
@@ -559,8 +618,7 @@ export default {
         type: 'db_search'
       }
       fetchData(query)
-        .then((res) => {
-        })
+        .then((res) => {})
         .catch((error) => {
           console.log(error)
         })
@@ -589,7 +647,9 @@ export default {
           // 设置表格数据总条数（行数）
           this.pagination.rowsNumber = res.data.data.count
           // 设置表格页码数数量
-          this.pages = Math.ceil(this.pagination.rowsNumber / this.pagination.rowsPerPage)
+          this.pages = Math.ceil(
+            this.pagination.rowsNumber / this.pagination.rowsPerPage
+          )
         })
         .catch((error) => {
           console.log(error)
@@ -605,7 +665,11 @@ export default {
           sqlId: 'select_grid_info',
           whereId: '0',
           orderId: '0',
-          params: { is_enable: this.enable_type.value || '', parent_bm: this.selected, grid_name: this.queryName },
+          params: {
+            is_enable: this.enable_type.value || '',
+            parent_bm: this.selected,
+            grid_name: this.queryName
+          },
           minRow: this.startPage,
           maxRow: this.endPage
         },
@@ -618,7 +682,9 @@ export default {
           // 设置表格数据总条数（行数）
           this.pagination.rowsNumber = res.data.data.count
           // 设置表格页码树数量
-          this.pages = Math.ceil(this.pagination.rowsNumber / this.pagination.rowsPerPage)
+          this.pages = Math.ceil(
+            this.pagination.rowsNumber / this.pagination.rowsPerPage
+          )
         })
         .catch((error) => {
           console.log(error)
@@ -631,7 +697,8 @@ export default {
       // 设置数据结束位置
       this.endPage = this.startPage + this.pagination.rowsPerPage
       if (this.startPage > this.pagination.rowsNumber) {
-        this.startPage = this.pagination.rowsNumber - this.pagination.rowsPerPage
+        this.startPage =
+          this.pagination.rowsNumber - this.pagination.rowsPerPage
         if (this.startPage < 0) {
           this.startPage = 0
         }
@@ -666,6 +733,30 @@ export default {
       }
       this.pagination.page = parseInt(this.toPage)
       this.changePagination()
+    },
+    /**
+     * 节点查询
+     */
+    queryNode () {
+      if (this.gridNodeSearch === '') {
+        this.simple = this.simpleBackup
+        return
+      }
+      this.baseSimple[0].children = []
+      this.queryNodeOperation(this.simpleBackup)
+    },
+    queryNodeOperation (params) {
+      for (let i = 0; i < params.length; i++) {
+        const index = params[i].label.indexOf(this.gridNodeSearch)
+        if (index !== -1) {
+          this.baseSimple[0].children.push(params[i])
+        } else {
+          if (params[i].children.length > 0) {
+            this.queryNodeOperation(params[i].children)
+          }
+        }
+      }
+      this.simple = this.baseSimple
     },
     /**
      * 重置查询数据
@@ -717,10 +808,12 @@ export default {
 
       const query = {
         url: 'api/dbsource/updateByParamKey',
-        data: [{
-          sqlId: this.queryType,
-          params: [this.gridForm]
-        }],
+        data: [
+          {
+            sqlId: this.queryType,
+            params: [this.gridForm]
+          }
+        ],
         method: 'post',
         type: 'db_search'
       }
@@ -746,28 +839,6 @@ export default {
       }
       // 刷新表格数据
       this.refreshView()
-      // const query = {
-      //   url: 'api/dbsource/queryByParamKey',
-      //   data: {
-      //     sqlId: 'select_grid_info',
-      //     whereId: '2',
-      //     orderId: '0',
-      //     params: { parent_bm: this.selected },
-      //     minRow: this.startPage,
-      //     maxRow: this.endPage
-      //   },
-      //   method: 'post',
-      //   type: 'db_search'
-      // }
-      // fetchData(query)
-      //   .then((res) => {
-      //     const resData = res.data.data.data
-      //     console.log(resData)
-      //     this.data = resData
-      //   })
-      //   .catch((error) => {
-      //     console.log(error)
-      //   })
     },
     /**
      * 界面关闭移除表单内容

@@ -1,5 +1,171 @@
 <template>
   <q-splitter v-model="splitterModel" style="height: 90vh">
+    <q-dialog v-model="chooseDevice">
+      <q-card style="max-width: 120vh; width: 100%">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">设备添加</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+        <q-card-section>
+          <q-table
+            row-key="id"
+            :data="deviceData"
+            :columns="deviceColumns"
+            class="my-sticky-header-table"
+            card-style="margin:15px;"
+            no-data-label="暂无数据"
+            separator="cell"
+            table-header-class="bg-blue-8 text-white"
+            selection="single"
+            :selected.sync="device_select"
+          >
+            <template v-slot:body="props">
+              <q-tr :props="props">
+                <q-td
+                  ><q-checkbox key="rn" v-model="props.selected"></q-checkbox
+                ></q-td>
+                <q-td key="module_equipment_id" :props="props">{{
+                  props.row.module_equipment_id
+                }}</q-td>
+                <q-td key="equipment_name" :props="props">{{
+                  props.row.equipment_name
+                }}</q-td>
+                <q-td key="equipment_type" :props="props">{{
+                  props.row.equipment_type
+                }}</q-td>
+              </q-tr>
+            </template>
+            <template v-slot:top-left>
+              <div class="q-gutter-md row items-start">
+                <q-input
+                  label="网格名称"
+                  style="width: 220px; margin-left: 10px"
+                  dense
+                  standout="bg-blue-6 text-white"
+                  input-class="text-left"
+                  class="q-ml-md"
+                  label-color="primary"
+                />
+                <q-select
+                  v-model="deviceTypeValue"
+                  style="width: 220px"
+                  standout="bg-blue-6 text-white"
+                  label="设备类型"
+                  :options="deviceType"
+                  option-label="name"
+                  dense
+                />
+                <q-input
+                  label="设备名称"
+                  style="width: 220px; margin-left: 10px"
+                  dense
+                  standout="bg-blue-6 text-white"
+                  input-class="text-left"
+                  class="q-ml-md"
+                  label-color="primary"
+                />
+                <q-btn color="primary" label="查询" icon="search" />
+                <q-btn color="primary" label="选择设备" @click="selectDevice()" icon="search" />
+              </div>
+            </template>
+            <!-- <template v-slot:bottom class="justify-end">
+          <span style="margin-right: 5px">
+            显示{{ startPage }}~{{ endPage }}条记录，总
+            {{ pagination.rowsNumber }}
+            条数据
+          </span>
+          <span style="margin-right: 5px"> 每页 </span>
+          <q-select
+            outlined
+            v-model="pagination.rowsPerPage"
+            :options="pageTotalumbe"
+            dense
+            @input="changeTotalumbe"
+            style="float: left; margin-right: 5px"
+          />
+          <span style="margin-right: 5px"> 条记录 </span>
+          <q-pagination
+            style="float: right"
+            v-model="pagination.page"
+            :max="pages"
+            :max-pages="maxPages"
+            ellipsess
+            :direction-links="true"
+            @input="changePagination"
+          >
+          </q-pagination>
+          <span>跳至 </span>
+          <q-input
+            outlined
+            v-model="toPage"
+            dense
+            class="pagination-input"
+            @keyup.enter.native="changeToPage"
+            style="width: 50px; margin: 10px"
+          ></q-input>
+          <span> 页</span>
+        </template> -->
+          </q-table>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+    <q-dialog v-model="addDialog">
+      <q-card style="max-width: 90vh">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">网络设备关联添加</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+        <q-card-section>
+          <q-input
+            v-model="deviceParams.grid_name"
+            filled
+            outlined
+            autogrow
+            dense
+            style="width: 400px"
+            lazy-rules
+            :rules="[
+              (val) => (val && val.length > 0) || '请输入正确的网格名称',
+            ]"
+          >
+            <template v-slot:before>
+              <span
+                class="input-label text-right text-grey-10"
+                style="font-size: 18px; width: 110px"
+              >
+                网格名称
+                <span class="text-red text-weight-bolder">*</span>：
+              </span>
+            </template>
+          </q-input>
+          <q-input
+            filled
+            v-model="deviceParams.equipment_name"
+            outlined
+            autogrow
+            dense
+            style="width: 400px"
+            lazy-rules
+            :rules="[
+              (val) => (val && val.length > 0) || '请输入正确的网格名称',
+            ]"
+            @click="renderSelectDeviceView()"
+          >
+            <template v-slot:before>
+              <span
+                class="input-label text-right text-grey-10"
+                style="font-size: 18px; width: 110px"
+              >
+                设备名称
+                <span class="text-red text-weight-bolder">*</span>：
+              </span>
+            </template>
+          </q-input>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
     <template v-slot:before>
       <div class="q-pa-md">
         <div class="row" style="margin: 10px">
@@ -12,6 +178,7 @@
             input-class="text-right"
             class="q-ml-md"
             label-color="primary"
+            @input="queryNode"
           >
             <template v-slot:append>
               <q-icon v-if="gridNodeSearch === ''" name="search" />
@@ -29,7 +196,7 @@
           node-key="grid_bm"
           selected-color="primary"
           :selected.sync="selected"
-          default-expand-all
+          :expanded.sync="expanded"
         />
       </div>
     </template>
@@ -49,10 +216,22 @@
         :pagination.sync="pagination"
         separator="cell"
       >
-      <template v-slot:top-right>
-                <q-btn label="添加关联设备" icon="add" type="submit" color="primary" />
-                <q-btn label="删除关联设备" icon="delete" type="reset" color="red" class="q-ml-sm" />
-    </template>
+        <template v-slot:top-right>
+          <q-btn
+            label="添加关联设备"
+            icon="add"
+            type="submit"
+            color="primary"
+            @click="Pre_addValidation"
+          />
+          <q-btn
+            label="删除关联设备"
+            icon="delete"
+            type="reset"
+            color="red"
+            class="q-ml-sm"
+          />
+        </template>
         <template v-slot:bottom class="justify-end">
           <span style="margin-right: 5px">
             显示{{ startPage }}~{{ endPage }}条记录，总
@@ -101,6 +280,10 @@ export default {
   data () {
     return {
       splitterModel: 20,
+      addDialog: false,
+      chooseDevice: false,
+      deviceType: [],
+      deviceTypeValue: '',
       pageTotalumbe: [5, 10, 20, 50],
       startPage: 0, // 开始记录数
       endPage: 5, // 结束记录数
@@ -112,8 +295,11 @@ export default {
         rowsPerPage: 5,
         rowsNumber: 0 // 总共数据条数
       },
+      device_select: [],
       selected: '-1',
       checkSelect: [],
+      // 默认打开的树节点
+      expanded: ['-1'],
       gridNodeSearch: '',
       simple: [
         {
@@ -123,6 +309,18 @@ export default {
           children: []
         }
       ],
+      // 树
+      baseSimple: [
+        {
+          label: '网格节点',
+          icon: 'share',
+          grid_bm: '-1',
+          grid_id: '-1',
+          id: '-1',
+          children: []
+        }
+      ],
+      simpleBackup: [],
       columns: [
         {
           name: 'grid_name',
@@ -144,7 +342,37 @@ export default {
           field: 'equipment_name'
         }
       ],
-      data: []
+      deviceColumns: [
+        {
+          name: 'module_equipment_id',
+          required: true,
+          label: '设备ID',
+          align: 'center',
+          field: 'module_equipment_id'
+        },
+        {
+          name: 'equipment_name',
+          align: 'center',
+          label: '设备名称',
+          field: 'equipment_name'
+        },
+        {
+          name: 'equipment_type',
+          align: 'center',
+          label: '设备类型',
+          field: 'equipment_type'
+        }
+      ],
+      // 添加关联设备参数
+      deviceParams: {
+        id: '',
+        grid_id: '',
+        grid_name: '',
+        equipment_id: '',
+        equipment_name: ''
+      },
+      data: [],
+      deviceData: []
     }
   },
   mounted () {
@@ -215,7 +443,11 @@ export default {
           this.createTree(params[i].children, treeData)
         }
       }
+      this.simpleBackup = this.simple
     },
+    /**
+     * 刷新表格
+     */
     refreshView () {
       const query = {
         url: 'api/dbsource/queryByParamKey',
@@ -290,8 +522,149 @@ export default {
             this.selected.length > 1 ? 's' : ''
           } selected of ${this.data.length}`
     },
-    options () {},
-    onReset () {}
+    /**
+     * 节点查询
+     */
+    queryNode () {
+      // 搜索条件为空，默认显示所有节点
+      if (this.gridNodeSearch === '') {
+        this.simple = this.simpleBackup
+        return
+      }
+      this.baseSimple[0].children = []
+      this.queryNodeOperation(this.simpleBackup)
+    },
+    queryNodeOperation (params) {
+      for (let i = 0; i < params.length; i++) {
+        // 判断节点是否符合搜索条件
+        const index = params[i].label.indexOf(this.gridNodeSearch)
+        if (index !== -1) {
+          // 符合条件追加整个节点（包括子节点），否子查询子节点
+          this.baseSimple[0].children.push(params[i])
+        } else {
+          // 查询子节点
+          if (params[i].children.length > 0) {
+            this.queryNodeOperation(params[i].children)
+          }
+        }
+      }
+      this.simple = this.baseSimple
+    },
+    /**
+     * 判断是否选择网格节点
+     */
+    Pre_addValidation () {
+      // 未选择网格节点，提示消息
+      if (this.selected === '-1') {
+        this.$q.notify({
+          message: '请先选择网格节点',
+          color: 'red',
+          position: 'center',
+          timeout: 1500
+        })
+        return
+      }
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info_tree',
+          whereId: '0',
+          params: { grid_name: '' }
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data
+          for (let i = 0; i < resData.length; i++) {
+            if (this.selected === resData[i].id) {
+              // 给参数赋值
+              this.deviceParams.grid_name = resData[i].grid_name
+              this.deviceParams.grid_id = resData[i].id
+              // 显示添加界面
+              this.addDialog = true
+              return
+            }
+          }
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    /**
+     * 渲染选择设备界面
+     */
+    renderSelectDeviceView () {
+      this.chooseDevice = true
+      this.renderDevicetype()
+      this.renderDeviceData()
+    },
+    /**
+     * 渲染设备类型
+     */
+    renderDevicetype () {
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: { sqlId: 'select_equipment_type_info_select' },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          this.deviceType = res.data.data
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    /**
+     * 渲染设备信息
+     */
+    renderDeviceData () {
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_equipment_info',
+          orderId: '0',
+          whereId: '4',
+          params: { parent_bm: '' },
+          minRow: 0,
+          maxRow: 15
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          this.deviceData = res.data.data.data
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    selectDevice () {
+      if (this.device_select.length === 0) {
+        this.$q.notify({
+          message: '当前未选择任何节点',
+          color: 'red',
+          position: 'center',
+          timeout: 1500
+        })
+        return
+      }
+      // 选择节点，给参数赋值
+      this.deviceParams.equipment_name = this.device_select[0].equipment_name
+      this.deviceParams.equipment_id = this.device_select[0].module_equipment_id
+      this.chooseDevice = false
+    },
+    removeDeviceForm () {
+      this.deviceParams.id = ''
+      this.deviceParams.equipment_name = ''
+      this.deviceParams.equipment_id = ''
+      this.deviceParams.grid_name = ''
+      this.deviceParams.grid_id = ''
+    }
   },
   watch: {
     // 监听事件
@@ -300,33 +673,14 @@ export default {
         this.selected = oldQuestion
       }
       this.refreshView()
-
-      // this.$router.push({ path: '/about' })
-      // console.log(this.selected)
-      // const query = {
-      //   url: 'api/dbsource/queryByParamKey',
-      //   data: {
-      //     sqlId: 'select_equipment_in_grid',
-      //     whereId: '0',
-      //     params: { grid_id: this.selected },
-      //     minRow: this.startPage,
-      //     maxRow: this.endPage
-      //   },
-      //   method: 'post',
-      //   type: 'db_search'
-      // }
-      // fetchData(query)
-      //   .then((res) => {
-      //     const resData = res.data.data.data
-      //     for (let i = 0; i < resData.length; i++) {
-      //       // index为表格唯一标识
-      //       resData[i].index = i
-      //     }
-      //     this.data = resData
-      //   })
-      //   .catch((error) => {
-      //     console.log(error)
-      //   })
+    },
+    /**
+     * 界面关闭移除表单内容
+     */
+    addDialog: function (newQuestion, oldQuestion) {
+      if (this.addDialog === false) {
+        this.removeDeviceForm()
+      }
     }
   }
 }
