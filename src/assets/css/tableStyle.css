@@ -23,11 +23,23 @@
     background: #1976d2;
     border: 0px solid #1976d2;
 }
+/*分页居右*/
+.my-sticky-header-table .pagination{
+  position: absolute;
+  justify-content: flex-start;
+  float: right;
+  right: 1%;
+  bottom: 10 ;
+}
 .my-sticky-header-table .pagination-input{
     display: inline-block;
-    width: 55px;
+    width: 75px;
     margin: 0 5px;
 }
+.my-sticky-header-table .q-pagination{
+  float: left;
+}
+/*表格底部设置*/
 .my-sticky-header-table  .q-table__bottom{
     justify-content: flex-start;
     height: 10%;
@@ -35,4 +47,33 @@
 /*选中后字体颜色改变*/
 .my-sticky-header-table .selected{
       color:#1976d2;
+}
+
+
+/* 设备信息 */
+.my-sticky-header-table  strong{
+  float:left;
+  margin-left:10px;
+  margin-right:10px;
+}
+.my-sticky-header-table .operation_input{
+  width:200px;
+  float:left;
+  margin-right:10px;
+}
+.my-sticky-header-table .operation_update{
+  float:left;
+  height:37px;
+  width:140px;
+  margin-right:10px;
+}
+.my-sticky-header-table .operation{
+  float:left;
+  height:37px;
+  width:80px;
+  margin-right:10px;
+}
+.my-sticky-header-table .dialog_card_section{
+  width:100%;
+  height:60px;
 }

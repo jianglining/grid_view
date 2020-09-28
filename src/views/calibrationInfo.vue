@@ -18,12 +18,20 @@
     >
     <!--操作选项-->
      <template v-slot:top>
-          <strong style="float:left;margin-left:10px;margin-right:10px;">卡号</strong>
+          <strong>卡号</strong>
           <q-input
           outlined
           v-model.trim="filterForm.cardNumber"
           dense
-          style="width:200px;float:left;margin-right:10px;" />
+          class="operation_input"/>
+
+          <!-- <q-input
+          standout="bg-blue-6 text-white"
+          v-model.trim="filterForm.cardNumber"
+          label="卡号"
+          style="width:200px;float:left;margin-right:10px;"
+          dense /> -->
+
           <q-btn
           color="primary"
           dense
@@ -111,12 +119,16 @@
         </q-card>
       </q-dialog>
       </template>
+
       <template v-slot:bottom class="justify-end">
+          <!-- 显示到第几条记录数据,总共多少条数据 -->
           <span style="margin-right:5px;">
             显示{{startPage}}~{{ endPage}}条记录，总
             {{ pagination.rowsNumber }}
             条数据
           </span>
+
+          <!-- 每页显示条数 -->
           <span style="margin-right:5px;">
             每页
           </span>
@@ -130,8 +142,15 @@
           <span style="margin-right:5px;">
             条记录
           </span>
+
+          <!-- 选中的记录 -->
+          <span style="margin-right:5px;" v-if="selected.length != 0">
+            选中{{selected.length}}条记录
+          </span>
+
+          <!-- 分页 -->
+          <div class="pagination">
           <q-pagination
-          style="float:right"
             v-model="pagination.page"
             :max="pages"
             :max-pages="5"
@@ -150,7 +169,9 @@
             @keyup.enter.native="refreshTableData"
           ></q-input>
           <span> 页</span>
+          </div>
       </template>
+
     </q-table>
     </div>
 </template>
@@ -170,7 +191,7 @@ export default {
         position: 'center',
         timeout: 1
       })
-      this.getTableData(1, 10, this.filterForm.cardNumber)
+      this.getTableData(0, 10, this.filterForm.cardNumber)
     },
     /**
      * 获取列表数据
@@ -199,6 +220,10 @@ export default {
         that.basicData = res.data.data.data
         that.data = that.basicData
         that.pagination.rowsNumber = res.data.data.count
+        // 当记录数小于每页显示数目时，将查询出的数目赋给结束记录数
+        if (res.data.data.count < that.pagination.rowsPerPage && res.data.data.count !== 0 && res.data.data.count !== null) {
+          that.endPage = res.data.data.count
+        }
         // 设置分页页数
         if (res.data.data.count % that.pagination.rowsPerPage === 0) {
           that.pages = res.data.data.count / that.pagination.rowsPerPage
@@ -224,7 +249,7 @@ export default {
         timeout: 5
       })
       this.filterForm.cardNumber = ''
-      this.getTableData(1, 10, this.filterForm.cardNumber)
+      this.getTableData(0, 10, this.filterForm.cardNumber)
     },
     /**
      * 双击查看详情
@@ -262,24 +287,23 @@ export default {
      */
     changeOptions (val) {
       // 处理当处于分页的最后一页时,如果选择显示页数大于原来显示页数
-      if (this.pagination.page >= Math.ceil(this.pagination.rowsNumber / val)) {
+      // 设置开始记录数
+      if (this.pagination.page >= Math.ceil(this.pagination.rowsNumber / val) || this.pagination.page === 0) {
         this.startPage = (Math.ceil(this.pagination.rowsNumber / val) - 1) * val + 1
-        if (this.pagination.page * this.val > this.pagination.rowsNumber) {
-          this.endPage = this.pagination.rowsNumber
-        } else {
-          this.endPage = this.pagination.page * val
-        }
-        this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
       } else {
-        // 设置开始记录数
         this.startPage = (this.pagination.page - 1) * val + 1
-        if (this.pagination.page * this.val > this.pagination.rowsNumber) {
-          this.endPage = this.pagination.rowsNumber
-        } else {
-          this.endPage = this.pagination.page * val
-        }
-        this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
       }
+      // 设置结束记录数
+      if (this.pagination.page * this.val > this.pagination.rowsNumber) {
+        this.endPage = this.pagination.rowsNumber
+      } else {
+        this.endPage = this.pagination.page * val
+      }
+      // 当总记录数小于选中条数时
+      if (this.pagination.rowsNumber < this.pagination.rowsPerPage) {
+        this.endPage = this.pagination.rowsNumber
+      }
+      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
     },
     /**
      * 改变分页
@@ -306,6 +330,12 @@ export default {
         // 输入正整数 且 小于最大页数
         // console.log(`input toPage: ${val} 是一个正整数`)
       } else {
+        this.$q.notify({
+          message: '请输入正确的页码',
+          color: 'black',
+          position: 'center',
+          timeout: 5
+        })
         this.toPage = ''
       }
     },
@@ -335,7 +365,7 @@ export default {
       pages: '', // 数据总页数
       toPage: '', // 跳转至
       pagination: {
-        page: '', // 当前记录数
+        page: 0, // 当前记录数
         rowsPerPage: 10, // 每页记录数
         rowsNumber: '' // 总共数据条数
       },

@@ -4,6 +4,7 @@
       :data="data"
       :columns="columns"
       row-key="rn"
+      rowsNumber=100
       :filter="filter"
       virtual-scroll
       class="my-sticky-header-table"
@@ -11,29 +12,49 @@
       card-style="height:85vh"
       selection="multiple"
       :selected.sync="selected"
-      :selected-rows-label="getSelectedString"
+      :pagination.sync="pagination"
       pagination.sync="selected"
-      rows-per-page-label="每页显示"
-      :rows-per-page-options="[10,20,30]"
       no-data-label="暂无数据"
       table-header-class="bg-blue-8 text-white"
     >
     <!--操作选项-->
      <template v-slot:top>
-          <strong style="float:left;margin-left:10px;margin-right:10px;">设备名称</strong>
+          <strong>设备名称</strong>
           <q-input
           outlined
           v-model.trim="filterForm.deviceName"
           dense
-          style="width:200px;float:left;" />
-
-          <strong style="float:left;margin-left:10px;margin-right:10px;">在线状态</strong>
+          class="operation_input"/>
+          <strong>在线状态</strong>
           <q-select
           outlined
           v-model.trim="filterForm.status"
           :options="options"
           dense
-          style="width:200px;float:left;margin-right:10px;" />
+          class="operation_input" />
+
+          <!-- <q-input
+          standout="bg-blue-6 text-white"
+          v-model.trim="filterForm.deviceName"
+          label="设备名称"
+          style="width:200px;float:left;margin-right:10px;"
+          dense />
+          <q-select
+              style="width:200px;float:left;margin-right:10px;"
+              standout="bg-blue-6 text-white"
+              label="启用类型"
+              color="blue-6"
+              v-model="filterForm.status"
+              :options="options"
+              option-value="value"
+              option-label="label"
+              dense
+              :options-dense="denseOpts"
+            >
+            <template v-slot:prepend>
+              <q-icon name="event"/>
+            </template>
+          </q-select> -->
 
           <q-btn
           color="primary"
@@ -42,7 +63,7 @@
           unelevated
           @click="search()"
           icon="search"
-          style="float:left;height:37px;width:80px;margin-right:10px"/>
+          class="operation"/>
           <q-btn
           color="primary"
           dense
@@ -50,7 +71,7 @@
           unelevated
           icon="refresh"
           @click="reset()"
-          style="float:left;height:37px;width:80px;margin-right:10px"/>
+          class="operation"/>
           <q-btn
           color="primary"
           dense
@@ -58,7 +79,7 @@
           @click="update()"
           unelevated
           icon="add"
-          style="float:left;height:37px;width:180px"/>
+          class="operation_update"/>
      </template>
 
      <!--表格内容-->
@@ -83,8 +104,10 @@
       <!--弹窗-->
       <q-dialog v-model="prompt" seamless >
       <q-card style="min-width: 47%;height:45%;box-shadow:0px 0px 3px #aaa;">
-        <q-card-section class="text-h6 text-white bg-blue-8 " style="width:100%;height:60px;">
-          <div>设备信息<q-icon name="close" style="float:right" v-close-popup/></div>
+        <q-card-section class="dialog_card_section text-h6 text-white bg-blue-8 ">
+          <div>设备信息
+            <q-icon name="close" class="float-right" v-close-popup/>
+            </div>
         </q-card-section>
         <!--弹框滚动条-->
         <div>
@@ -118,11 +141,13 @@
       </q-dialog>
       </template>
       <template v-slot:bottom class="justify-end">
+           <!-- 显示到第几条记录数据,总共多少条数据 -->
           <span style="margin-right:5px;">
             显示{{startPage}}~{{ endPage}}条记录，总
             {{ pagination.rowsNumber }}
             条数据
           </span>
+          <!-- 每页显示条数 -->
           <span style="margin-right:5px;">
             每页
           </span>
@@ -136,8 +161,13 @@
           <span style="margin-right:5px;">
             条记录
           </span>
+          <!-- 选中的记录 -->
+         <span style="margin-right:5px;" v-if="selected.length != 0">
+            选中{{selected.length}}条记录
+          </span>
+          <!-- 分页 -->
+          <div class="pagination">
           <q-pagination
-          style="float:right"
             v-model="pagination.page"
             :max="pages"
             :max-pages="5"
@@ -156,6 +186,8 @@
             @keyup.enter.native="refreshTableData"
           ></q-input>
           <span> 页</span>
+          </div>
+
       </template>
     </q-table>
     </div>
@@ -189,6 +221,7 @@ export default {
             position: 'center',
             timeout: 200
           })
+          that.getTableData(0, 10, that.filterForm.deviceName, that.filterForm.status)
         } else if (that.updateFlag === false) {
           that.$q.notify({
             message: '更新失败',
@@ -201,6 +234,7 @@ export default {
         console.log('后端数据访问出错!', err)
       })
     },
+
     /**
      * 查询
      */
@@ -211,8 +245,9 @@ export default {
         position: 'center',
         timeout: 1
       })
-      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
+      this.getTableData(0, 10, this.filterForm.deviceName, this.filterForm.status)
     },
+
     /**
      * 重置
      */
@@ -225,8 +260,9 @@ export default {
       })
       this.filterForm.deviceName = ''
       this.filterForm.status = ''
-      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
+      this.getTableData(0, 10, this.filterForm.deviceName, this.filterForm.status)
     },
+
     /**
      * 双击查看详情
      * @param row 该行的数组
@@ -238,12 +274,7 @@ export default {
       this.equipment_state = row.equipment_state
       this.equipment_type = row.equipment_type
     },
-    /**
-     * 重写选中显示的文字
-     */
-    getSelectedString (numberOfRows) {
-      return '共选中' + numberOfRows + '条记录'
-    },
+
     /**
      * 数据访问
      */
@@ -267,6 +298,7 @@ export default {
           .catch(errorCallback)
       }
     },
+
     /**
      * 获取列表数据
      * @param start 开始读取的页数
@@ -275,7 +307,6 @@ export default {
      * @param query2 查询关键字2——设备名称
      */
     getTableData (start, end, query1, query2) {
-      console.log('查询参数1：', query1)
       var that = this
       var url = '/api/dbsource/queryByParamKey'
       let minR = 0
@@ -294,7 +325,6 @@ export default {
       } else if (query2 === '离线') {
         query2 = '1'
       }
-      // var data01 = { sqlId: 'select_equipment_info', whereId: '4', orderId: '0', params: {}, minRow: 0, maxRow: 19 }
       var data01 = { sqlId: 'select_equipment_info', orderId: 0, params: { equipment_name: query1, equipment_state: query2 }, minRow: minR, maxRow: maxR, whereId: 0 }
       data01 = 'args=' + JSON.stringify(data01)
       console.log('访问参数：', data01)
@@ -305,6 +335,10 @@ export default {
         that.basicData = res.data.data.data
         that.data = that.basicData
         that.pagination.rowsNumber = res.data.data.count
+        // 当记录数小于每页显示数目时，将查询出的数目赋给结束记录数
+        if (res.data.data.count < that.pagination.rowsPerPage && res.data.data.count !== 0 && res.data.data.count !== null) {
+          that.endPage = res.data.data.count
+        }
         // 设置分页页数
         if (res.data.data.count % that.pagination.rowsPerPage === 0) {
           that.pages = res.data.data.count / that.pagination.rowsPerPage
@@ -316,27 +350,32 @@ export default {
         console.log('后端数据访问出错!', err)
       })
     },
+
     /**
      * 改变显示条数
      * @param val 选中下拉按钮的值
      */
     changeOptions (val) {
       // 处理当处于分页的最后一页时,如果选择显示页数大于原来显示页数
-      if (this.pagination.page >= Math.ceil(this.pagination.rowsNumber / val)) {
+      // 设置开始记录数
+      if (this.pagination.page >= Math.ceil(this.pagination.rowsNumber / val) || this.pagination.page === 0) {
         this.startPage = (Math.ceil(this.pagination.rowsNumber / val) - 1) * val + 1
-        this.endPage = this.pagination.rowsNumber
-        this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
       } else {
-        // 设置开始记录数
         this.startPage = (this.pagination.page - 1) * val + 1
-        if (this.pagination.page * this.val > this.pagination.rowsNumber) {
-          this.endPage = this.pagination.rowsNumber
-        } else {
-          this.endPage = this.pagination.page * val
-        }
-        this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
       }
+      // 设置结束记录数
+      if (this.pagination.page * this.val > this.pagination.rowsNumber) {
+        this.endPage = this.pagination.rowsNumber
+      } else {
+        this.endPage = this.pagination.page * val
+      }
+      // 当总记录数小于选中条数时
+      if (this.pagination.rowsNumber < this.pagination.rowsPerPage) {
+        this.endPage = this.pagination.rowsNumber
+      }
+      this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
     },
+
     /**
      * 改变分页
      * @param val 选中的分页码
@@ -352,8 +391,10 @@ export default {
       this.toPage = val
       this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
     },
+
     /**
       * 改变跳转分页
+      * @param val 输入跳转的值
       */
     changeToPage (val) {
       this.selected = []
@@ -362,9 +403,16 @@ export default {
         // 输入正整数 且 小于最大页数
         // console.log(`input toPage: ${val} 是一个正整数`)
       } else {
+        this.$q.notify({
+          message: '请输入正确的页码',
+          color: 'black',
+          position: 'center',
+          timeout: 5
+        })
         this.toPage = ''
       }
     },
+
     /**
       * 刷新数据表数据
       */
@@ -391,7 +439,7 @@ export default {
       pages: '', // 数据总页数
       toPage: '', // 跳转至
       pagination: {
-        page: 0, // 当前记录数
+        page: '', // 当前记录数
         rowsPerPage: 10, // 每页记录数
         rowsNumber: '' // 总共数据条数
       },
