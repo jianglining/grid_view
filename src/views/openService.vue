@@ -256,8 +256,6 @@ export default {
           api_description: this.addData.api_description
         }]
       }]
-      // console.log(this.addData)
-      // console.log('*****保存的addData******')
       // var data01 = { sqlId: 'select_api_description' }
       data02 = 'args=' + JSON.stringify(data02)
       // console.log('访问参数：', data01)
@@ -276,16 +274,21 @@ export default {
         timeout: 5
       })
       this.increase = false
+      this.getList()
       location.reload()
     },
     /**
     *  编辑按钮响应事件
     */
     submitEdit () {
-      // this.addData.id = this.selected
-      // this.addData.api_name = this.api_name
-      // this.addData.api_description = this.api_description
-      // this.addData.label = ''
+      // if (this.addData.api_name === '') {
+      //   this.$q.notify({
+      //     message: '保存成功',
+      //     color: 'green',
+      //     position: 'center',
+      //     timeout: 5
+      //   })
+      // }
       var url = '/api/dbsource/updateByParamKey'
       var data03 = [{
         sqlId: 'update_api_description',
@@ -321,7 +324,7 @@ export default {
         timeout: 5
       })
       this.edited = false
-      location.reload()
+      this.getList()
     },
     /**
     *  删除按钮事件
@@ -340,20 +343,21 @@ export default {
       // console.log('访问参数：', data01)
       // 后台数据访问
       this.dataAccess(url, data04, function (res) {
-        this.$q.notify({
-          message: 'green',
-          color: 'black',
-          position: 'center',
-          timeout: 5
-        })
         // console.log('后端返回数据结果json：', res.data)
         // var insertDate = res.data.data.data
         // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
       }, function (err) {
         console.log('后端数据访问出错!', err)
       })
+      this.$q.notify({
+        message: '删除成功',
+        color: 'green',
+        position: 'center',
+        timeout: 5
+      })
       this.deleted = false
-      location.reload()
+      // location.reload()
+      this.getList()
     },
     /**
     *  响应事件
@@ -399,8 +403,8 @@ export default {
         // console.log(result)
         // console.log(this.selected)
         // console.log(this.addData.id)
-        console.log('*****请求数据的simple******')
-        console.log(that.simple)
+        // console.log('*****请求数据的simple******')
+        // console.log(that.simple)
         // // 查看有没有取到的数据
       }, function (err) {
         console.log('后端数据访问出错!', err)

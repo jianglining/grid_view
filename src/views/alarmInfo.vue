@@ -4,6 +4,7 @@
       :data="data"
       :columns="columns"
       row-key="rn"
+      rowsNumber=100
       class="my-sticky-header-table"
       :filter="filter"
       virtual-scroll
@@ -19,7 +20,7 @@
           <strong style="float:left;margin-left:10px;margin-right:10px;">设备名称</strong>
           <q-input
             outlined
-            v-model="filterForm.deviceName"
+            v-model="equipment_name"
             dense
             style="width:200px;float:left;"
           />
@@ -27,7 +28,7 @@
           <strong style="float:left;margin-left:10px;margin-right:10px;">告警等级</strong>
           <q-select
           outlined
-          v-model="filterForm.status"
+          v-model="alarm_level"
           :options="options"
           dense
           style="width:200px;float:left;margin-right:10px;" />
@@ -126,32 +127,50 @@
         </q-card>
       </q-dialog>
       </template>
-      <!-- <template v-slot:bottom class="justify-end">
-        <div class="q-pa-lg flex flex-center">
-        <span>
-          {{ pagination.rowsPerPage }}条/页
-          共 {{ pagination.rowsNumber }} 条数据
-        </span>
+      <template v-slot:bottom class="justify-end">
+          <!-- 显示记录数和数据总数 -->
+          <span style="margin-right:5px;">
+            显示{{ startPage }}~{{ endPage }}条记录，
+            总{{ pagination.rowsNumber }}条数据。
+          </span>
+          <span style="margin-right:5px;">
+            每页
+          </span>
+          <q-select
+            outlined
+            v-model="pagination.rowsPerPage"
+            :options="optionsPage"
+            dense
+            @input="changeOptions"
+            style="float:left;margin-right:5px;"
+          />
+          <span style="margin-right:5px;">
+            条记录
+          </span>
+          <div class="pagination">
+          <!-- 分页 -->
           <q-pagination
             v-model="pagination.page"
-            :max="pages"
+            :max='pages'
             :max-pages="5"
             ellipsess
             :direction-links="true"
             @input="changePagination"
           >
           </q-pagination>
+          <!-- 跳转 -->
           <span>跳至 </span>
           <q-input
             outlined
             v-model="toPage"
+            dense
             class="pagination-input"
             @input="changeToPage"
             @keyup.enter.native="refreshTableData"
           ></q-input>
           <span> 页</span>
-        </div>
-      </template> -->
+          </div>
+      </template>
     </q-table>
   </div>
 </template>
@@ -163,20 +182,24 @@ export default {
         status: '',
         deviceName: ''
       },
-      pages: '10', // 数据总页数
+      startPage: 1, // 开始记录数
+      endPage: '', // 结束记录数
+      pages: '', // 数据总页数
       toPage: '', // 跳转至
       pagination: {
-        sortBy: 'desc',
-        descending: false,
         page: 1,
-        rowsPerPage: 5,
-        rowsNumber: 50 // 总共数据条数
+        rowsPerPage: 19,
+        rowsNumber: '' // 总共数据条数
       },
+      optionsPage: [
+        19, 30, 50, 100
+      ],
       current: 1,
       changeColor: false,
       module_equipment_id: '',
       alarm_describe: '',
       alarm_status: '',
+      alarm_level: '',
       filter: '',
       alarm_time: '',
       equipment_name: '',
@@ -202,55 +225,142 @@ export default {
     this.getList()
   },
   methods: {
+    /**
+    *  点击页数的值跳转到该页的数据列表
+    */
     changePagination (val) {
-      this.selected = []
-      console.log(`changePagination: ${val}`)
-      this.pagination.page = val
-      this.loading = true
-      this.getTableData()
+      this.startPage = (val - 1) * this.pagination.rowsPerPage + 1
+      if (val * this.pagination.rowsPerPage > this.pagination.rowsNumber) {
+        this.endPage = this.pagination.rowsNumber
+      } else {
+        this.endPage = val * this.pagination.rowsPerPage
+      }
+      this.toPage = ''
+      this.getList()
     },
+    /**
+    *  输入跳转页面的值
+    */
     changeToPage (val) {
-      this.selected = []
+      if (this.toPage === '') {
+        return
+      }
       var r = /^\+?[1-9][0-9]*$/
       if (r.test(val) && parseInt(val) <= this.pages) {
         // 输入正整数 且 小于最大页数
         // console.log(`input toPage: ${val} 是一个正整数`)
       } else {
-        this.toPage = ''
+        this.$q.notify({
+          message: '请输入正确的页码',
+          color: 'red',
+          position: 'center',
+          timeout: 5
+        })
+        this.pagination.page = parseInt(this.toPage)
+      // this.changePagination()
+      }
+    },
+    /**
+    *  选择一页显示的记录数
+    */
+    changeOptions (val) {
+      // 处理当处于分页的最后一页时,如果选择显示页数大于原来显示页数
+      // 设置开始记录数
+      if (this.pagination.page >= Math.ceil(this.pagination.rowsNumber / val) || this.pagination.page === 0) {
+        this.startPage = (Math.ceil(this.pagination.rowsNumber / val) - 1) * val + 1
+      } else {
+        this.startPage = (this.pagination.page - 1) * val + 1
+      }
+      // 设置结束记录数
+      if (this.pagination.page * this.val > this.pagination.rowsNumber) {
+        this.endPage = this.pagination.rowsNumber
+      } else {
+        this.endPage = this.pagination.page * val
+      }
+      // 当总记录数小于选中条数时
+      if (this.pagination.rowsNumber < this.pagination.rowsPerPage) {
+        this.endPage = this.pagination.rowsNumber
+      }
+      // console.log(val, this.startPage, this.endPage)
+      this.getList()
+    },
+    refreshTableData () {
+      if (this.toPage !== '') {
+        this.startPage = (parseInt(this.toPage) - 1) * this.pagination.rowsPerPage + 1
+        if (parseInt(this.toPage) * this.pagination.rowsPerPage > this.pagination.rowsNumber) {
+          this.endPage = this.pagination.rowsNumber
+        } else {
+          this.endPage = parseInt(this.toPage) * this.pagination.rowsPerPage
+        }
+        this.pagination.page = parseInt(this.toPage)
+        this.getList()
       }
     },
     /**
     *  搜索
     */
     search () {
-      if (this.filterForm.deviceName === '' && this.filterForm.status === '') {
-        // this.searchData = this.data
-        // this.data = this.searchData
-        this.$q.notify({
-          message: '请输入搜索关键词',
-          color: 'black',
-          position: 'center',
-          timeout: 5
-        })
-      } else if (this.filterForm.deviceName !== '' && this.filterForm.status !== '') {
-        this.data = this.basicData.filter(item => {
-          if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1 && item.alarm_level.indexOf(this.filterForm.status) !== -1) {
-            return item
-          }
-        })
-      } else if (this.filterForm.deviceName !== '' && this.filterForm.status === '') {
-        this.data = this.basicData.filter(item => {
-          if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1) {
-            return item
-          }
-        })
-      } else if (this.filterForm.deviceName === '' && this.filterForm.status !== '') {
-        this.data = this.basicData.filter(item => {
-          if (item.alarm_level.indexOf(this.filterForm.status) !== -1) {
-            return item
-          }
-        })
+      var that = this
+      var url = '/api/dbsource/queryByParamKey'
+      var data02 = {
+        sqlId: 'select_alarm_info',
+        orderId: '0',
+        minRow: this.startPage,
+        maxRow: this.endPage,
+        params: {
+          equipment_name: that.equipment_name,
+          alarm_grade: that.alarm_level
+        },
+        whereId: '0'
       }
+      data02 = 'args=' + JSON.stringify(data02)
+      // console.log('访问参数：', data01)
+      // 后台数据访问
+      this.dataAccess(url, data02, function (res) {
+        that.data = res.data.data.data
+        that.basicData = res.data.data.data
+        // 获取数据总数
+        // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
+        that.pagination.rowsNumber = res.data.data.count
+        console.log(that.data)
+        console.log(that.pagination.rowsNumber)
+        if (that.pagination.rowsNumber % that.pagination.rowsPerPage === 0) {
+          that.pages = that.pagination.rowsNumber / that.pagination.rowsPerPage
+        } else {
+          // 分页页数向上取整
+          that.pages = Math.ceil(that.pagination.rowsNumber / that.pagination.rowsPerPage)
+        }
+      }, function (err) {
+        console.log('后端数据访问出错!', err)
+      })
+      // if (this.filterForm.deviceName === '' && this.filterForm.status === '') {
+      //   // this.searchData = this.data
+      //   // this.data = this.searchData
+      //   this.$q.notify({
+      //     message: '请输入搜索关键词',
+      //     color: 'red',
+      //     position: 'center',
+      //     timeout: 5
+      //   })
+      // } else if (this.filterForm.deviceName !== '' && this.filterForm.status !== '') {
+      //   this.data = this.basicData.filter(item => {
+      //     if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1 && item.alarm_level.indexOf(this.filterForm.status) !== -1) {
+      //       return item
+      //     }
+      //   })
+      // } else if (this.filterForm.deviceName !== '' && this.filterForm.status === '') {
+      //   this.data = this.basicData.filter(item => {
+      //     if (item.equipment_name.indexOf(this.filterForm.deviceName) !== -1) {
+      //       return item
+      //     }
+      //   })
+      // } else if (this.filterForm.deviceName === '' && this.filterForm.status !== '') {
+      //   this.data = this.basicData.filter(item => {
+      //     if (item.alarm_level.indexOf(this.filterForm.status) !== -1) {
+      //       return item
+      //     }
+      //   })
+      // }
     },
     /**
     *  重置
@@ -296,7 +406,7 @@ export default {
     getList () {
       var that = this
       var url = '/api/dbsource/queryByParamKey'
-      var data01 = { sqlId: 'select_alarm_info', orderId: '0', minRow: '0', maxRow: '560', params: {} }
+      var data01 = { sqlId: 'select_alarm_info', orderId: '0', minRow: this.startPage, maxRow: this.endPage, params: {} }
       // { sqlId: 'select_equipment_info', whereId: '4', orderId: '0', params: {}, minRow: 0, maxRow: 19 }
       data01 = 'args=' + JSON.stringify(data01)
       // console.log('访问参数：', data01)
@@ -304,14 +414,23 @@ export default {
       this.dataAccess(url, data01, function (res) {
         // console.log('后端返回数据结果json：', res)
         // 获取数据传给data
-        that.data = res.data.data.data
-        that.pagination.rowsNumber = res.data.data.count
-        that.basicData = res.data.data.data
-        that.totalData = res.data.data.count
-        console.log(that.data)
-        console.log(that.pagination.rowsNumber)
-        // console.log(that.totalData)
         // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
+        that.data = res.data.data.data
+        that.basicData = res.data.data.data
+        // 获取数据总数
+        that.pagination.rowsNumber = res.data.data.count
+        // console.log(that.data.alarm_level)
+        // console.log(that.pagination.rowsNumber)
+        // that.pages = Math.ceil(
+        //   this.pagination.rowsNumber / this.pagination.rowsPerPage
+        // )
+        // 设置分页页数
+        if (that.pagination.rowsNumber % that.pagination.rowsPerPage === 0) {
+          that.pages = that.pagination.rowsNumber / that.pagination.rowsPerPage
+        } else {
+          // 分页页数向上取整
+          that.pages = Math.ceil(that.pagination.rowsNumber / that.pagination.rowsPerPage)
+        }
       }, function (err) {
         console.log('后端数据访问出错!', err)
       })
