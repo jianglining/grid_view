@@ -16,21 +16,22 @@
       :no-data-label="dataLabel"
       table-header-class="bg-blue-8 text-white"
     >
-    <!--操作选项-->
+    <!--插槽之前-->
      <template v-slot:top>
-          <strong>卡号</strong>
+          <!-- <strong>卡号</strong>
           <q-input
           outlined
           v-model.trim="filterForm.cardNumber"
           dense
-          class="operation_input"/>
+          class="operation_input"/> -->
 
-          <!-- <q-input
+          <q-input
           standout="bg-blue-6 text-white"
           v-model.trim="filterForm.cardNumber"
           label="卡号"
-          style="width:200px;float:left;margin-right:10px;"
-          dense /> -->
+          label-color="blue-8"
+          class="operation_input"
+          dense />
 
           <q-btn
           color="primary"
@@ -39,7 +40,7 @@
           unelevated
           @click="search()"
           icon="search"
-          style="float:left;height:37px;width:80px;margin-right:10px"/>
+          class="operation"/>
           <q-btn
           color="primary"
           dense
@@ -47,10 +48,10 @@
           unelevated
            icon="refresh"
           @click="reset()"
-          style="float:left;height:37px;width:80px;margin-right:10px"/>
+          class="operation"/>
      </template>
 
-     <!--表格内容-->
+     <!--主体插槽-->
     <template v-slot:body="props">
         <q-tr  :props="props" :class="{ 'selected': changeColor }" >
           <q-td @dblclick="look(props.row)">
@@ -72,64 +73,19 @@
             {{ props.row.requesttime }}
           </q-td>
     </q-tr>
-      <!--弹窗-->
-      <q-dialog v-model="prompt" seamless >
-      <q-card style="min-width: 47%;height:45%;box-shadow:0px 0px 3px #aaa;">
-        <q-card-section class="text-h6 text-white bg-blue-8 " style="width:100%;height:60px;">
-          <div>定标信息<q-icon name="close" style="float:right" v-close-popup/></div>
-        </q-card-section>
-        <!--弹框滚动条-->
-        <div>
-          <q-scroll-area style="width:100% ; height:200px; margin-top:0px" >
-            <q-card-section style="width:100% ;height:40px;">
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex">
-              <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
-                卡号：
-              </div>
-              <q-input outlined disable class="bg-grey-2" v-model="card_number" :dense="true" style="height:40px;float:left;margin-right:10px"/>
-              <div class="text-body1" style="width:100px;height:40px;float:left;text-align:left;line-height:40px;">
-                设备名称：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="equipment_name" :dense="true" style="height:40px;float:left"/>
-              </div>
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex;margin-top:15px">
-              <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
-                事件信息：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="message" :dense="true" style="height:40px;float:left;margin-right:10px"/>
-              <div class="text-body1" style="width:100px;height:40px;float:left;text-align:left;line-height:40px;">
-                事件时间：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="requesttime" :dense="true" style="height:40px;float:left"/>
-              </div>
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex;margin-top:15px">
-              <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
-                设备ID：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="devicename" :dense="true" style="height:40px;float:left;margin-right:10px"/>
-              <div class="text-body1" style="width:100px;height:40px;float:left;text-align:left;line-height:40px;">
-                事件类型：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="identifier" :dense="true" style="height:40px;float:left"/>
-              </div>
-             </q-card-section>
-          </q-scroll-area>
-          <q-separator inset size="1.5px" />
-        </div>
-        </q-card>
-      </q-dialog>
       </template>
 
+      <!--插槽之后-->
       <template v-slot:bottom class="justify-end">
           <!-- 显示到第几条记录数据,总共多少条数据 -->
-          <span style="margin-right:5px;">
+          <span>
             显示{{startPage}}~{{ endPage}}条记录，总
             {{ pagination.rowsNumber }}
             条数据
           </span>
 
           <!-- 每页显示条数 -->
-          <span style="margin-right:5px;">
+          <span>
             每页
           </span>
           <q-select
@@ -138,23 +94,22 @@
           :options="options"
           dense
           @input="changeOptions"
-          style="float:left;margin-right:5px;" />
-          <span style="margin-right:5px;">
-            条记录
-          </span>
+          class="float-left"/>
+          <span> 条记录  </span>
 
           <!-- 选中的记录 -->
-          <span style="margin-right:5px;" v-if="selected.length != 0">
+          <span v-if="selected.length != 0">
             选中{{selected.length}}条记录
           </span>
 
           <!-- 分页 -->
-          <div class="pagination">
+          <div class="pagination float-right">
           <q-pagination
             v-model="pagination.page"
             :max="pages"
             :max-pages="5"
             ellipsess
+            class="float-left"
             :direction-links="true"
             @input="changePagination"
           >
@@ -171,8 +126,56 @@
           <span> 页</span>
           </div>
       </template>
-
     </q-table>
+
+    <!--弹窗-->
+      <q-dialog v-model="prompt" seamless >
+      <q-card class="dialog_card shadow-1">
+        <q-card-section class="text-h6 text-white bg-blue-8">
+          <div>定标信息
+            <q-icon name="close" class="float-right" v-close-popup/>
+          </div>
+        </q-card-section>
+        <!--弹框滚动条-->
+        <div>
+          <q-scroll-area class="scroll_area">
+            <q-card-section class="dialog_card_section1">
+              <div class="section_content">
+              <div class="content_name text-body1">
+                卡号：
+              </div>
+              <q-input outlined disable class="content_value bg-grey-2" v-model="card_number" :dense="true"/>
+              <div class="content_name text-body1">
+                设备名称：
+              </div>
+              <q-input outlined  disable class="content_value bg-grey-2" v-model="equipment_name" :dense="true"/>
+              </div>
+              <div class="section_content">
+              <div class="content_name text-body1">
+                事件信息：
+              </div>
+              <q-input outlined  disable class="content_value bg-grey-2" v-model="message" :dense="true"/>
+              <div class="content_name text-body1">
+                事件时间：
+              </div>
+              <q-input outlined  disable class="content_value bg-grey-2" v-model="requesttime" :dense="true"/>
+              </div>
+              <div class="section_content">
+              <div class="content_name text-body1">
+                设备ID：
+              </div>
+              <q-input outlined  disable class="content_value bg-grey-2" v-model="devicename" :dense="true"/>
+              <div class="content_name text-body1">
+                事件类型：
+              </div>
+              <q-input outlined  disable class="content_value bg-grey-2" v-model="identifier" :dense="true"/>
+              </div>
+             </q-card-section>
+          </q-scroll-area>
+          <q-separator inset size="1.5px" />
+        </div>
+        </q-card>
+      </q-dialog>
     </div>
 </template>
 <script>

@@ -1,10 +1,10 @@
 <template>
-  <div class="q-pa-md " >
+  <div class="q-pa-md">
     <q-table
       :data="data"
       :columns="columns"
       row-key="rn"
-      rowsNumber=100
+      rowsNumber="100"
       :filter="filter"
       virtual-scroll
       class="my-sticky-header-table"
@@ -17,9 +17,9 @@
       no-data-label="暂无数据"
       table-header-class="bg-blue-8 text-white"
     >
-    <!--操作选项-->
-     <template v-slot:top>
-          <strong>设备名称</strong>
+      <!--插槽之前-->
+      <template v-slot:top>
+        <!-- <strong>设备名称</strong>
           <q-input
           outlined
           v-model.trim="filterForm.deviceName"
@@ -31,62 +31,67 @@
           v-model.trim="filterForm.status"
           :options="options"
           dense
-          class="operation_input" />
+          class="operation_input" /> -->
 
-          <!-- <q-input
+        <q-input
           standout="bg-blue-6 text-white"
           v-model.trim="filterForm.deviceName"
           label="设备名称"
-          style="width:200px;float:left;margin-right:10px;"
-          dense />
-          <q-select
-              style="width:200px;float:left;margin-right:10px;"
-              standout="bg-blue-6 text-white"
-              label="启用类型"
-              color="blue-6"
-              v-model="filterForm.status"
-              :options="options"
-              option-value="value"
-              option-label="label"
-              dense
-              :options-dense="denseOpts"
-            >
-            <template v-slot:prepend>
-              <q-icon name="event"/>
-            </template>
-          </q-select> -->
+          label-color="blue-8"
+          class="operation_input"
+          dense
+        />
+        <q-select
+          class="operation_input"
+          standout="bg-blue-6 text-white"
+          label="在线状态"
+          color="blue-8"
+          v-model="filterForm.status"
+          :options="options"
+          option-value="value"
+          option-label="label"
+          dense
+          :options-dense="denseOpts"
+        >
+          <template v-slot:prepend>
+            <q-icon name="event" />
+          </template>
+        </q-select>
 
-          <q-btn
+        <q-btn
           color="primary"
           dense
           label="查询"
           unelevated
           @click="search()"
           icon="search"
-          class="operation"/>
-          <q-btn
+          class="operation"
+        />
+        <q-btn
           color="primary"
           dense
           label="重置"
           unelevated
           icon="refresh"
           @click="reset()"
-          class="operation"/>
-          <q-btn
+          class="operation"
+        />
+        <q-btn
           color="primary"
           dense
           label="更新设备信息"
           @click="update()"
           unelevated
           icon="add"
-          class="operation_update"/>
-     </template>
+          class="operation_update"
+        />
+      </template>
 
-     <!--表格内容-->
-    <template v-slot:body="props">
-        <q-tr  :props="props" :class="{ 'selected': changeColor }" >
+      <!--主体插槽-->
+      <template v-slot:body="props">
+        <q-tr :props="props" :class="{ selected: changeColor }">
           <q-td @dblclick="look(props.row)">
-            <q-checkbox key="props.row.rn" v-model="props.selected"/>
+            <q-checkbox key="props.row.rn" v-model="props.selected" />
           </q-td>
 
           <q-td key="equipment_name" :props="props" @dblclick="look(props.row)">
@@ -97,80 +102,46 @@
             {{ props.row.equipment_type }}
           </q-td>
 
-          <q-td key="equipment_state" :props="props" @dblclick="look(props.row)">
+          <q-td
+            key="equipment_state"
+            :props="props"
+            @dblclick="look(props.row)"
+          >
             {{ props.row.equipment_state }}
           </q-td>
-    </q-tr>
-      <!--弹窗-->
-      <q-dialog v-model="prompt" seamless >
-      <q-card style="min-width: 47%;height:45%;box-shadow:0px 0px 3px #aaa;">
-        <q-card-section class="dialog_card_section text-h6 text-white bg-blue-8 ">
-          <div>设备信息
-            <q-icon name="close" class="float-right" v-close-popup/>
-            </div>
-        </q-card-section>
-        <!--弹框滚动条-->
-        <div>
-          <q-scroll-area style="width:100% ; height:200px; margin-top:0px" >
-            <q-card-section style="width:100% ;height:40px;">
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex">
-              <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
-                设备名称：
-              </div>
-              <q-input outlined disable class="bg-grey-2" v-model="equipment_name" :dense="true" style="height:40px;float:left;margin-right:10px"/>
-              <div class="text-body1" style="width:100px;height:40px;float:left;text-align:left;line-height:40px;">
-                设备ID：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="module_equipment_id" :dense="true" style="height:40px;float:left"/>
-              </div>
-              <div style="width:100%;height:40px;justify-content: center;align-items: center;display: -webkit-flex;margin-top:15px">
-              <div class="text-body1" style="width:12%;height:40px;float:left;text-align:left;line-height:40px;">
-                所选产品：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="equipment_type" :dense="true" style="height:40px;float:left;margin-right:10px"/>
-              <div class="text-body1" style="width:100px;height:40px;float:left;text-align:left;line-height:40px;">
-                在线状态：
-              </div>
-              <q-input outlined  disable class="bg-grey-2" v-model="equipment_state" :dense="true" style="height:40px;float:left"/>
-              </div>
-             </q-card-section>
-          </q-scroll-area>
-          <q-separator inset size="1.5px" />
-        </div>
-        </q-card>
-      </q-dialog>
+        </q-tr>
       </template>
+
+      <!--插槽之后-->
       <template v-slot:bottom class="justify-end">
-           <!-- 显示到第几条记录数据,总共多少条数据 -->
-          <span style="margin-right:5px;">
-            显示{{startPage}}~{{ endPage}}条记录，总
-            {{ pagination.rowsNumber }}
-            条数据
-          </span>
-          <!-- 每页显示条数 -->
-          <span style="margin-right:5px;">
-            每页
-          </span>
-          <q-select
+        <!-- 显示到第几条记录数据,总共多少条数据 -->
+        <span>
+          显示{{ startPage }}~{{ endPage }}条记录，总
+          {{ pagination.rowsNumber }}
+          条数据
+        </span>
+        <!-- 每页显示条数 -->
+        <span> 每页 </span>
+        <q-select
           outlined
           v-model="pagination.rowsPerPage"
           :options="optionsPage"
           dense
           @input="changeOptions"
-          style="float:left;margin-right:5px;" />
-          <span style="margin-right:5px;">
-            条记录
-          </span>
-          <!-- 选中的记录 -->
-         <span style="margin-right:5px;" v-if="selected.length != 0">
-            选中{{selected.length}}条记录
-          </span>
-          <!-- 分页 -->
-          <div class="pagination">
+          class="float-left"
+        />
+        <span> 条记录 </span>
+        <!-- 选中的记录 -->
+        <span v-if="selected.length != 0">
+          选中{{ selected.length }}条记录
+        </span>
+        <!-- 分页 -->
+        <div class="pagination float-right">
           <q-pagination
             v-model="pagination.page"
             :max="pages"
             :max-pages="5"
+            class="float-left"
             ellipsess
             :direction-links="true"
             @input="changePagination"
@@ -186,11 +157,68 @@
             @keyup.enter.native="refreshTableData"
           ></q-input>
           <span> 页</span>
-          </div>
-
+        </div>
       </template>
     </q-table>
-    </div>
+
+    <!--弹窗-->
+    <q-dialog v-model="prompt" seamless>
+      <q-card class="dialog_card shadow-1">
+        <q-card-section
+          class=" text-h6 text-white bg-blue-8"
+        >
+          <div>
+            设备信息
+            <q-icon name="close" class="float-right" v-close-popup />
+          </div>
+        </q-card-section>
+        <!--弹框滚动条-->
+        <div>
+          <q-scroll-area class="scroll_area">
+            <q-card-section class="dialog_card_section1">
+              <div class="section_content">
+                <div class="content_name text-body1">设备名称：</div>
+                <q-input
+                  outlined
+                  disable
+                  class="content_value bg-grey-2"
+                  v-model="equipment_name"
+                  :dense="true"
+                />
+                <div class="content_name text-body1">设备ID：</div>
+                <q-input
+                  outlined
+                  disable
+                  class="content_value bg-grey-2"
+                  v-model="module_equipment_id"
+                  :dense="true"
+                />
+              </div>
+              <div class="section_content">
+                <div class="content_name text-body1">所选产品：</div>
+                <q-input
+                  outlined
+                  disable
+                  class="content_value bg-grey-2"
+                  v-model="equipment_type"
+                  :dense="true"
+                />
+                <div class="content_name text-body1">在线状态：</div>
+                <q-input
+                  outlined
+                  disable
+                  class="content_value bg-grey-2"
+                  v-model="equipment_state"
+                  :dense="true"
+                />
+              </div>
+            </q-card-section>
+          </q-scroll-area>
+          <q-separator inset size="1.5px" />
+        </div>
+      </q-card>
+    </q-dialog>
+  </div>
 </template>
 <script>
 export default {
@@ -304,7 +332,7 @@ export default {
      * @param start 开始读取的页数
      * @param end 结束读取的页数
      * @param query1 查询关键字1——设备名称
-     * @param query2 查询关键字2——设备名称
+     * @param query2 查询关键字2——在线状态
      */
     getTableData (start, end, query1, query2) {
       var that = this
