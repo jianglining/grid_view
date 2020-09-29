@@ -19,6 +19,7 @@
             table-header-class="bg-blue-8 text-white"
             selection="single"
             :selected.sync="device_select"
+            :pagination.sync="devicePagination"
           >
             <template v-slot:body="props">
               <q-tr :props="props">
@@ -39,7 +40,8 @@
             <template v-slot:top-left>
               <div class="q-gutter-md row items-start">
                 <q-input
-                  label="网格名称"
+                  v-model="queryDeviceParams.equipment_id"
+                  label="设备ID"
                   style="width: 220px; margin-left: 10px"
                   dense
                   standout="bg-blue-6 text-white"
@@ -57,6 +59,7 @@
                   dense
                 />
                 <q-input
+                  v-model="queryDeviceParams.equipment_name"
                   label="设备名称"
                   style="width: 220px; margin-left: 10px"
                   dense
@@ -65,47 +68,63 @@
                   class="q-ml-md"
                   label-color="primary"
                 />
-                <q-btn color="primary" label="查询" icon="search" />
-                <q-btn color="primary" label="选择设备" @click="selectDevice()" icon="search" />
+                <q-btn
+                  color="primary"
+                  label="查询"
+                  icon="search"
+                  @click="queryDevice"
+                />
+                <q-btn
+                  color="primary"
+                  label="重置"
+                  icon="search"
+                  @click="resetDevice"
+                />
+                <q-btn
+                  color="primary"
+                  label="选择设备"
+                  @click="selectDevice"
+                  icon="search"
+                />
               </div>
             </template>
-            <!-- <template v-slot:bottom class="justify-end">
+  <template v-slot:bottom class="justify-end">
           <span style="margin-right: 5px">
             显示{{ startPage }}~{{ endPage }}条记录，总
-            {{ pagination.rowsNumber }}
+            {{ devicePagination.rowsNumber }}
             条数据
           </span>
           <span style="margin-right: 5px"> 每页 </span>
           <q-select
             outlined
-            v-model="pagination.rowsPerPage"
+            v-model="devicePagination.rowsPerPage"
             :options="pageTotalumbe"
             dense
-            @input="changeTotalumbe"
+            @input="changeDeviceTotalumbe"
             style="float: left; margin-right: 5px"
           />
           <span style="margin-right: 5px"> 条记录 </span>
-          <q-pagination
-            style="float: right"
-            v-model="pagination.page"
-            :max="pages"
-            :max-pages="maxPages"
-            ellipsess
-            :direction-links="true"
-            @input="changePagination"
-          >
-          </q-pagination>
-          <span>跳至 </span>
-          <q-input
-            outlined
-            v-model="toPage"
-            dense
-            class="pagination-input"
-            @keyup.enter.native="changeToPage"
-            style="width: 50px; margin: 10px"
-          ></q-input>
-          <span> 页</span>
-        </template> -->
+          <div class="pagination">
+            <q-pagination
+              v-model="devicePagination.page"
+              :max="devicePages"
+              :max-pages="maxPages"
+              ellipsess
+              :direction-links="true"
+              @input="changeDevicePagination"
+            >
+            </q-pagination>
+            <span>跳至 </span>
+            <q-input
+              outlined
+              v-model="deviceToPage"
+              dense
+              class="pagination-input"
+              @keyup.enter.native="changeDeviceToPage"
+            ></q-input>
+            <span> 页</span>
+          </div>
+        </template>
           </q-table>
         </q-card-section>
       </q-card>
@@ -118,51 +137,68 @@
           <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
         <q-card-section>
-          <q-input
-            v-model="deviceParams.grid_name"
-            filled
-            outlined
-            autogrow
-            dense
-            style="width: 400px"
-            lazy-rules
-            :rules="[
-              (val) => (val && val.length > 0) || '请输入正确的网格名称',
-            ]"
-          >
-            <template v-slot:before>
-              <span
-                class="input-label text-right text-grey-10"
-                style="font-size: 18px; width: 110px"
-              >
-                网格名称
-                <span class="text-red text-weight-bolder">*</span>：
-              </span>
-            </template>
-          </q-input>
-          <q-input
-            filled
-            v-model="deviceParams.equipment_name"
-            outlined
-            autogrow
-            dense
-            style="width: 400px"
-            lazy-rules
-            :rules="[
-              (val) => (val && val.length > 0) || '请输入正确的网格名称',
-            ]"
-            @click="renderSelectDeviceView()"
-          >
-            <template v-slot:before>
-              <span
-                class="input-label text-right text-grey-10"
-                style="font-size: 18px; width: 110px"
-              >
-                设备名称
-                <span class="text-red text-weight-bolder">*</span>：
-              </span>
-            </template>
-          </q-input>
+          <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-md">
+            <q-input
+              v-model="deviceParams.grid_name"
+              filled
+              outlined
+              autogrow
+              dense
+              style="width: 400px"
+              lazy-rules
+              :rules="[
+                (val) => (val && val.length > 0) || '请输入正确的网格名称',
+              ]"
+            >
+              <template v-slot:before>
+                <span
+                  class="input-label text-right text-grey-10"
+                  style="font-size: 18px; width: 110px"
+                >
+                  网格名称
+                  <span class="text-red text-weight-bolder">*</span>：
+                </span>
+              </template>
+            </q-input>
+            <q-input
+              filled
+              v-model="deviceParams.equipment_name"
+              outlined
+              autogrow
+              dense
+              style="width: 400px"
+              lazy-rules
+              :rules="[
+                (val) => (val && val.length > 0) || '请输入正确的网格名称',
+              ]"
+              @click="renderSelectDeviceView"
+            >
+              <template v-slot:before>
+                <span
+                  class="input-label text-right text-grey-10"
+                  style="font-size: 18px; width: 110px"
+                >
+                  设备名称
+                  <span class="text-red text-weight-bolder">*</span>：
+                </span>
+              </template>
+            </q-input>
+            <div align="center">
+              <q-btn
+                style="width: 30%"
+                label="提交"
+                type="submit"
+                color="primary"
+              />
+              <q-btn
+                style="width: 30%"
+                label="重置"
+                type="reset"
+                color="red"
+                class="q-ml-sm"
+              />
+            </div>
+          </q-form>
         </q-card-section>
       </q-card>
     </q-dialog>
@@ -230,6 +266,7 @@
             type="reset"
             color="red"
             class="q-ml-sm"
+            @click="deleteDevice"
           />
         </template>
         <template v-slot:bottom class="justify-end">
@@ -248,26 +285,26 @@
             style="float: left; margin-right: 5px"
           />
           <span style="margin-right: 5px"> 条记录 </span>
-          <q-pagination
-            style="float: right"
-            v-model="pagination.page"
-            :max="pages"
-            :max-pages="maxPages"
-            ellipsess
-            :direction-links="true"
-            @input="changePagination"
-          >
-          </q-pagination>
-          <span>跳至 </span>
-          <q-input
-            outlined
-            v-model="toPage"
-            dense
-            class="pagination-input"
-            @keyup.enter.native="changeToPage"
-            style="width: 50px; margin: 10px"
-          ></q-input>
-          <span> 页</span>
+          <div class="pagination">
+            <q-pagination
+              v-model="pagination.page"
+              :max="pages"
+              :max-pages="maxPages"
+              ellipsess
+              :direction-links="true"
+              @input="changePagination"
+            >
+            </q-pagination>
+            <span>跳至 </span>
+            <q-input
+              outlined
+              v-model="toPage"
+              dense
+              class="pagination-input"
+              @keyup.enter.native="changeToPage"
+            ></q-input>
+            <span> 页</span>
+          </div>
         </template>
       </q-table>
     </template>
@@ -276,6 +313,7 @@
 <script>
 // import {fetchData}
 import { fetchData } from '../../api/index'
+import { uid } from 'quasar'
 export default {
   data () {
     return {
@@ -288,9 +326,16 @@ export default {
       startPage: 0, // 开始记录数
       endPage: 5, // 结束记录数
       pages: 5, // 数据总页数
+      devicePages: 5,
       maxPages: 5,
       toPage: '', // 跳转至
+      deviceToPage: '',
       pagination: {
+        page: 1,
+        rowsPerPage: 5,
+        rowsNumber: 0 // 总共数据条数
+      },
+      devicePagination: {
         page: 1,
         rowsPerPage: 5,
         rowsNumber: 0 // 总共数据条数
@@ -369,6 +414,11 @@ export default {
         grid_id: '',
         grid_name: '',
         equipment_id: '',
+        equipment_name: ''
+      },
+      queryDeviceParams: {
+        equipment_id: '',
+        equipment_type: '',
         equipment_name: ''
       },
       data: [],
@@ -496,6 +546,32 @@ export default {
     changeTotalumbe () {
       this.changePagination()
     },
+    /**
+     * 选择设备界面分页，刷新表格数据
+     */
+    changeDevicePagination () {
+      // 设置数据开始位置
+      this.startPage = (this.devicePagination.page - 1) * this.devicePagination.rowsPerPage
+      // 设置数据结束位置
+      this.endPage = this.startPage + this.devicePagination.rowsPerPage
+      if (this.startPage > this.devicePagination.rowsNumber) {
+        this.startPage =
+          this.devicePagination.rowsNumber - this.devicePagination.rowsPerPage
+        if (this.startPage < 0) {
+          this.startPage = 0
+        }
+        this.endPage = this.devicePagination.rowsNumber
+      }
+      // 刷新页面
+      // this.refreshView()
+      this.renderDeviceData()
+    },
+    /**
+     * 修改表格容量
+     */
+    changeDeviceTotalumbe () {
+      this.changeDevicePagination()
+    },
     // 跳转页数
     changeToPage () {
       // 填写的页码为空直接结束
@@ -503,17 +579,35 @@ export default {
         return
       }
       // 填写的页码大于最大页，提示信息并结束
-      if (this.toPage > this.pages || this.toPage <= 0) {
-        this.$q.notify({
-          message: '请选择正确的页码',
-          color: 'red',
-          position: 'center',
-          timeout: 1500
-        })
+      if (this.toPage <= this.pages && this.toPage > 0) {
+        this.pagination.page = parseInt(this.toPage)
+        this.changePagination()
         return
       }
-      this.pagination.page = parseInt(this.toPage)
-      this.changePagination()
+      this.$q.notify({
+        message: '请选择正确的页码',
+        color: 'red',
+        position: 'center',
+        timeout: 1500
+      })
+    },
+    changeDeviceToPage () {
+      // 填写的页码为空直接结束
+      if (this.deviceToPage === '') {
+        return
+      }
+      // 填写的页码大于最大页，提示信息并结束
+      if (this.deviceToPage <= this.devicePages && this.deviceToPage > 0) {
+        this.devicePagination.page = parseInt(this.deviceToPage)
+        this.changeDevicePagination()
+        return
+      }
+      this.$q.notify({
+        message: '请选择正确的页码',
+        color: 'red',
+        position: 'center',
+        timeout: 1500
+      })
     },
     getSelectedString () {
       return this.selected.length === 0
@@ -613,6 +707,7 @@ export default {
       fetchData(query)
         .then((res) => {
           this.deviceType = res.data.data
+          this.deviceType.push({ id: '', name: '' })
         })
         .catch((error) => {
           console.log(error)
@@ -629,8 +724,8 @@ export default {
           orderId: '0',
           whereId: '4',
           params: { parent_bm: '' },
-          minRow: 0,
-          maxRow: 15
+          minRow: this.startPage,
+          maxRow: this.endPage
         },
         method: 'post',
         type: 'db_search'
@@ -638,6 +733,13 @@ export default {
       fetchData(query)
         .then((res) => {
           this.deviceData = res.data.data.data
+          this.devicePagination.rowsNumber = res.data.data.count
+          // 设置表格页码树数量
+          console.log(this.devicePagination.rowsNumber, this.devicePagination.rowsPerPage)
+          this.devicePages = Math.ceil(
+            this.devicePagination.rowsNumber / this.devicePagination.rowsPerPage
+          )
+          console.log(this.devicePages)
         })
         .catch((error) => {
           console.log(error)
@@ -664,6 +766,93 @@ export default {
       this.deviceParams.equipment_id = ''
       this.deviceParams.grid_name = ''
       this.deviceParams.grid_id = ''
+    },
+    queryDevice () {
+      this.queryDeviceParams.equipment_type = this.deviceTypeValue.name
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_equipment_info',
+          orderId: '0',
+          whereId: '5',
+          params: this.queryDeviceParams,
+          minRow: 0,
+          maxRow: 15
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          this.deviceData = res.data.data.data
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    resetDevice () {
+      this.renderDeviceData()
+    },
+    onSubmit () {
+      this.deviceParams.id = uid()
+      const query = {
+        url: 'api/dbsource/updateByParamKey',
+        data: [
+          { sqlId: 'insert_equipment_in_grid', params: [this.deviceParams] }
+        ],
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          this.addDialog = false
+          if (res.data.success === true) {
+            this.$q.notify({
+              message: '添加成功',
+              color: 'green',
+              position: 'center',
+              timeout: 1500
+            })
+          } else {
+            this.$q.notify({
+              message: '添加失败',
+              color: 'green',
+              position: 'center',
+              timeout: 1500
+            })
+          }
+          this.removeDeviceForm()
+          this.refreshView()
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    onReset () {},
+    deleteDevice () {
+      const query = {
+        url: 'api/dbsource/updateByParamKey',
+        data: [{ sqlId: 'delete_equipment_in_grid', params: this.checkSelect }],
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          this.addDialog = false
+          if (res.success === true) {
+            this.$q.notify({
+              message: '删除成功',
+              color: 'green',
+              position: 'center',
+              timeout: 1500
+            })
+          }
+          this.removeDeviceForm()
+          this.refreshView()
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     }
   },
   watch: {

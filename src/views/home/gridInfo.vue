@@ -56,27 +56,7 @@
                   </span>
                 </template>
               </q-input>
-              <q-select
-                style="width: 400px"
-                standout="bg-blue-6 text-white"
-                v-model="gridForm.parent_bm"
-                :options="choose"
-                option-label="label"
-                option-value="value"
-                :dense="dense"
-                :options-dense="denseOpts"
-              >
-                <template v-slot:before>
-                  <span
-                    class="input-label text-right text-grey-10"
-                    style="font-size: 18px; width: 110px"
-                  >
-                    父 节 点
-                    <span class="text-red text-weight-bolder">*</span>：
-                  </span>
-                </template>
-              </q-select>
-              <q-input
+               <q-input
                 filled
                 type="text"
                 dense
@@ -97,6 +77,26 @@
                   </span>
                 </template>
               </q-input>
+              <q-select
+                style="width: 400px"
+                standout="bg-blue-6 text-white"
+                v-model="gridForm.parent_bm"
+                :options="choose"
+                option-label="label"
+                option-value="value"
+                :dense="dense"
+                :options-dense="denseOpts"
+              >
+                <template v-slot:before>
+                  <span
+                    class="input-label text-right text-grey-10"
+                    style="font-size: 18px; width: 110px"
+                  >
+                    父 节 点
+                    <span class="text-red text-weight-bolder">*</span>：
+                  </span>
+                </template>
+              </q-select>
               <q-select
                 style="width: 400px"
                 standout="bg-blue-6 text-white"
@@ -280,26 +280,26 @@
             style="float: left; margin-right: 5px"
           />
           <span style="margin-right: 5px"> 条记录 </span>
-          <q-pagination
-            style="float: right"
-            v-model="pagination.page"
-            :max="pages"
-            :max-pages="maxPages"
-            ellipsess
-            :direction-links="true"
-            @input="changePagination"
-          >
-          </q-pagination>
-          <span>跳至 </span>
-          <q-input
-            outlined
-            v-model="toPage"
-            dense
-            class="pagination-input"
-            @keyup.enter.native="changeToPage"
-            style="width: 50px; margin: 10px"
-          ></q-input>
-          <span> 页</span>
+          <div class="pagination">
+            <q-pagination
+              v-model="pagination.page"
+              :max="pages"
+              :max-pages="maxPages"
+              ellipsess
+              :direction-links="true"
+              @input="changePagination"
+            >
+            </q-pagination>
+            <span>跳至 </span>
+            <q-input
+              outlined
+              v-model="toPage"
+              dense
+              class="pagination-input"
+              @keyup.enter.native="changeToPage"
+            ></q-input>
+            <span> 页</span>
+          </div>
         </template>
       </q-table>
     </template>
@@ -437,21 +437,6 @@ export default {
      * 获取网格节点(左菜单)
      */
     getTreeNode () {
-      // var url = '/api/dbsource/queryByParamKey'
-      // var data01 = { sqlId: 'select_grid_info', whereId: '2', orderId: '0', params: { parent_bm: '-1' }, minRow: 0, maxRow: 19 }
-      // // {"sqlId":"select_grid_info_tree","whereId":"0","params":{"grid_name":""}}
-      // data01 = 'args=' + JSON.stringify(data01)
-      // // console.log('访问参数：', data01)
-      // // 后台数据访问
-      // this.dataAccess(url, data01, function (res) {
-      //   // console.log('后端返回数据结果json：', res.data)
-      //   // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
-      // }, function (err) {
-      //   console.log('后端数据访问出错!', err)
-      // })
-      // 构建树
-      // this.createTree(this.simple)
-
       // 刷新表格数据
       this.refreshView()
       const query = {
@@ -546,9 +531,7 @@ export default {
       }
       fetchData(query)
         .then((res) => {
-          console.log(res)
           this.getTreeNode()
-          // this.addDialog = false
         })
         .catch((error) => {
           console.log(error)
@@ -722,17 +705,17 @@ export default {
         return
       }
       // 填写的页码大于最大页，提示信息并结束
-      if (this.toPage > this.pages || this.toPage <= 0) {
-        this.$q.notify({
-          message: '请选择正确的页码',
-          color: 'red',
-          position: 'center',
-          timeout: 1500
-        })
+      if (this.toPage <= this.pages && this.toPage > 0) {
+        this.pagination.page = parseInt(this.toPage)
+        this.changePagination()
         return
       }
-      this.pagination.page = parseInt(this.toPage)
-      this.changePagination()
+      this.$q.notify({
+        message: '请选择正确的页码',
+        color: 'red',
+        position: 'center',
+        timeout: 1500
+      })
     },
     /**
      * 节点查询
@@ -771,7 +754,6 @@ export default {
       // vue 处理__ob__: Observer 的数组
       const t = JSON.parse(JSON.stringify(this.gridForm.is_enable))
       const v = JSON.parse(JSON.stringify(this.gridForm.parent_bm))
-      console.log(t, v)
       this.gridForm.is_enable = t.value
       this.gridForm.start_type = t.label
       this.gridForm.parent_bm = v.value
@@ -796,16 +778,6 @@ export default {
       if (this.gridForm.id === '') {
         this.gridForm.id = uids
       }
-      // var params = []
-      // params.push(this.gridForm)
-      // console.log('params', params)
-      // if (this.gridForm.is_enable === '0') {
-      //   this.gridForm.start_type = '是'
-      // } else {
-      //   this.gridForm.start_type = '否'
-      // }
-      // var updateParams = [{ sqlId: 'insert_grid_info', params: [{ id: 'c56659ad-9f30-4b43-b7c9-5bada879c41f', grid_name: '01', parent_bm: '-1', parent_name: 'AB门测试', is_enable: '0', start_type: '启用', location: '3', grid_bm: '004', create_by: '', create_name: '', create_time: '', update_by: '', update_name: '', update_time: '', node_bm: '' }] }]
-
       const query = {
         url: 'api/dbsource/updateByParamKey',
         data: [
@@ -819,14 +791,12 @@ export default {
       }
       fetchData(query)
         .then((res) => {
-          console.log(res)
           this.getTreeNode()
           this.addDialog = false
         })
         .catch((error) => {
           console.log(error)
         })
-      console.log(this.gridForm)
     },
     onReset () {}
   },

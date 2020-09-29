@@ -2,7 +2,7 @@
   <q-splitter v-model="splitterModel" style="height: 90vh">
     <div class="q-pa-md">
       <q-dialog v-model="addDialog">
-        <q-card style="max-width:90vh;width:80%">
+        <q-card style="max-width: 90vh; width: 80%">
           <q-card-section class="row items-center q-pb-none">
             <div class="text-h6">网格下的卡</div>
             <q-space />
@@ -16,21 +16,27 @@
               class="my-sticky-header-table"
               card-style="margin:15px;"
               no-data-label="暂无数据"
-                      separator="cell"
-                              :pagination.sync="pagination"
+              separator="cell"
+              :pagination.sync="pagination"
             >
               <template v-slot:body="props">
                 <q-tr :props="props">
-                  <q-td key="grid_name" :props="props">{{ props.row.grid_name }}</q-td>
-                  <q-td key="card_number" :props="props">{{ props.row.card_number }}</q-td>
-                  <q-td key="update_time" :props="props">{{ props.row.update_time }}</q-td>
+                  <q-td key="grid_name" :props="props">{{
+                    props.row.grid_name
+                  }}</q-td>
+                  <q-td key="card_number" :props="props">{{
+                    props.row.card_number
+                  }}</q-td>
+                  <q-td key="update_time" :props="props">{{
+                    props.row.update_time
+                  }}</q-td>
                 </q-tr>
               </template>
               <template v-slot:top-left>
                 <div class="q-gutter-md row items-start">
                   <q-input
-                    label="网格名称"
-                    style="width: 265px;margin-left: 10px"
+                    label="卡号"
+                    style="width: 265px; margin-left: 10px"
                     dense
                     standout="bg-blue-6 text-white"
                     v-model="queryName"
@@ -38,46 +44,51 @@
                     class="q-ml-md"
                     label-color="primary"
                   />
-                  <q-btn color="primary" label="查询" icon="search" @click="queryGridCard()"/>
+                  <q-btn
+                    color="primary"
+                    label="查询"
+                    icon="search"
+                    @click="queryGridCard()"
+                  />
                 </div>
               </template>
-                            <template v-slot:bottom class="justify-end">
-          <span style="margin-right: 5px">
-            显示{{ startPage }}~{{ endPage }}条记录，总
-            {{ pagination.rowsNumber }}
-            条数据
-          </span>
-          <span style="margin-right: 5px"> 每页 </span>
-          <q-select
-            outlined
-            v-model="pagination.rowsPerPage"
-            :options="pageTotalumbe"
-            dense
-            @input="changeTotalumbe"
-            style="float: left; margin-right: 5px"
-          />
-          <span style="margin-right: 5px"> 条记录 </span>
-          <q-pagination
-            style="float: right"
-            v-model="pagination.page"
-            :max="pages"
-            :max-pages="maxPages"
-            ellipsess
-            :direction-links="true"
-            @input="changePagination"
-          >
-          </q-pagination>
-          <span>跳至 </span>
-          <q-input
-            outlined
-            v-model="toPage"
-            dense
-            class="pagination-input"
-            @keyup.enter.native="changeToPage"
-            style="width: 50px; margin: 10px"
-          ></q-input>
-          <span> 页</span>
-        </template>
+              <template v-slot:bottom class="justify-end">
+                <span style="margin-right: 5px">
+                  显示{{ startPage }}~{{ endPage }}条记录，总
+                  {{ pagination.rowsNumber }}
+                  条数据
+                </span>
+                <span style="margin-right: 5px"> 每页 </span>
+                <q-select
+                  outlined
+                  v-model="pagination.rowsPerPage"
+                  :options="pageTotalumbe"
+                  dense
+                  @input="changeTotalumbe"
+                  style="float: left; margin-right: 5px"
+                />
+                <span style="margin-right: 5px"> 条记录 </span>
+                <div class="pagination">
+                  <q-pagination
+                    v-model="pagination.page"
+                    :max="pages"
+                    :max-pages="maxPages"
+                    ellipsess
+                    :direction-links="true"
+                    @input="changePagination"
+                  >
+                  </q-pagination>
+                  <span>跳至 </span>
+                  <q-input
+                    outlined
+                    v-model="toPage"
+                    dense
+                    class="pagination-input"
+                    @keyup.enter.native="changeToPage"
+                  ></q-input>
+                  <span> 页</span>
+                </div>
+              </template>
             </q-table>
           </q-card-section>
         </q-card>
@@ -85,10 +96,10 @@
     </div>
     <template v-slot:before>
       <div class="q-pa-md">
-        <div class="row" style="margin:10px">
+        <div class="row" style="margin: 10px">
           <q-input
             label="网格节点搜索"
-            style="width: 265px;margin-left: 0px"
+            style="width: 265px; margin-left: 0px"
             dense
             standout="bg-blue-6 text-white"
             v-model="gridNodeSearch"
@@ -99,7 +110,12 @@
           >
             <template v-slot:append>
               <q-icon v-if="gridNodeSearch === ''" name="search" />
-              <q-icon v-else name="clear" class="cursor-pointer" @click="gridNodeSearch = ''" />
+              <q-icon
+                v-else
+                name="clear"
+                class="cursor-pointer"
+                @click="gridNodeSearch = ''"
+              />
             </template>
           </q-input>
         </div>
@@ -117,21 +133,25 @@
         :data="data"
         :columns="columns"
         row-key="id"
+        class="my-sticky-header-table"
         card-style="margin:15px;height:85vh"
         table-header-class="bg-blue-8 text-white"
         no-data-label="暂无数据"
       >
-        <!-- <template v-slot:top-right>
-        <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
-        <q-btn class="q-ml-sm" color="teal-7" :disable="loading" label="删除" @click="removeRow" />
-        </template>-->
         <template v-slot:body="props">
           <q-tr :props="props">
-            <q-td key="grid_name" :props="props">{{ props.row.grid_name }}</q-td>
-            <q-td key="cardNumber" :props="props">{{ props.row.cardNumber }}</q-td>
+            <q-td key="grid_name" :props="props">{{
+              props.row.grid_name
+            }}</q-td>
+            <q-td key="cardNumber" :props="props">{{
+              props.row.cardNumber
+            }}</q-td>
             <q-td key="cz" :props="props">
-              <!-- <span><q-btn dense color="red" label="删除"  icon="highlight_off" size="8px" @click="delRecord(props.row)"/></span> -->
-              <q-btn color="primary" label="查看详情" @click="detailView(props.row)" />
+              <q-btn
+                color="primary"
+                label="查看详情"
+                @click="detailView(props.row)"
+              />
             </q-td>
           </q-tr>
         </template>
@@ -146,9 +166,7 @@ export default {
   data () {
     return {
       splitterModel: 20,
-      pageTotalumbe: [
-        5, 10, 20, 50
-      ],
+      pageTotalumbe: [5, 10, 20, 50],
       startPage: 0, // 开始记录数
       endPage: 5, // 结束记录数
       pages: 5, // 数据总页数
@@ -317,7 +335,11 @@ export default {
        */
       const query = {
         url: 'api/dbsource/queryByParamKey',
-        data: { sqlId: 'select_grid_info_tree', whereId: '0', params: { grid_name: '' } },
+        data: {
+          sqlId: 'select_grid_info_tree',
+          whereId: '0',
+          params: { grid_name: '' }
+        },
         method: 'post',
         type: 'db_search'
       }
@@ -352,6 +374,66 @@ export default {
               })
           }
           this.data = resData
+          // 设置表格数据总条数（行数）
+          this.pagination.rowsNumber = resData.length
+          // 设置表格页码树数量
+          this.pages = Math.ceil(
+            this.pagination.rowsNumber / this.pagination.rowsPerPage
+          )
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    refreshCardTable () {
+      const query = {
+        url: 'api/dbsource/queryByParamKey',
+        data: {
+          sqlId: 'select_grid_info',
+          whereId: '1',
+          params: { id: this.selected },
+          minRow: 0,
+          maxRow: 19
+        },
+        method: 'post',
+        type: 'db_search'
+      }
+      fetchData(query)
+        .then((res) => {
+          const resData = res.data.data.data
+          for (let i = 0; i < resData.length; i++) {
+            resData[i].cardNumber = '0'
+            // 添加label属性
+            resData[i].label = resData[i].grid_name
+            const query01 = {
+              url: 'api/dbsource/queryByParamKey',
+              data: {
+                sqlId: 'select_grid_statistics_card_info',
+                params: { grid_id: resData[i].grid_bm }
+              },
+              method: 'post',
+              type: 'db_search'
+            }
+            fetchData(query01)
+              .then((res) => {
+                const resData01 = res.data.data
+                if (resData01 === null) {
+                  resData[i].cardNumber = '0'
+                } else {
+                  resData[i].cardNumber = resData01.length + ''
+                }
+              })
+              .catch((error) => {
+                console.log(error)
+              })
+          }
+          this.data = resData
+          // 设置表格数据总条数（行数）
+          this.pagination.rowsNumber = res.data.data.count
+          // 设置表格页码树数量
+          this.pages = Math.ceil(
+            this.pagination.rowsNumber / this.pagination.rowsPerPage
+          )
         })
         .catch((error) => {
           console.log(error)
@@ -384,17 +466,17 @@ export default {
         return
       }
       // 填写的页码大于最大页，提示信息并结束
-      if (this.toPage > this.pages || this.toPage <= 0) {
-        this.$q.notify({
-          message: '请选择正确的页码',
-          color: 'red',
-          position: 'center',
-          timeout: 1500
-        })
+      if (this.toPage <= this.pages && this.toPage > 0) {
+        this.pagination.page = parseInt(this.toPage)
+        this.changePagination()
         return
       }
-      this.pagination.page = parseInt(this.toPage)
-      this.changePagination()
+      this.$q.notify({
+        message: '请选择正确的页码',
+        color: 'red',
+        position: 'center',
+        timeout: 1500
+      })
     },
     /**
      * 节点查询
@@ -477,46 +559,7 @@ export default {
         this.refreshView()
         return
       }
-      const query = {
-        url: 'api/dbsource/queryByParamKey',
-        data: { sqlId: 'select_grid_info', whereId: '1', params: { id: this.selected }, minRow: 0, maxRow: 19 },
-        method: 'post',
-        type: 'db_search'
-      }
-      fetchData(query)
-        .then((res) => {
-          const resData = res.data.data.data
-          for (let i = 0; i < resData.length; i++) {
-            resData[i].cardNumber = '0'
-            // 添加label属性
-            resData[i].label = resData[i].grid_name
-            const query01 = {
-              url: 'api/dbsource/queryByParamKey',
-              data: {
-                sqlId: 'select_grid_statistics_card_info',
-                params: { grid_id: resData[i].grid_bm }
-              },
-              method: 'post',
-              type: 'db_search'
-            }
-            fetchData(query01)
-              .then((res) => {
-                const resData01 = res.data.data
-                if (resData01 === null) {
-                  resData[i].cardNumber = '0'
-                } else {
-                  resData[i].cardNumber = resData01.length + ''
-                }
-              })
-              .catch((error) => {
-                console.log(error)
-              })
-          }
-          this.data = resData
-        })
-        .catch((error) => {
-          console.log(error)
-        })
+      this.refreshCardTable()
     },
     /**
      * 界面关闭移除表单内容
@@ -530,4 +573,5 @@ export default {
 }
 </script>
 <style>
+@import "../assets/css/tableStyle.css";
 </style>
