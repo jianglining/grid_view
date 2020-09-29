@@ -111,7 +111,7 @@
               :max-pages="maxPages"
               ellipsess
               :direction-links="true"
-              @input="changeDevicePagination"
+              @click="changeDevicePagination"
             >
             </q-pagination>
             <span>跳至 </span>
@@ -321,7 +321,10 @@ export default {
       addDialog: false,
       chooseDevice: false,
       deviceType: [],
-      deviceTypeValue: '',
+      deviceTypeValue: {
+        id: '',
+        name: ''
+      },
       pageTotalumbe: [5, 10, 20, 50],
       startPage: 0, // 开始记录数
       endPage: 5, // 结束记录数
@@ -735,11 +738,9 @@ export default {
           this.deviceData = res.data.data.data
           this.devicePagination.rowsNumber = res.data.data.count
           // 设置表格页码树数量
-          console.log(this.devicePagination.rowsNumber, this.devicePagination.rowsPerPage)
           this.devicePages = Math.ceil(
             this.devicePagination.rowsNumber / this.devicePagination.rowsPerPage
           )
-          console.log(this.devicePages)
         })
         .catch((error) => {
           console.log(error)
@@ -776,8 +777,8 @@ export default {
           orderId: '0',
           whereId: '5',
           params: this.queryDeviceParams,
-          minRow: 0,
-          maxRow: 15
+          minRow: this.startPage,
+          maxRow: this.endPage
         },
         method: 'post',
         type: 'db_search'
@@ -785,6 +786,12 @@ export default {
       fetchData(query)
         .then((res) => {
           this.deviceData = res.data.data.data
+          // 设置表格数据总条数（行数）
+          this.devicePagination.rowsNumber = res.data.data.count
+          // 设置表格页码树数量
+          this.devicePages = Math.ceil(
+            this.devicePagination.rowsNumber / this.devicePagination.rowsPerPage
+          )
         })
         .catch((error) => {
           console.log(error)

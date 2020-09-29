@@ -15,8 +15,9 @@ const service = Axios.create({
 // 请求拦截器
 service.interceptors.request.use(
   config => {
-    const token = localStorage.getItem('access_token')
-    if (token && config.type) {
+    // const token = localStorage.getItem('access_token')
+    // console.log(token)
+    if (config.type) {
       switch (config.type) {
         case 'db_search' || 'db_update':
           config.transformRequest = [
@@ -31,7 +32,7 @@ service.interceptors.request.use(
           }
       }
     }
-    config.headers.Authorization = 'Bearer ' + token
+    // config.headers.Authorization = 'Bearer ' + token
     return config
   },
   error => {
