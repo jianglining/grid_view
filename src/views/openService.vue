@@ -32,8 +32,8 @@
             <!-- 按钮 -->
             <div class="q-gutter-xs absolute-bottom">
               <q-btn size="12px" color="primary" icon="add" label="添加" @click="increase = true"/>
-              <q-btn size="12px" color="primary" icon="colorize" label="编辑" @click="edited = true"/>
-              <q-btn size="12px" color="primary" icon="delete" label="删除" @click="deleted = true"/>
+              <q-btn size="12px" color="primary" icon="colorize" label="编辑" @click="editing()"/>
+              <q-btn size="12px" color="primary" icon="delete" label="删除" @click="deleting()"/>
               <!-- 弹出框 -->
               <!-- 增加 -->
               <q-dialog v-model="increase" persistent :maximized="maximizedToggle">
@@ -90,7 +90,7 @@
                 </form>
                 <div class="absolute-bottom-right">
                 <q-card-actions class="text-primary " >
-                  <q-btn size="13px" color="primary" icon="send" label="保存" @click="save"/>
+                  <q-btn size="13px" color="primary" icon="send" label="保存" @click="save()"/>
                 </q-card-actions>
                 </div>
                 </q-card>
@@ -146,7 +146,7 @@
                 </q-card-section>
                 <div class="absolute-bottom-right">
                 <q-card-actions align="right" class="text-primary">
-                  <q-btn size="13px" color="primary" icon="send" label="保存" @click="submitEdit"/>
+                  <q-btn size="13px" color="primary" icon="send" label="保存" @click="submitEdit()"/>
                   <q-btn size="13px" color="primary" icon="close" label="取消" v-close-popup />
                 </q-card-actions>
                 </div>
@@ -241,12 +241,10 @@ export default {
     *  新增按钮响应事件
     */
     save () {
-      // this.addData.id = ''
       const uids = uid()
       this.addData.id = uids
       this.addData.api_name = this.api_name
       this.addData.api_description = this.api_description
-      // this.addData.label = ''
       var url = '/api/dbsource/updateByParamKey'
       var data02 = [{
         sqlId: 'insert_api_description',
@@ -256,7 +254,6 @@ export default {
           api_description: this.addData.api_description
         }]
       }]
-      // var data01 = { sqlId: 'select_api_description' }
       data02 = 'args=' + JSON.stringify(data02)
       // console.log('访问参数：', data01)
       // 后台数据访问
@@ -278,17 +275,24 @@ export default {
       location.reload()
     },
     /**
-    *  编辑按钮响应事件
+    *  编辑按钮响应前判断是否选择了任一API
+    */
+    editing () {
+      if (this.selected === '') {
+        this.$q.notify({
+          message: '请先选择API说明',
+          color: 'red',
+          position: 'center',
+          timeout: 5
+        })
+      } else {
+        this.edited = true
+      }
+    },
+    /**
+    *  编辑弹窗保存按钮响应事件
     */
     submitEdit () {
-      // if (this.addData.api_name === '') {
-      //   this.$q.notify({
-      //     message: '保存成功',
-      //     color: 'green',
-      //     position: 'center',
-      //     timeout: 5
-      //   })
-      // }
       var url = '/api/dbsource/updateByParamKey'
       var data03 = [{
         sqlId: 'update_api_description',
@@ -298,25 +302,15 @@ export default {
           api_description: this.addData.api_description
         }]
       }]
-      // var data01 = { sqlId: 'select_api_description' }
       data03 = 'args=' + JSON.stringify(data03)
       // console.log('访问参数：', data01)
       // 后台数据访问
-      // console.log(this.addData.id)
-      // console.log(this.addData.api_name)
-      // console.log(this.addData.api_description)
       this.dataAccess(url, data03, function (res) {
-        // var result = res.data.data
-        // for (let i = 0; i < result.length; i++) {
-        //   result[i].label = result[i].api_name
-        // }
-        // console.log('后端返回数据结果json：', res.data)
         // var insertDate = res.data.data.data
         // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
       }, function (err) {
         console.log('后端数据访问出错!', err)
       })
-      // this.getList()
       this.$q.notify({
         message: '保存成功',
         color: 'green',
@@ -327,7 +321,22 @@ export default {
       this.getList()
     },
     /**
-    *  删除按钮事件
+    *  删除按钮响应前判断是否选择了任一API
+    */
+    deleting () {
+      if (this.selected === '') {
+        this.$q.notify({
+          message: '请先选择API说明',
+          color: 'red',
+          position: 'center',
+          timeout: 5
+        })
+      } else {
+        this.deleted = true
+      }
+    },
+    /**
+    *  删除弹窗按钮响应事件
     */
     onDelete () {
       var url = '/api/dbsource/updateByParamKey'
@@ -356,7 +365,6 @@ export default {
         timeout: 5
       })
       this.deleted = false
-      // location.reload()
       this.getList()
     },
     /**
@@ -382,6 +390,9 @@ export default {
         .then(successCallback)
         .catch(errorCallback)
     },
+    /**
+    *  请求数据
+    */
     getList () {
       var that = this
       var url = 'api/dbsource/query'
@@ -400,12 +411,6 @@ export default {
         // 再从后端返回数据结果json中再取出data字段就可以得到数据库查询的结果
         that.simple = result
         that.simpleBackup = result
-        // console.log(result)
-        // console.log(this.selected)
-        // console.log(this.addData.id)
-        // console.log('*****请求数据的simple******')
-        // console.log(that.simple)
-        // // 查看有没有取到的数据
       }, function (err) {
         console.log('后端数据访问出错!', err)
       })
@@ -427,14 +432,9 @@ export default {
             a[i] = a[i].replace('</p>', '')
             a[i] = a[i].replace(/['"\b\f\n\r\t]/g, '')
           }
-          // console.log(this.addData.id)
-          // console.log(this.addData.api_name)
-          // console.log(this.addData.api_description)
           this.addData.api_description = a
-          // console.log(a)
           break
         }
-        // console.log(this.addData.api_description)
       }
     }
   }
