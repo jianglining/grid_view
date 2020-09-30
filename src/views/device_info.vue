@@ -51,7 +51,6 @@
           option-value="value"
           option-label="label"
           dense
-          :options-dense="denseOpts"
         >
           <template v-slot:prepend>
             <q-icon name="event" />
@@ -169,7 +168,7 @@
         >
           <div>
             设备信息
-            <q-icon name="close" class="float-right" v-close-popup />
+            <q-btn icon="close" flat class="float-right" round dense v-close-popup />
           </div>
         </q-card-section>
         <!--弹框滚动条-->
@@ -305,6 +304,10 @@ export default {
 
     /**
      * 数据访问
+     * @param accessUrl 访问路径
+     * @param pdata 参数
+     * @param successCallback 操作成功的回调函数
+     * @param errorCallback 操作失败的回调函数
      */
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
       if (pdata === undefined || pdata.length <= 0) {
@@ -355,10 +358,8 @@ export default {
       }
       var data01 = { sqlId: 'select_equipment_info', orderId: 0, params: { equipment_name: query1, equipment_state: query2 }, minRow: minR, maxRow: maxR, whereId: 0 }
       data01 = 'args=' + JSON.stringify(data01)
-      console.log('访问参数：', data01)
       // 后台数据访问
       this.dataAccess(url, data01, function (res) {
-        console.log('后端返回数据结果json：', res)
         // 获取数据传给basicData,data
         that.basicData = res.data.data.data
         that.data = that.basicData
@@ -427,8 +428,8 @@ export default {
     changeToPage (val) {
       this.selected = []
       var r = /^\+?[1-9][0-9]*$/
+      // 输入正整数 且 小于最大页数
       if (r.test(val) && parseInt(val) <= this.pages) {
-        // 输入正整数 且 小于最大页数
         // console.log(`input toPage: ${val} 是一个正整数`)
       } else {
         this.$q.notify({

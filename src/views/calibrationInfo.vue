@@ -133,7 +133,7 @@
       <q-card class="dialog_card shadow-1">
         <q-card-section class="text-h6 text-white bg-blue-8">
           <div>定标信息
-            <q-icon name="close" class="float-right" v-close-popup/>
+            <q-btn icon="close" flat class="float-right" round dense v-close-popup />
           </div>
         </q-card-section>
         <!--弹框滚动条-->
@@ -194,6 +194,7 @@ export default {
         position: 'center',
         timeout: 1
       })
+      this.query = true
       this.getTableData(0, 10, this.filterForm.cardNumber)
     },
     /**
@@ -207,6 +208,7 @@ export default {
       var url = '/api/dbsource/queryByParamKey'
       let minR = 0
       let maxR = 0
+      var data01
       maxR = that.pagination.rowsPerPage
       if (that.pagination.page !== 1) {
         minR = that.pagination.page
@@ -215,7 +217,14 @@ export default {
         minR = start
         maxR = end
       }
-      var data01 = { sqlId: 'select_picketage_info', orderId: '0', params: { card_number: query, requesttime: '' }, minRow: minR, maxRow: maxR, whereId: '0' }
+
+      // 判断是否使用查询接口
+      if (that.query === true) {
+        data01 = { sqlId: 'select_picketage_info', orderId: '0', params: { card_number: query, requesttime: '' }, minRow: minR, maxRow: maxR, whereId: '0' }
+      } else {
+        data01 = { sqlId: 'select_picketage_info', orderId: '0', params: { }, minRow: minR, maxRow: maxR }
+      }
+
       data01 = 'args=' + JSON.stringify(data01)
       // 后台数据访问
       this.dataAccess(url, data01, function (res) {
@@ -251,6 +260,7 @@ export default {
         position: 'center',
         timeout: 5
       })
+      this.query = true
       this.filterForm.cardNumber = ''
       this.getTableData(0, 10, this.filterForm.cardNumber)
     },
@@ -384,6 +394,7 @@ export default {
       card_number: '',
       identifier: '',
       filter: '',
+      query: false, // 判断有没有点击过查询或者重置按钮
       checked: false,
       selected: [],
       dense: false,
