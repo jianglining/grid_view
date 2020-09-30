@@ -52,7 +52,19 @@
                 <q-separator />
 
                 <q-card-section style="max-height: 50vh" class="scroll">
-                  <q-select outlined id="equipment_type" v-model="options[0]" :dense="dense" :options="options" disalbled=true placeholder="请选择设备类型" style="margin: 25px 25px;">
+                  <q-select
+                    outlined
+                    filled
+                    id="equipment_type"
+                    v-model="myModel"
+                    :dense="dense"
+                    :options="options"
+                    disalbled=true
+                    placeholder="请选择设备类型"
+                    @input="inputchange"
+                    @input-value ="myinput"
+                    style="margin: 25px 25px;"
+                    >
                     <template v-slot:before>
                       <q-item-label style="font-size: 18px;">设备类型<span class="text-red text-weight-bolder">*</span>：</q-item-label>
                     </template>
@@ -84,6 +96,45 @@
             <q-btn color="primary" icon="add" label="事件配置" style="margin-right:30px" />
             <q-btn color="primary" icon="add" label="事件添加" />
             <q-btn color="primary" icon="delete" label="事件删除" />
+            <q-dialog>
+              <!-- v-model="eventAddd" -->
+              <q-card style="width: 500px;max-width: 80vw">
+                <q-card-section class="bg-primary">
+                  <q-item-label class="text-h6">新增事件</q-item-label>
+                  <!-- <q-toolbar>
+                    <q-toolbar-title>新增设备类型</q-toolbar-title>
+                  </q-toolbar> -->
+                </q-card-section>
+
+                <q-separator />
+
+                <q-card-section style="max-height: 50vh" class="scroll">
+                  <q-input id="equipment_type" outlined v-model="formain.equipment_order" :dense="dense" style="margin: 25px 25px;">
+                    <template v-slot:before>
+                      <q-item-label style="font-size: 18px;">显示顺序<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                    </template>
+                  </q-input>
+                  <q-input id="equipment_type" outlined v-model="formain.equipment_order" :dense="dense" style="margin: 25px 25px;">
+                    <template v-slot:before>
+                      <q-item-label style="font-size: 18px;">显示顺序<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                    </template>
+                  </q-input>
+                  <q-input id="equipment_type" outlined v-model="formain.equipment_order" :dense="dense" style="margin: 25px 25px;">
+                    <template v-slot:before>
+                      <q-item-label style="font-size: 18px;">显示顺序<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                    </template>
+                  </q-input>
+                </q-card-section>
+
+                <q-separator />
+
+                <q-card-actions align="right">
+                  <!-- <q-btn size="12px" color="primary" icon="send" label="保存" @click="save"/> -->
+                  <q-btn flat label="保存" color="primary" @click="save" v-close-popup />
+                  <q-btn flat label="关闭" color="primary" @click="delet" v-close-popup />
+                </q-card-actions>
+              </q-card>
+            </q-dialog>
           </div>
         </q-card-section>
         <!-- class="normal-table-div my-sticky-virtscroll-table"
@@ -126,6 +177,7 @@ export default {
   // },
   data () {
     return {
+      myModel: null,
       options: [],
       itemAddd: false,
       dense: true,
@@ -175,6 +227,7 @@ export default {
       var url = '/api/dbsource/queryByParamKey'
       var sqlIdd = { sqlId: 'select_equipment_type_analysis_info_select' }
       sqlIdd = 'args=' + JSON.stringify(sqlIdd)
+      // JSON.stringify(row)
       console.log('访问参数：', sqlIdd, url)
       this.itemAddd = true
       // 后台数据访问
@@ -183,27 +236,23 @@ export default {
         // this.itemAddd = false
       })
     },
-    //  findEquipmentType () {
-    //   var url = '/api/dbsource/queryByParamKey'
-    //   var sqlIdd = { sqlId: 'select_equipment_type_analysis_info_select' }
-    //   sqlIdd = 'args=' + JSON.stringify(sqlIdd)
-    //   console.log('访问参数：', sqlIdd, url)
-    //   // 后台数据访问
-    //   this.dataAccess(url, sqlIdd, this.equipmentType, function (err) {
-    //     console.log('后端数据访问出错!', err)
-    //   })
-    // },
     equipmentType (typee) {
-      console.log('设备类型', typee.data.data)
+      console.log('设备类型data', typee.data.data)
       var data02 = typee.data.data
-      for (let i = 0; i < this.data02.length; i++) {
-        // var op = {}
-        // this.options = myoptions
-        // this.options.push(op)
+      // this.options = data02
+      for (let i = 0; i < data02.length; i++) {
+        // this.options[i].id = typee
+        // this.options.push({ id: typee.data.data[i].id, name: typee.data.data[i].name })
+        this.options.push({ value: data02[i].id, label: data02[i].name })
       }
-      // this.itemAddd = true
-      // //this.options=
+      // { label: 'BMW', value: 'car'
       console.log('设备类型1111', this.options)
+    },
+    inputchange (value) {
+      console.log('55555', value)
+    },
+    myinput (inputvalue) {
+      console.log('inputvalue:', inputvalue)
     },
     qitemclick (event) {
       console.log('22222222', event)
@@ -236,14 +285,6 @@ export default {
     itemlist (res) {
       var result = res.data.data
       console.log('数据', res.data.data)
-      // {equipment_order: "2", equipment_type: "门控板", id: "d6a765d9-d9cb-4606-b4b5-9a748419951e", label: "门控板"}
-      // for (let i = 0; i < result.length; i++) {
-      // result[i].label = result[i].equipment_type
-      // result[i]
-      // result[i].equipment_order01 = result[i].equipment_order
-      // result[i].id01 = result[i].id
-      // result[i].
-      // }
       this.list = result
       console.log('11111111111111', this.list)
     },
@@ -342,6 +383,7 @@ export default {
           icon: 'warning',
           message: '请选择设备类型'
         })
+        return
       }
       if (!this.formain.equipment_order) {
         this.$q.notify({
@@ -350,6 +392,7 @@ export default {
           icon: 'warning',
           message: '请输入显示顺序'
         })
+        return
       }
       // this.equipmentType()
       // "sqlId":"insert_equipment_type",
@@ -364,7 +407,7 @@ export default {
       // this.itemAdd()
       // this.equipmentType()
       var url = '/api/dbsource/queryByParamKey'
-      var sqlIdd = { sqlId: 'insert_equipment_type', params: { id: '', equipment_type: '', equipment_order: '' } }
+      var sqlIdd = { sqlId: 'insert_equipment_type' }
       sqlIdd = 'args=' + JSON.stringify(sqlIdd)
       console.log('访问参数：', sqlIdd, url)
       // 后台数据访问
