@@ -144,6 +144,17 @@ const routes = [
         component: () => import('../views/scene/SceneConfig.vue')
       },
       {
+        path: '/mytest',
+        name: 'mytest',
+        hidden: false,
+        meta: {
+          title: '实验用小组件',
+          icon: 'inbox',
+          noCache: true
+        },
+        component: () => import('../views/scene/Mytest.vue')
+      },
+      {
         path: '/eventAnalysis',
         name: 'EventAnalysis',
         hidden: false,

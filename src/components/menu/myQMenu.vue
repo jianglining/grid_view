@@ -290,6 +290,20 @@ export default {
           systemcode: 'giveanalarm-center',
           systemservice: null,
           child: null
+        },
+        {
+          id: 112,
+          parentId: 87,
+          name: '测试组件',
+          css: '',
+          url: '/api-alarm/pages/ruleManagement/ruleManagement.html',
+          path: '/mytest',
+          sort: 1003001,
+          createTime: '2020-08-13T05:31:44.000+0000',
+          updateTime: '2020-08-13T05:34:18.000+0000',
+          systemcode: 'giveanalarm-center',
+          systemservice: null,
+          child: null
         }
       ]
     }

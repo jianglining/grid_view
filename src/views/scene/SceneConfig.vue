@@ -1,8 +1,8 @@
 <template>
 <div class="fit row wrap justify-start items-start content-start main_content" >
      <!-- 左边div用来显示上传的组件和显示场景图中有的那些子网格 -->
-    <div class="col-3 left-div q-pt-sm">
-      <q-uploader url="http://localhost:4444/upload" label="场景图" accept=".svg,.SVG" color="grey-5" text-color="dark" bordered no-thumbnails
+    <div class="col-3 col-shrink left-div q-pt-sm q-mb-md">
+      <q-uploader url="http://localhost:4444/upload" label="场景图" accept=".svg,.SVG" color="grey-5" text-color="dark" bordered no-thumbnails class="col-grow"
           @factory-failed="uploaderFactoryFailed"
           @added="uploaderAdded"
           @removed="uploaderRemoved"
@@ -25,10 +25,11 @@
         @selection = "selectionSubGrid"
         row-key="subgrid"
         selection="single"
+        class="col-auto"
       />
     </div>
     <!-- 右边div用来显示场景图 -->
-    <div class="col-grow q-col-gutter-md right-div">
+    <div class="col q-col-gutter-md right-div">
       <div ref="svgContent" class="">  {{msg}}</div>
     </div>
 </div>
@@ -226,6 +227,6 @@ export default {
     overflow: auto;
   }
   .table-header {
-    backgroundColor: '#ff0000'
+    color: '#ff0000'
   }
 </style>
