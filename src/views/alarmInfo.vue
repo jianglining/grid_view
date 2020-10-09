@@ -12,7 +12,7 @@
       :selected.sync="selected"
       :pagination.sync="pagination"
       separator="cell"
-      card-style="height:85vh"
+      card-style="height:90vh"
       table-header-class="bg-blue-8 text-white"
     >
     <!--操作选项-->

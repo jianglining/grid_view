@@ -90,7 +90,8 @@
                 </form>
                 <div class="absolute-bottom-right">
                 <q-card-actions class="text-primary " >
-                  <q-btn size="13px" color="primary" icon="send" label="保存" @click="save()"/>
+                  <q-btn size="13px" color="primary" icon="send" label="保存" @click="saving()"/>
+                  <q-btn size="13px" color="primary" icon="close" label="取消" v-close-popup />
                 </q-card-actions>
                 </div>
                 </q-card>
@@ -193,6 +194,7 @@ export default {
   data () {
     return {
       splitterModel: 22,
+      saved: false,
       deleted: false,
       increase: false,
       edited: false,
@@ -237,6 +239,19 @@ export default {
         }
       }
     },
+    saving () {
+      if (this.api_name === '') {
+        this.$q.notify({
+          message: '请输入API名称',
+          color: 'red',
+          position: 'center',
+          timeout: 5
+        })
+      } else {
+        this.saved = true
+        this.save()
+      }
+    },
     /**
     *  新增按钮响应事件
     */
@@ -270,7 +285,7 @@ export default {
         position: 'center',
         timeout: 5
       })
-      this.increase = false
+      this.saved = false
       this.getList()
       location.reload()
     },
