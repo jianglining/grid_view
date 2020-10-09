@@ -400,7 +400,7 @@ export default {
           label: '网格位置',
           field: 'location'
         },
-        { name: 'start_type', label: '是否启用', field: 'start_type' },
+        { name: 'start_type', label: '是否启用', align: 'center', field: 'start_type' },
         {
           name: 'cz',
           align: 'center',
