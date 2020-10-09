@@ -84,8 +84,10 @@
 
 /* 弹窗 */
 .dialog_card {
-  min-width: 47%;
-  height: 45%;
+  width: 700px;
+  max-width: 50%;
+  height: 300px;
+  max-height: 45%;
 }
 
 /* .my-sticky-header-table .dialog_card_section {
@@ -115,7 +117,7 @@
 }
 
 .content_name {
-  width: 12%;
+  width: 20%;
   height: 40px;
   float: left;
   text-align: left;

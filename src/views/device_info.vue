@@ -1,5 +1,5 @@
 <template>
-  <div class="q-pa-md">
+  <div class="q-pa-none">
     <q-table
       :data="data"
       :columns="columns"
@@ -9,7 +9,7 @@
       virtual-scroll
       class="my-sticky-header-table"
       separator="cell"
-      card-style="height:85vh"
+      card-style="height:100vh"
       selection="multiple"
       :selected.sync="selected"
       :pagination.sync="pagination"
