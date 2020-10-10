@@ -11,6 +11,7 @@
       separator="cell"
       card-style="height:100vh"
       selection="multiple"
+      id="table"
       :selected.sync="selected"
       :pagination.sync="pagination"
       pagination.sync="selected"
@@ -223,8 +224,17 @@
 export default {
   mounted () {
     this.getTableData(this.startPage - 1, this.endPage, this.filterForm.deviceName, this.filterForm.status)
+    this.getHeight()
   },
   methods: {
+    /**
+     * 更改表格高度
+     */
+    getHeight () {
+      // var height = 100 / document.body.clientHeight * (document.body.clientHeight - document.getElementById('table').offsetTop) + 'vh'
+      var height = 100 / document.body.clientHeight * (document.body.clientHeight - 58) + 'vh'
+      document.getElementById('table').style.height = height
+    },
     /**
      * 更新设备信息
      */

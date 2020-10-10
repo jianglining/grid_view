@@ -9,7 +9,7 @@
       class="my-sticky-header-table"
       virtual-scroll
       separator="cell"
-      card-style="height:100vh"
+      id="table"
       selection="multiple"
       :selected.sync="selected"
       :pagination.sync="pagination"
@@ -182,8 +182,17 @@
 export default {
   mounted () {
     this.getTableData(this.startPage - 1, this.endPage, this.filterForm.cardNumber)
+    this.getHeight()
   },
   methods: {
+    /**
+     * 更改表格高度
+     */
+    getHeight () {
+      // var height = 100 / document.body.clientHeight * (document.body.clientHeight - document.getElementById('table').offsetTop) + 'vh'
+      var height = 100 / document.body.clientHeight * (document.body.clientHeight - 58) + 'vh'
+      document.getElementById('table').style.height = height
+    },
     /**
      * 查询
      */
