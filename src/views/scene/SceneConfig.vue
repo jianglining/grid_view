@@ -2,7 +2,7 @@
 <div class="fit row wrap justify-start items-start content-start main_content" >
      <!-- 左边div用来显示上传的组件和显示场景图中有的那些子网格 -->
     <div class="col-3 col-shrink left-div q-pt-sm q-mb-md">
-      <q-uploader url="http://localhost:4444/upload" label="场景图" accept=".svg,.SVG" color="grey-5" text-color="dark" bordered no-thumbnails class="col-grow"
+      <q-uploader fieldName="sceneFile" url="api/upload" label="场景图" accept=".svg,.SVG" color="grey-5" text-color="dark" bordered no-thumbnails class="col-grow"
           @factory-failed="uploaderFactoryFailed"
           @added="uploaderAdded"
           @removed="uploaderRemoved"
