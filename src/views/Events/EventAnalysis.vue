@@ -480,7 +480,7 @@ export default {
     //   this.renderParentNode()
     // },
     },
-    edit () {},
+    editSave () {},
     delet () {}
   },
   watch: {
