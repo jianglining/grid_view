@@ -197,6 +197,12 @@ const routes = [
           noCache: true
         },
         component: () => import('../views/test/request_test')
+      },
+      {
+        path: '/gridInfo2',
+        name: 'gridInfo2',
+        hidden: false,
+        component: () => import('../views/home/gridInfo2.vue')
       }
     ]
   }

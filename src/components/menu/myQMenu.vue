@@ -304,6 +304,20 @@ export default {
           systemcode: 'giveanalarm-center',
           systemservice: null,
           child: null
+        },
+        {
+          id: 113,
+          parentId: 87,
+          name: '网格信息',
+          css: '',
+          url: '/api-alarm/pages/ruleManagement/ruleManagement.html',
+          path: '/gridInfo2',
+          sort: 1003001,
+          createTime: '2020-08-13T05:31:44.000+0000',
+          updateTime: '2020-08-13T05:34:18.000+0000',
+          systemcode: 'giveanalarm-center',
+          systemservice: null,
+          child: null
         }
       ]
     }

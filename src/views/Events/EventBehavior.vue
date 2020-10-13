@@ -43,7 +43,7 @@
                 <q-btn color="primary" label="添加事件行为" @click="addRow" icon="add"/>
                 <q-btn color="primary" label="删除事件行为" @click="removeRow" icon="delete_forever" class="q-ml-sm"  />
                 <!-- 弹框 -->
-                <q-dialog v-model="addBehavior">
+                <q-dialog seamless v-model="addBehavior">
                   <q-card style="width: 500px;max-width: 80vw">
                     <q-card-section class="bg-primary">
                       <q-item-label class="text-h6">新增关联网络</q-item-label>
@@ -57,7 +57,7 @@
                           <q-item-label style="font-size: 18px;">设&nbsp;备&nbsp;&nbsp;ID<span class="text-red text-weight-bolder">&nbsp;*</span>：</q-item-label>
                         </template>
                       </q-input>
-                      <q-input outlined @click="secondDialog" :dense="dense" placeholder="请选择网络" style="margin: 25px 25px;">
+                      <q-input outlined @click="secondDialogM" :dense="dense" placeholder="请选择网络" style="margin: 25px 25px;">
                         <template v-slot:before>
                           <q-item-label style="font-size: 18px;">网格名称<span class="text-red text-weight-bolder">*</span>：</q-item-label>
                         </template>
@@ -99,15 +99,17 @@
                   </q-card>
                 </q-dialog>
                 <!-- 网格添加 -->
-                <q-dialog v-model="secondDialogg" persistent transition-show="scale" transition-hide="scale">
-                  <q-card class="bg-teal text-white" style="width: 800px;max-width: 80vw">
+                <q-dialog seamless v-model="secondDialog" persistent transition-show="scale" transition-hide="scale">
+                  <q-card class="bg-white text-white" style="width: 800px;max-width: 80vw;height:60%">
                     <q-card-section class="bg-primary">
                       <q-item-label class="text-h6">网格添加</q-item-label>
+                      <q-btn icon="close" flat round dense v-close-popup style="float: right;margin-top: -30px;" />
                     </q-card-section>
                     <q-card-section class="bg-white">
                       <q-table
                         :data="data01"
                         :columns="columns01"
+                        row-key="rn"
                         class="my-sticky-header-table"
                         table-header-class="bg-blue-8 text-white"
                         card-style="margin:15px;"
@@ -129,6 +131,15 @@
                             <q-btn color="primary" icon="add" label="添加到分配界面" />
                           </div>
                         </template>
+                        <template v-slot:body="props">
+                          <q-tr :props="props">
+                            <q-td>
+                              <q-checkbox key="id" dark v-model="props.checkSelect01" color="light-blue"></q-checkbox>
+                            </q-td>
+                            <q-td key="grid_name" :props="props">{{ props.row.grid_name }}></q-td>
+                            <q-td key="location" :props="props">{{ props.row.location }}></q-td>
+                          </q-tr>
+                        </template>
                       </q-table>
                     </q-card-section>
                   </q-card>
@@ -149,7 +160,8 @@ export default {
       myModel: null,
       loading: false,
       addBehavior: false,
-      secondDialogg: false,
+      secondDialog: false,
+      text: '',
       options: [],
       filter: '',
       splitterModel: 20,
@@ -163,7 +175,7 @@ export default {
         grid_bm: '-1',
         children: []
       }],
-      data01: [{ grid_name: 'qq', location: 'aaaaaaaaaa' }],
+      data01: [{ grid_name: '22222222222222', location: '555555555555555' }],
       columns01: [
         {
           name: 'grid_name',
@@ -223,17 +235,29 @@ export default {
     }
   },
   methods: {
-    secondDialog () {
+    secondDialogM () {
       var url = '/api/dbsource/queryByParamKey'
-      var sqlIdStr = { sqlId: 'select_grid_info' }
+      var sqlIdStr = {
+        sqlId: 'select_grid_info',
+        whereId: '',
+        orderId: '0',
+        params: {
+          parent_bm: ''
+        },
+        minRow: '0',
+        maxRow: '15'
+      }
       sqlIdStr = 'args=' + JSON.stringify(sqlIdStr)
-      // JSON.stringify(row)
       console.log('访问参数：', sqlIdStr, url)
-      this.secondDialogg = true
+      this.secondDialog = true
       // 后台数据访问
-      this.dataAccess(url, sqlIdStr, function (err) {
+      this.dataAccess(url, sqlIdStr, this.addTableData, function (err) {
         console.log('后端数据访问出错!', err)
       })
+    },
+    // 添加表格数据
+    addTableData (res) {
+      console.log('获取数据', res.data.data)
     },
     addRow () {
       if (!this.module_equipment_id) {
