@@ -29,6 +29,8 @@
             <q-table
               :data="data"
               :columns="columns"
+              class="my-sticky-header-table"
+              table-header-class="bg-blue-8 text-white"
               card-style="margin:15px;height:85vh"
               rows-per-page-label="每页显示"
               no-data-label="暂无数据"
@@ -38,14 +40,100 @@
               :selected.sync="checkSelect"
             >
               <template v-slot:top>
-                <q-btn color="grey-9 " label="添加事件行为" @click="addRow" icon="add"/>
-                <q-btn color="grey-9 " label="删除事件行为" @click="removeRow" icon="delete_forever" class="q-ml-sm"  />
+                <q-btn color="primary" label="添加事件行为" @click="addRow" icon="add"/>
+                <q-btn color="primary" label="删除事件行为" @click="removeRow" icon="delete_forever" class="q-ml-sm"  />
+                <!-- 弹框 -->
+                <q-dialog v-model="addBehavior">
+                  <q-card style="width: 500px;max-width: 80vw">
+                    <q-card-section class="bg-primary">
+                      <q-item-label class="text-h6">新增关联网络</q-item-label>
+                    </q-card-section>
+
+                    <q-separator />
+
+                    <q-card-section style="max-height: 50vh" class="scroll">
+                      <q-input outlined :dense="dense" style="margin: 25px 25px;">
+                        <template v-slot:before>
+                          <q-item-label style="font-size: 18px;">设&nbsp;备&nbsp;&nbsp;ID<span class="text-red text-weight-bolder">&nbsp;*</span>：</q-item-label>
+                        </template>
+                      </q-input>
+                      <q-input outlined @click="secondDialog" :dense="dense" placeholder="请选择网络" style="margin: 25px 25px;">
+                        <template v-slot:before>
+                          <q-item-label style="font-size: 18px;">网格名称<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                        </template>
+                      </q-input>
+                      <q-select
+                        outlined
+                        filled
+                        use-input
+                        v-model="myModel"
+                        :dense="dense"
+                        :options="options"
+                        @input="inputchange"
+                        @input-value ="myinput"
+                        style="margin: 25px 25px;"
+                        >
+                        <template v-slot:before>
+                          <q-item-label style="font-size: 18px;">事件标识<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                        </template>
+                      </q-select>
+                      <q-input outlined :dense="dense" style="margin: 25px 25px;">
+                        <template v-slot:before>
+                          <q-item-label style="font-size: 18px;">行为标识<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                        </template>
+                      </q-input>
+                      <q-input outlined :dense="dense" style="margin: 25px 25px;">
+                        <template v-slot:before>
+                          <q-item-label style="font-size: 18px;">行为名称<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                        </template>
+                      </q-input>
+                    </q-card-section>
+
+                    <q-separator />
+
+                    <q-card-actions align="right">
+                      <!-- <q-btn size="12px" color="primary" icon="send" label="保存" @click="save"/> -->
+                      <q-btn flat label="保存" color="primary" @click="behaviorSave" />
+                      <q-btn flat label="关闭" color="primary" v-close-popup />
+                    </q-card-actions>
+                  </q-card>
+                </q-dialog>
+                <!-- 网格添加 -->
+                <q-dialog v-model="secondDialogg" persistent transition-show="scale" transition-hide="scale">
+                  <q-card class="bg-teal text-white" style="width: 800px;max-width: 80vw">
+                    <q-card-section class="bg-primary">
+                      <q-item-label class="text-h6">网格添加</q-item-label>
+                    </q-card-section>
+                    <q-card-section class="bg-white">
+                      <q-table
+                        :data="data01"
+                        :columns="columns01"
+                        class="my-sticky-header-table"
+                        table-header-class="bg-blue-8 text-white"
+                        card-style="margin:15px;"
+                        rows-per-page-label="每页显示"
+                        no-data-label="暂无数据"
+                        :selected-rows-label="getSelectedString"
+                        :pagination-label="getPaginationLabel"
+                        selection="single"
+                        :selected.sync="checkSelect01"
+                      >
+                        <template v-slot:top>
+                          <q-input outlined bottom-slots v-model="text" :dense="dense" style="width:300px">
+                            <template v-slot:before>
+                              <q-item-label class="text-h6">网格名称</q-item-label>
+                            </template>
+                          </q-input>
+                          <div style="float: right;margin-top: -25px;margin-left: 100px;">
+                            <q-btn color="primary" icon="search" label="查询" style="margin-right:25px" />
+                            <q-btn color="primary" icon="add" label="添加到分配界面" />
+                          </div>
+                        </template>
+                      </q-table>
+                    </q-card-section>
+                  </q-card>
+                </q-dialog>
                 <q-space />
-                <q-input borderless dense debounce="300" color="primary" v-model="filter">
-                  <template v-slot:append>
-                    <q-icon name="search" />
-                  </template>
-                </q-input>
               </template>
             </q-table>
           </q-card-section>
@@ -57,11 +145,17 @@
 export default {
   data () {
     return {
+      dense: true,
+      myModel: null,
       loading: false,
+      addBehavior: false,
+      secondDialogg: false,
+      options: [],
       filter: '',
       splitterModel: 20,
       selected: '',
       checkSelect: [],
+      checkSelect01: [],
       gridNodeSearch: '',
       simple: [{
         label: '网格节点',
@@ -69,6 +163,23 @@ export default {
         grid_bm: '-1',
         children: []
       }],
+      data01: [{ grid_name: 'qq', location: 'aaaaaaaaaa' }],
+      columns01: [
+        {
+          name: 'grid_name',
+          required: true,
+          label: '网格名称',
+          align: 'center',
+          field: 'grid_name'
+        },
+        {
+          name: 'location',
+          required: true,
+          align: 'center',
+          label: '网格位置',
+          field: 'location'
+        }
+      ],
       treeNodes: [],
       columns: [
         {
@@ -112,12 +223,53 @@ export default {
     }
   },
   methods: {
+    secondDialog () {
+      var url = '/api/dbsource/queryByParamKey'
+      var sqlIdStr = { sqlId: 'select_grid_info' }
+      sqlIdStr = 'args=' + JSON.stringify(sqlIdStr)
+      // JSON.stringify(row)
+      console.log('访问参数：', sqlIdStr, url)
+      this.secondDialogg = true
+      // 后台数据访问
+      this.dataAccess(url, sqlIdStr, function (err) {
+        console.log('后端数据访问出错!', err)
+      })
+    },
     addRow () {
-      this.loading = true
+      if (!this.module_equipment_id) {
+        this.addBehavior = true
+      }
+      // this.loading = true
+      // var url = '/api/dbsource/queryByParamKey'
+      // // {"sqlId":"select_equipment_incident_info_select","whereId":"0","params":{"equipment_type_name":"门控板"}}
+      // var sqlIdd = { sqlId: 'select_equipment_incident_info_select', whereId: '0', params: { equipment_type_name: '' } }
+      // sqlIdd = 'args=' + JSON.stringify(sqlIdd)
+      // //   this.addBehavior = true
+      // console.log('访问参数：', sqlIdd, url)
+      // // 后台数据访问
+      // this.dataAccess(url, sqlIdd, this.equipmentType, function (err) {
+      //   console.log('后端数据访问出错!', err)
+      // })
+    //   itemAdd () {
+    //   // this.itemAddd = true
+    //   var url = '/api/dbsource/queryByParamKey'
+    //   var sqlIdd = { sqlId: 'select_equipment_type_analysis_info_select' }
+    //   sqlIdd = 'args=' + JSON.stringify(sqlIdd)
+    //   // JSON.stringify(row)
+    //   console.log('访问参数：', sqlIdd, url)
+    //   this.itemAddd = true
+    //   // 后台数据访问
+    //   this.dataAccess(url, sqlIdd, this.equipmentType, function (err) {
+    //     console.log('后端数据访问出错!', err)
+    //   })
+    // },
     },
     removeRow () {
       this.loading = true
     },
+    inputchange () {},
+    myinput () {},
+    behaviorSave () {},
     myTweak (offset) {
       // “offset”是一个数字（像素），它表示基于QLayout“view”属性配置的屏幕上页眉+页脚的总高度
       // 这实际上是Quasar中默认style-fn的功能
@@ -158,6 +310,11 @@ export default {
      * 树结构绑定对象的查找
      * 当前树后台只返回两层
      */
+    // for (let i = 0; i < this.treeNodes.length; i++) {
+    //     if (this.treeNodes[i].module_equipment_id === this.selected) {
+    //       this.addBehavior = true
+    //     }
+    //   }
     findTreeNodeById (treeNodeId) {
       for (let i = 0; i < this.treeNodes.length; i++) {
         if (this.treeNodes[i].id === treeNodeId) {
@@ -302,12 +459,40 @@ export default {
       // this.$router.push({ path: '/about' })
       // console.log(this.selected, newQuestion, oldQuestion)
       // console.log('选择的树对象', newQuestion, this.findTreeNodeById(newQuestion))
+      for (let i = 0; i < this.treeNodes.length; i++) {
+        if (this.treeNodes[i].children.length > 0) {
+          // 查找子节点
+          for (let L = 0; L < this.treeNodes[i].children.length; L++) {
+            // 叶子节点的查找
+            // console.log('查找叶子节点：', this.treeNodes[i].children[L])
+            if (this.treeNodes[i].children[L].id === this.selected) {
+              this.module_equipment_id = this.treeNodes[i].children[L].module_equipment_id
+            }
+          }
+        }
+      }
       this.getTreeNodeDatas(this.findTreeNodeById(newQuestion))
     }
+    // for (let i = 0; i < this.simple.length; i++) {
+    //     if (this.simple[i].id === this.selected) {
+    //       this.addData.id = this.simple[i].id
+    //       this.addData.api_name = this.simple[i].api_name
+    //       this.addData.api_description = this.simple[i].api_description
+    //       var a = this.addData.api_description.split('\n')
+    //       for (let i = 0; i < a.length; i++) {
+    //         a[i] = a[i].replace('<p>', '')
+    //         a[i] = a[i].replace('</p>', '')
+    //         a[i] = a[i].replace(/['"\b\f\n\r\t]/g, '')
+    //       }
+    //       this.addData.api_description = a
+    //       break
+    //     }
+    //   }
   }
 }
 </script>
 <style scoped>
+@import "../../assets/css/tableStyle.css";
   .main_content {
     overflow: hidden;
   }

@@ -1,6 +1,6 @@
 <template>
   <div id="Analysis" class="full-width row wrap justify-start items-stretch content-start" style="overflow: hidden;">
-    <div class="col-2 bg-grey-6" style="overflow: auto;">
+    <div class="col-2 bg-grey-6">
       <q-card bg-grey-6>
         <q-card-section>
           <q-input
@@ -12,9 +12,9 @@
             filled
             placeholder="请输入关键字搜索"
             >
-              <template v-slot:append>
-                <q-icon name="equipmentNodeSearch" />
-              </template>
+            <template v-slot:append>
+              <q-icon name="equipmentNodeSearch" />
+            </template>
           </q-input>
         </q-card-section>
         <q-card-section>
@@ -24,6 +24,7 @@
               :key="item.id"
               class="q-my-sm"
               @click="qitemclick"
+              active-class="my-menu-link"
               clickable
               v-ripple
               >
@@ -38,12 +39,65 @@
           </q-list>
           <div class="q-pa-md q-gutter-sm">
             <q-btn no-caps color="primary" label="添加" @click="itemAdd" />
-            <q-btn no-caps color="primary" label="编辑" @click="edit" />
+            <q-btn no-caps color="primary" label="编辑" @click="itemEdit" />
             <q-btn no-caps color="primary" label="删除" @click="delet" />
             <q-dialog v-model="itemAddd">
               <q-card style="width: 500px;max-width: 80vw">
                 <q-card-section class="bg-primary">
                   <q-item-label class="text-h6">新增设备类型</q-item-label>
+                </q-card-section>
+
+                <q-separator />
+
+                <q-card-section style="max-height: 50vh" class="scroll">
+                  <q-form @submit.prevent.stop="addsave">
+                    <q-select
+                      outlined
+                      filled
+                      use-input
+                      ref="myModel"
+                      v-model="myModel"
+                      :dense="dense"
+                      :options="options"
+                      @input="inputchange"
+                      @input-value ="myinput"
+                      style="margin: 25px 25px;"
+                      lazy-rules
+                      :rules="[val => val && val.length > 0 || '请选择设备类型']"
+                      >
+                      <template v-slot:before>
+                        <q-item-label style="font-size: 18px;">设备类型<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                      </template>
+                    </q-select>
+                    <q-input
+                      ref="equipment_order"
+                      outlined
+                      v-model="equipment_order"
+                      :dense="dense"
+                      lazy-rules
+                      :rules="[val => val !== null && val !== '' || '请输入显示顺序']"
+                      style="margin: 25px 25px;"
+                      >
+                      <template v-slot:before>
+                        <q-item-label style="font-size: 18px;">显示顺序<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                      </template>
+                    </q-input>
+                  </q-form>
+                </q-card-section>
+
+                <q-separator />
+
+                <q-card-actions align="right">
+                  <!-- <q-btn size="12px" color="primary" icon="send" label="保存" @click="save"/> -->
+                  <q-btn flat label="保存" color="primary" @click="addsave" />
+                  <q-btn flat label="关闭" color="primary" @click="delet" v-close-popup />
+                </q-card-actions>
+              </q-card>
+            </q-dialog>
+            <q-dialog v-model="itemEdit">
+              <q-card style="width: 500px;max-width: 80vw">
+                <q-card-section class="bg-primary">
+                  <q-item-label class="text-h6">编辑设备类型</q-item-label>
                   <!-- <q-toolbar>
                     <q-toolbar-title>新增设备类型</q-toolbar-title>
                   </q-toolbar> -->
@@ -55,23 +109,21 @@
                   <q-select
                     outlined
                     filled
-                    id="equipment_type"
+                    use-input
                     v-model="myModel"
                     :dense="dense"
                     :options="options"
-                    disalbled=true
-                    placeholder="请选择设备类型"
                     @input="inputchange"
                     @input-value ="myinput"
                     style="margin: 25px 25px;"
                     >
                     <template v-slot:before>
-                      <q-item-label style="font-size: 18px;">设备类型<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                      <q-item-label style="font-size: 18px;">设备类型：</q-item-label>
                     </template>
                   </q-select>
-                  <q-input id="equipment_type" outlined v-model="formain.equipment_order" :dense="dense" style="margin: 25px 25px;">
+                  <q-input outlined v-model="formain.equipment_order" :dense="dense" style="margin: 25px 25px;">
                     <template v-slot:before>
-                      <q-item-label style="font-size: 18px;">显示顺序<span class="text-red text-weight-bolder">*</span>：</q-item-label>
+                      <q-item-label style="font-size: 18px;">显示顺序：</q-item-label>
                     </template>
                   </q-input>
                 </q-card-section>
@@ -80,7 +132,7 @@
 
                 <q-card-actions align="right">
                   <!-- <q-btn size="12px" color="primary" icon="send" label="保存" @click="save"/> -->
-                  <q-btn flat label="保存" color="primary" @click="save" v-close-popup />
+                  <q-btn flat label="保存" color="primary" @click="editSave" />
                   <q-btn flat label="关闭" color="primary" @click="delet" v-close-popup />
                 </q-card-actions>
               </q-card>
@@ -130,7 +182,7 @@
 
                 <q-card-actions align="right">
                   <!-- <q-btn size="12px" color="primary" icon="send" label="保存" @click="save"/> -->
-                  <q-btn flat label="保存" color="primary" @click="save" v-close-popup />
+                  <!-- <q-btn flat label="保存" color="primary" @click="save" v-close-popup /> -->
                   <q-btn flat label="关闭" color="primary" @click="delet" v-close-popup />
                 </q-card-actions>
               </q-card>
@@ -170,7 +222,7 @@
 </template>
 <script>
 // import EventAnalysisAdd from './EventAnalysisAdd.vue'
-
+import { uid } from 'quasar'
 export default {
   // components: {
   //   EventAnalysisAdd
@@ -178,8 +230,10 @@ export default {
   data () {
     return {
       myModel: null,
+      equipment_order: null,
       options: [],
       itemAddd: false,
+      itemEdit: true,
       dense: true,
       separator: 'cell',
       equipmentNodeSearch: '',
@@ -233,7 +287,6 @@ export default {
       // 后台数据访问
       this.dataAccess(url, sqlIdd, this.equipmentType, function (err) {
         console.log('后端数据访问出错!', err)
-        // this.itemAddd = false
       })
     },
     equipmentType (typee) {
@@ -241,11 +294,8 @@ export default {
       var data02 = typee.data.data
       // this.options = data02
       for (let i = 0; i < data02.length; i++) {
-        // this.options[i].id = typee
-        // this.options.push({ id: typee.data.data[i].id, name: typee.data.data[i].name })
         this.options.push({ value: data02[i].id, label: data02[i].name })
       }
-      // { label: 'BMW', value: 'car'
       console.log('设备类型1111', this.options)
     },
     inputchange (value) {
@@ -256,10 +306,8 @@ export default {
     },
     qitemclick (event) {
       console.log('22222222', event)
-      // .getAttribute('alarmlayer'))
       console.log(event.target.getAttribute('myData'))
       var listNodeId = event.target.getAttribute('myData')
-      // this.selected = listNodeId
       this.getListNodeDatas(listNodeId)
     },
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
@@ -273,7 +321,6 @@ export default {
         .catch(errorCallback)
     },
     getList () {
-      // this.getListNodeDatas()
       var url = 'api/dbsource/query'
       var data01 = { sqlId: 'select_equipment_type' }
       data01 = 'args=' + JSON.stringify(data01)
@@ -288,14 +335,6 @@ export default {
       this.list = result
       console.log('11111111111111', this.list)
     },
-    // findListNodeBylabe (labe) {
-    //   for (let i = 0; i < this.list.length; i++) {
-    //     if (this.list[i].label === labe) {
-    //       return i
-    //     }
-    //   }
-    //   return -1
-    // },
     findListNodeById (listNodeId) {
       for (let i = 0; i < this.list.length; i++) {
         if (this.list[i].id === listNodeId) {
@@ -369,31 +408,31 @@ export default {
       console.log('列表数据111111111111111', res.data)
       this.data = res.data.data
     },
-    // itemAdd () {
-    //   this.formain.id = ''
-    //   this.formain.equipment_type = ''
-    //   this.formain.equipment_order = ''
-    // },
     // 查询设备类型列表
-    save () {
-      if (!this.formain.equipment_type) {
-        this.$q.notify({
-          color: 'red-5',
-          textColor: 'white',
-          icon: 'warning',
-          message: '请选择设备类型'
-        })
-        return
+    addsave () {
+      this.$refs.myModel.validate()
+      this.$refs.equipment_order.validate()
+      if (this.$refs.myModel.hasError || this.$refs.equipment_order.hasError) {
+        this.formHasError = true
       }
-      if (!this.formain.equipment_order) {
-        this.$q.notify({
-          color: 'red-5',
-          textColor: 'white',
-          icon: 'warning',
-          message: '请输入显示顺序'
-        })
-        return
-      }
+      // if (!this.formain.equipment_type) {
+      //   this.$q.notify({
+      //     color: 'red-5',
+      //     textColor: 'white',
+      //     icon: 'warning',
+      //     message: '请选择设备类型'
+      //   })
+      //   return
+      // }
+      // if (!this.formain.equipment_order) {
+      //   this.$q.notify({
+      //     color: 'red-5',
+      //     textColor: 'white',
+      //     icon: 'warning',
+      //     message: '请输入显示顺序'
+      //   })
+      //   return
+      // }
       // this.equipmentType()
       // "sqlId":"insert_equipment_type",
       // "params":[{
@@ -406,14 +445,34 @@ export default {
       //   "incident_explain":""
       // this.itemAdd()
       // this.equipmentType()
-      var url = '/api/dbsource/queryByParamKey'
-      var sqlIdd = { sqlId: 'insert_equipment_type' }
-      sqlIdd = 'args=' + JSON.stringify(sqlIdd)
-      console.log('访问参数：', sqlIdd, url)
+      const ids = uid()
+      this.formain.id = ids
+      // this.formain.equipment_type = this.equipment_type
+      // this.formain.equipment_order = this.equipment_order
+      var url = '/api/dbsource/updateByParamKey'
+      var sqlIdpax = [{ sqlId: 'insert_equipment_type', params: [{ id: this.formain.id, equipment_type: this.myModel.label, equipment_order: this.formain.equipment_order }] }]
+      var sqlIddStr = 'args=' + JSON.stringify(sqlIdpax)
+      console.log('访问参数：', url, sqlIddStr)
       // 后台数据访问
-      this.dataAccess(url, sqlIdd, function (err) {
+      this.dataAccess(url, sqlIddStr, function (ress) {
+        // this.$q.notify({
+        //   icon: 'done',
+        //   color: 'positive',
+        //   message: '保存成功'
+        // })
+        console.log('新增数据：', ress.data)
+      }, function (err) {
         console.log('后端数据访问出错!', err)
+        // this.$q.notify({
+        //   message: '保存失败',
+        //   color: 'red',
+        //   position: 'center',
+        //   timeout: 5
+        // })
       })
+      this.increase = false
+      this.getList()
+      // location.reload()
     // addGrid () {
     //   this.addDialog = true
     //   this.choose = []
@@ -434,6 +493,15 @@ export default {
       // this.getListNodeDatas(this.findListNodeById(newQuestion))
       this.getListNodeDatas(newQuestion)
     }
+    // options: function (newData, oldData) {
+    //   for (let i = 0; i < this.options.length; i++) {
+    //     if (this.options[i].id === this.selected) {
+    //       this.formain.id = this.options[i].id
+    //       this.formain.equipment_type = this.options[i].lable
+    //       this.formain.equipment_order = this.options[i].equipment_order
+    //     }
+    //   }
+    // }
   }
 
 }
@@ -447,5 +515,8 @@ export default {
     height: 100%;
     width: 100%;
   }
-
+  /* .my-menu-link {
+    color: white
+    background: F2C037
+  } */
 </style>
