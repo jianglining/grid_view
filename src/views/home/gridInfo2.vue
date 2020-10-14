@@ -170,98 +170,119 @@
             :selected.sync="selected"
             :expanded.sync="expanded"
           />
-          <!-- <template v-slot:default-header="prop"></template> -->
+          <!-- <template v-slot:default-header>
+            <div class="row items-center">
+              <i class="mdui-icon material-icons" style="font-size: 18px;">&#xe148;</i>
+              <q-btn round color="primary" icon="add" />
+            </div>
+          </template> -->
         </q-card-section>
       </q-card>
     </template>
     <template v-slot:after>
-      <q-table
-        :data="data"
-        :columns="columns"
-        row-key="rn"
-        card-style="margin:15px"
-        class="my-sticky-header-table"
-        no-data-label="暂无数据"
-        table-header-class="bg-blue-8 text-white"
-        selection="multiple"
-        :pagination.sync="pagination"
-        :selected.sync="table_select"
-        separator="cell"
-      >
-        <!-- <template v-slot:top-right>
-        <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
-        <q-btn class="q-ml-sm" color="teal-7" :disable="loading" label="删除" @click="removeRow" />
-        </template>-->
-        <template v-slot:body="props">
-          <q-tr :props="props">
-            <q-td
-              ><q-checkbox key="rn" v-model="props.selected"></q-checkbox
-            ></q-td>
-            <q-td key="grid_name" :props="props">{{
-              props.row.grid_name
-            }}</q-td>
-            <q-td key="location" :props="props">{{ props.row.location }}</q-td>
-            <q-td key="start_type" :props="props">{{
-              props.row.start_type
-            }}</q-td>
-            <q-td key="scenefile" :props="props">{{ props.row.scenefile }}</q-td>
-            <q-td key="is_scenefile" :props="props">{{ props.row.is_scenefile }}</q-td>
-            <q-td key="cz" :props="props">
-              <!-- <span><q-btn dense color="red" label="删除"  icon="highlight_off" size="8px" @click="delRecord(props.row)"/></span> -->
-              <q-btn color="primary" label="上传" style="margin-right:5px" />
-              <q-btn
-                color="primary"
-                label="修改网格"
-                @click="update(props.row)"
-                style="margin-right:5px"
+      <q-card>
+        <q-card-section>
+          <q-table
+            :data="data"
+            :columns="columns"
+            row-key="rn"
+            card-style="margin:15px"
+            class="my-sticky-header-table"
+            no-data-label="暂无数据"
+            table-header-class="bg-blue-8 text-white"
+            selection="multiple"
+            :pagination.sync="pagination"
+            :selected.sync="table_select"
+            separator="cell"
+          >
+            <!-- <template v-slot:top-right>
+            <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
+            <q-btn class="q-ml-sm" color="teal-7" :disable="loading" label="删除" @click="removeRow" />
+            </template>-->
+            <template v-slot:body="props">
+              <q-tr :props="props">
+                <q-td
+                  ><q-checkbox key="rn" v-model="props.selected"></q-checkbox
+                ></q-td>
+                <q-td key="grid_name" :props="props">{{
+                  props.row.grid_name
+                }}</q-td>
+                <q-td key="location" :props="props">{{ props.row.location }}</q-td>
+                <q-td key="start_type" :props="props">{{
+                  props.row.start_type
+                }}</q-td>
+                <q-td key="scenefile" :props="props">{{ props.row.scenefile }}</q-td>
+                <q-td key="is_scenefile" :props="props">{{ props.row.is_scenefile }}</q-td>
+                <q-td key="cz" :props="props">
+                  <!-- <span><q-btn dense color="red" label="删除"  icon="highlight_off" size="8px" @click="delRecord(props.row)"/></span> -->
+                  <q-btn
+                    :loading="loading3"
+                    :percentage="percentage3"
+                    dark-percentage
+                    unelevated
+                    color="primary"
+                    @click="startComputing(3)"
+                    icon="cloud_upload"
+                    style="margin-right:5px"
+                  />
+                  <q-btn
+                    color="primary"
+                    label="修改网格"
+                    @click="update(props.row)"
+                    style="margin-right:5px"
+                  />
+                  <q-btn
+                    color="primary"
+                    label="删除"
+                    @click="deletes()"
+                    style="margin-right:5px"
+                  />
+                </q-td>
+              </q-tr>
+            </template>
+            <template v-slot:bottom class="justify-end">
+              <span style="margin-right: 5px">
+                显示{{ startPage }}~{{ endPage }}条记录，总
+                {{ pagination.rowsNumber }}
+                条数据
+              </span>
+              <span style="margin-right: 5px"> 每页 </span>
+              <q-select
+                outlined
+                v-model="pagination.rowsPerPage"
+                :options="pageTotalumbe"
+                dense
+                @input="changeTotalumbe"
+                style="float: left; margin-right: 5px"
               />
-              <q-btn
-                color="primary"
-                label="删除"
-                @click="deletes()"
-                style="margin-right:5px"
-              />
-            </q-td>
-          </q-tr>
-        </template>
-        <template v-slot:bottom class="justify-end">
-          <span style="margin-right: 5px">
-            显示{{ startPage }}~{{ endPage }}条记录，总
-            {{ pagination.rowsNumber }}
-            条数据
-          </span>
-          <span style="margin-right: 5px"> 每页 </span>
-          <q-select
-            outlined
-            v-model="pagination.rowsPerPage"
-            :options="pageTotalumbe"
-            dense
-            @input="changeTotalumbe"
-            style="float: left; margin-right: 5px"
-          />
-          <span style="margin-right: 5px"> 条记录 </span>
-          <div class="pagination">
-            <q-pagination
-              v-model="pagination.page"
-              :max="pages"
-              :max-pages="maxPages"
-              ellipsess
-              :direction-links="true"
-              @input="changePagination"
-            >
-            </q-pagination>
-            <span>跳至 </span>
-            <q-input
-              outlined
-              v-model="toPage"
-              dense
-              class="pagination-input"
-              @keyup.enter.native="changeToPage"
-            ></q-input>
-            <span> 页</span>
-          </div>
-        </template>
-      </q-table>
+              <span style="margin-right: 5px"> 条记录 </span>
+              <div class="pagination">
+                <q-pagination
+                  v-model="pagination.page"
+                  :max="pages"
+                  :max-pages="maxPages"
+                  ellipsess
+                  :direction-links="true"
+                  @input="changePagination"
+                >
+                </q-pagination>
+                <span>跳至 </span>
+                <q-input
+                  outlined
+                  v-model="toPage"
+                  dense
+                  class="pagination-input"
+                  @keyup.enter.native="changeToPage"
+                ></q-input>
+                <span> 页</span>
+              </div>
+            </template>
+          </q-table>
+        </q-card-section>
+        <q-card-section>
+          <q-img src=""></q-img>
+        </q-card-section>
+      </q-card>
     </template>
   </q-splitter>
 </template>
