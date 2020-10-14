@@ -18,6 +18,9 @@
           selection="single"
           class="col-auto"
         />
+        <div class="q-pa-md q-gutter-sm">
+          <q-btn @click="getSceneFile"  round color="primary" icon="map" title="获取场景图"/>
+        </div>
       </div>
     </div>
     <!-- 右边div用来显示场景图 -->
@@ -57,8 +60,35 @@ export default {
     }
   },
   methods: {
+    // axios方法，获取后台数据
+    // 'Content-Type': 'application/json'
+    dataAccess (accessUrl, pdata, successCallback, errorCallback) {
+      this.$axios({
+        method: 'post',
+        url: accessUrl,
+        data: pdata,
+        type: 'json'
+      }).then(successCallback).catch(errorCallback)
+    },
     updateSelected (newSelected) {
       // 当选择对象数组中选择的对象有变更时的设回调
+    },
+    getSceneFile (evt) {
+      console.log('获取场景图', evt)
+      var url = '/api/getSceneFile'
+      var args = {
+        // sceneFilePath: 'D:\\gradleDemos\\grid-engine-v2.0\\bin\\SceneFile\\场景图.svg'
+        sceneFilePath: '\\SceneFile\\场景图.svg'
+      }
+      // 后台数据访问
+      this.dataAccess(url, args, this.getSceneFileSuccess, function (err) {
+        console.log('后端数据访问出错!', err)
+      })
+    },
+    getSceneFileSuccess (res) {
+      console.log('获取场景数据成功', res.data)
+      var contentDiv = this.$refs.svgContent
+      contentDiv.innerHTML = res.data.data
     },
     selectionSubGrid (details) {}
   }
