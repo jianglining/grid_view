@@ -172,136 +172,53 @@
       </div>
     </template>
     <template v-slot:after>
-      <q-table
-        :data="data"
-        :columns="columns"
-        row-key="rn"
-        card-style="margin:15px;height:85vh"
-        class="my-sticky-header-table"
-        no-data-label="暂无数据"
-        table-header-class="bg-blue-8 text-white"
-        selection="multiple"
-        :pagination.sync="pagination"
-        :selected.sync="table_select"
-        separator="cell"
+      <div>
+    <q-splitter
+      v-model="splitterModelTow"
+      style="height: 90vh"
+    >
+      <!-- 左边内容和操作 -->
+      <template v-slot:before>
+        <div class="q-pa-md">
+          <div class="text-h5 q-mb-md">网格名称</div>
+          <div class="q-my-md">{{ gridForm.grid_name }}</div>
+          <div class="text-h5 q-mb-md">网格位置</div>
+          <div class="q-my-md">{{ gridForm.location }}</div>
+          <div class="text-h5 q-mb-md">是否启用</div>
+          <div class="q-my-md">否</div>
+          <div class="q-gutter-xs absolute-bottom q-px-md">
+            <q-uploader
+              url="http://localhost:4444/upload"
+              label="场景图"
+              text-color="black"
+              accept=".svg,.SVG"
+              style="max-width: 200px"
+            />
+            <q-btn size="12px" color="primary" icon="delete" label="删除"/>
+          </div>
+        </div>
+      </template>
+      <!-- 右边的场景图展示 -->
+      <template v-slot:after>
+        <div class="col q-col-gutter-md right-div">
+            <div ref="svgContent" class="">  {{msg}}</div>
+          </div>
+        <!-- <div class="q-pa-md">
+          <div class="text-h4 q-mb-md">图片</div>
+          <q-img
+        src="https://placeimg.com/500/300/nature"
+        contain
       >
-        <!-- <template v-slot:top-right>
-        <q-btn color="teal-7" :disable="loading" label="修改" @click="update" />
-        <q-btn class="q-ml-sm" color="teal-7" :disable="loading" label="删除" @click="removeRow" />
-        </template>-->
-        <template v-slot:body="props">
-          <q-tr :props="props">
-            <q-td
-              ><q-checkbox key="rn" v-model="props.selected"></q-checkbox
-            ></q-td>
-            <q-td key="grid_name" :props="props">{{
-              props.row.grid_name
-            }}</q-td>
-            <q-td key="location" :props="props">{{ props.row.location }}</q-td>
-            <q-td key="start_type" :props="props">{{
-              props.row.start_type
-            }}</q-td>
-            <q-td key="cz" :props="props">
-              <!-- <span><q-btn dense color="red" label="删除"  icon="highlight_off" size="8px" @click="delRecord(props.row)"/></span> -->
-              <q-btn
-                color="primary"
-                label="修改网格"
-                @click="update(props.row)"
-              />
-            </q-td>
-          </q-tr>
-        </template>
-        <template v-slot:top-left>
-          <div class="q-gutter-md row items-start">
-            <q-input
-              label="网格名称"
-              style="width: 265px; margin-left: 10px"
-              dense
-              standout="bg-blue-6 text-white"
-              v-model="queryName"
-              input-class="text-left"
-              class="q-ml-md"
-              label-color="primary"
-            />
-            <q-select
-              style="width: 265px; margin-left: 10px"
-              standout="bg-blue-6 text-white"
-              label="启用类型"
-              v-model="enable_type"
-              :options="chooseType"
-              option-value="value"
-              option-label="label"
-              :dense="dense"
-              :options-dense="denseOpts"
-            >
-              <template v-slot:prepend>
-                <q-icon name="event" />
-              </template>
-            </q-select>
-            <q-btn
-              color="primary"
-              label="查询"
-              icon="search"
-              @click="gridQuery()"
-            />
-            <q-btn
-              color="primary"
-              label="重置"
-              icon="navigation"
-              @click="reset"
-            />
-            <q-btn
-              color="primary"
-              label="删除"
-              icon="delete"
-              @click="deletes()"
-            />
-            <q-btn
-              color="primary"
-              label="添加网格"
-              icon="add"
-              @click="addGrid()"
-            />
-          </div>
-        </template>
-        <template v-slot:bottom class="justify-end">
-          <span style="margin-right: 5px">
-            显示{{ startPage }}~{{ endPage }}条记录，总
-            {{ pagination.rowsNumber }}
-            条数据
-          </span>
-          <span style="margin-right: 5px"> 每页 </span>
-          <q-select
-            outlined
-            v-model="pagination.rowsPerPage"
-            :options="pageTotalumbe"
-            dense
-            @input="changeTotalumbe"
-            style="float: left; margin-right: 5px"
-          />
-          <span style="margin-right: 5px"> 条记录 </span>
-          <div class="pagination">
-            <q-pagination
-              v-model="pagination.page"
-              :max="pages"
-              :max-pages="maxPages"
-              ellipsess
-              :direction-links="true"
-              @input="changePagination"
-            >
-            </q-pagination>
-            <span>跳至 </span>
-            <q-input
-              outlined
-              v-model="toPage"
-              dense
-              class="pagination-input"
-              @keyup.enter.native="changeToPage"
-            ></q-input>
-            <span> 页</span>
-          </div>
-        </template>
-      </q-table>
+        <div class="absolute-bottom text-subtitle1 text-center">
+          Contain
+        </div>
+      </q-img>
+
+        </div>-->
+      </template>
+
+    </q-splitter>
+  </div>
     </template>
   </q-splitter>
 </template>
@@ -312,7 +229,9 @@ import { uid } from 'quasar'
 export default {
   data () {
     return {
+      msg: '场景预览',
       splitterModel: 20,
+      splitterModelTow: 25,
       pageTotalumbe: [5, 10, 20, 50],
       startPage: 0, // 开始记录数
       endPage: 5, // 结束记录数
@@ -416,6 +335,42 @@ export default {
     this.getTreeNode()
   },
   methods: {
+    setSvgContent (event) {
+      // 作为url地址载入到内存之后使用THREE.OBJLoader把模型文件放到场景中
+      // console.log('解析文件：', event.target.result)
+      // this.setSvgContent(event.target.result)
+      // 取出svg原文件中的字符串格式
+      // 以文本方式开始读取指定的Blob中的内容。一旦完成，result属性中将包含一个字符串以表示所读取的文件内容。
+      var svtStr = event.target.result
+      var contentDiv = this.$refs.svgContent
+      contentDiv.innerHTML = svtStr
+      // console.log('svg显示容器', contentDiv, svtStr)
+      // 返回的是一个同名节点的数组
+      var svgdoc = document.getElementsByTagName('svg')
+      var svgdocjs = svgdoc[0].getElementsByTagName('script')
+      console.log('svg中的脚本对象:', svgdocjs)
+      // 获取文档中有 "sub-grid" 属性的第一个 <g> 元素：
+      // 查找文档中共包含 "sub-grid" 属性的 <g> 标签
+      var subGrids = document.querySelectorAll('g[subgrid]')
+      if (subGrids.length > 0) {
+        this.subGridTableShow = true
+        // this.subGridData.push({ subGridName: treeNode.id })
+        for (let i = 0; i < subGrids.length; i++) {
+          // { name: 'subGridName', label: '子网格(区域)', field: 'subGridName', sortable: true, align: 'left' },
+          // { name: 'subgrid', label: 'id', field: 'subgrid', sortable: true, align: 'left' }
+          this.subGridData.push({ subGridName: subGrids[i].id, subgrid: subGrids[i].getAttribute('subgrid') })
+          console.log('子网格:', subGrids[i].id, subGrids[i].getAttribute('subgrid'), subGrids[i])
+        }
+      }
+      console.log('特殊属性查找:', subGrids)
+      // 调用svg中的脚本
+      // svgJs('2222222222222')
+      // var childNodes = this.$refs.svgref.childNodes
+      // 因为只作单一场景所以，第0个索引下的数组对象就是场景图
+      console.log('svg节点', svgdoc, svgdoc[0].childNodes)
+      // svg作为innerHTML被加进来没办法执行里面的js方法
+      // svgdoc[0].onload()
+    },
     // axios方法，获取后台数据
     // 'Content-Type': 'application/json'
     dataAccess (accessUrl, pdata, successCallback, errorCallback) {
